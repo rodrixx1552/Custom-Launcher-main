@@ -766,7 +766,6 @@ ipcMain.on('toggle-mod', (event, filename) => {
     }
 });
 
-const { spawn } = require('child_process');
 
 ipcMain.on('start-auto-update', async (event, { url }) => {
     console.log('AUTO-UPDATE: Initialization started for:', url);
@@ -810,7 +809,14 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
         if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true, force: true });
         
         const zip = new AdmZip(tempZip);
-        zip.extractAllTo(extractPath, true);
+        zip.getEntries().forEach(entry => {
+            try {
+                // Manually extract and ignore chmod errors
+                zip.extractEntryTo(entry, extractPath, true, true);
+            } catch (e) {
+                console.warn('Silent update warning (chmod):', e.message);
+            }
+        });
 
         const appPath = path.dirname(process.execPath);
         const batchPath = path.join(app.getPath('temp'), 'launcher-updater.bat');
