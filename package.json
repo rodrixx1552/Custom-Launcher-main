@@ -1,0 +1,79 @@
+{
+  "name": "custom-launcher",
+  "version": "0.1.6",
+  "description": "Launcher de Minecraft personalizable basado en ElectronJS",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev:start": "sass src/scss/main.scss src/css/main.css && electron .",
+    "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/main.ico --overwrite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MilleniumMods/Custom-Launcher.git"
+  },
+  "keywords": [
+    "electron",
+    "minecraft",
+    "launcher",
+    "lospapus",
+    "custom-launcher"
+  ],
+  "author": "LosPapus Lover Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/MilleniumMods/Custom-Launcher/issues"
+  },
+  "homepage": "https://github.com/MilleniumMods/Custom-Launcher#readme",
+  "devDependencies": {
+    "electron": "^19.0.9",
+    "electron-builder": "^26.8.1",
+    "electron-installer-windows": "^3.0.0",
+    "electron-packager": "^17.1.2",
+    "electron-reload": "^2.0.0-alpha.1",
+    "esm": "^3.2.25",
+    "requirejs": "^2.3.6",
+    "sass": "^1.54.4"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.0.8",
+    "@fortawesome/fontawesome-free": "^6.1.2",
+    "adm-zip": "^0.5.16",
+    "axios": "^0.27.2",
+    "bootstrap": "^5.2.0",
+    "discord-rpc": "^4.0.1",
+    "ejs": "^3.1.8",
+    "ejs-electron": "^2.1.1",
+    "form-data": "^4.0.5",
+    "mc-ping-updated": "^0.1.1",
+    "minecraft-launcher-core": "^3.16.13",
+    "msmc": "^5.0.5",
+    "node-fetch": "^2.7.0",
+    "skinview3d": "^3.4.1",
+    "xml2js": "^0.6.2",
+    "zip-local": "^0.3.5"
+  },
+  "build": {
+    "appId": "com.lospapus.launcher",
+    "productName": "LosPapus Launcher",
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/main.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

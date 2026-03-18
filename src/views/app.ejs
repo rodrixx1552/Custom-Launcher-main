@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="../js/scripts/appCore.js"></script>
+    <script src="../../node_modules/skinview3d/bundles/skinview3d.bundle.js"></script>
+    <link rel="stylesheet" href="../../node_modules/@fortawesome/fontawesome-free/css/all.css">
+    <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="../css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <title> <%=title%> </title>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="background-image"></div>
+        <div class="clouds"></div>
+        <div class="particles"></div>
+    </div>
+<%- include('frame.ejs')  %> 
+    <div id="user-hub" class="glass">
+        <div class="user-info">
+            <span id="user-name-text">PILOT OFFLINE</span>
+            <span class="user-status-dot"></span>
+        </div>
+        <img id="user-avatar" src="../assets/user.png" alt="Pilot Head">
+    </div>
+<div id="root">
+        
+        <div class="app-layout">
+            <aside class="sidebar">
+                <div class="sidebar-top">
+                    <div class="nav-item active" data-tab="play">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="nav-item" data-tab="accounts">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                </div>
+                <nav class="sidebar-nav">
+                    <div class="nav-item">
+                        <i class="fas fa-play"></i>
+                        <span>Play</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-puzzle-piece"></i>
+                        <span>Mods</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-cube"></i>
+                        <span>Skins</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Community</span>
+                    </div>
+                </nav>
+            </aside>
+            <main id="main-content">
+                <%- include('main.ejs') %> 
+            </main>
+        </div>
+    </div> 
+
+    <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+</body>
+</html>

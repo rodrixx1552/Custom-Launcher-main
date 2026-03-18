@@ -1,0 +1,285 @@
+#mainContainer {
+    position: relative;
+    height: 100%;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    overflow: hidden;
+
+    @keyframes logoFloat {
+        0%, 100% { transform: translateY(0) scale(1.0); filter: drop-shadow(0 0 20px rgba(255, 183, 197, 0.3)); }
+        50% { transform: translateY(-10px) scale(1.03); filter: drop-shadow(0 0 50px rgba(255, 183, 197, 0.6)); }
+    }
+
+    .logo-wrapper {
+        position: relative;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+        animation: scaleIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255, 183, 197, 0.2) 0%, transparent 60%);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulseGlow 4s infinite alternate ease-in-out;
+        }
+
+        .main-logo {
+            max-width: 550px;
+            z-index: 2;
+            filter: drop-shadow(0 0 50px rgba(255, 183, 197, 0.5));
+            animation: logoFloat 6s infinite ease-in-out;
+        }
+    }
+
+    @keyframes pulseGlow {
+        from { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+        to { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    .middle-section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+
+        .news-card {
+            width: 500px;
+            padding: 30px;
+            border-radius: 24px;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            
+            &::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 24px;
+                padding: 1px;
+                background: linear-gradient(135deg, rgba(255,183,197,0.3), transparent 50%, rgba(255,183,197,0.1));
+                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: xor;
+                mask-composite: exclude;
+            }
+
+            h3 {
+                font-size: 20px;
+                font-weight: 900;
+                margin-bottom: 20px;
+                color: #ffb7c5;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                text-shadow: 0 0 15px rgba(255, 183, 197, 0.3);
+            }
+            p {
+                font-size: 14px;
+                color: #ddd;
+                margin-bottom: 20px;
+            }
+            hr { border-color: rgba(255, 255, 255, 0.1); margin: 15px 0; }
+
+            .news-item {
+                h4 { font-size: 15px; margin-bottom: 2px; }
+                span { font-size: 12px; color: #888; }
+            }
+        }
+    }
+
+    .bottom-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        padding-bottom: 20px;
+
+        .play-area {
+            position: relative;
+            z-index: 5;
+            animation: scaleIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+
+            .btn-play-custom {
+                background: linear-gradient(135deg, #ffb7c5 0%, #ff8c4a 100%);
+                border: none;
+                border-radius: 20px;
+                padding: 25px 120px;
+                font-size: 38px;
+                font-weight: 900;
+                color: #000;
+                cursor: pointer;
+                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                letter-spacing: 5px;
+                text-transform: uppercase;
+                box-shadow: 0 0 40px rgba(255, 183, 197, 0.4);
+                position: relative;
+                overflow: hidden;
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+                    transition: 0.5s;
+                }
+
+                &:hover {
+                    transform: scale(1.05) translateY(-5px);
+                    box-shadow: 0 15px 60px rgba(255, 183, 197, 0.7);
+                    &::before { left: 100%; }
+                }
+
+                &:active { transform: scale(0.95); }
+
+                &.btn-secondary {
+                    background: rgba(255, 255, 255, 0.05);
+                    color: #fff;
+                    font-size: 16px;
+                    padding: 12px 35px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    box-shadow: none;
+                    letter-spacing: 1px;
+                    &:hover { background: rgba(255, 255, 255, 0.15); border-color: #ffb7c5; }
+                }
+
+                &.btn-outline {
+                    background: transparent;
+                    border: 2px solid #ffb7c5;
+                    color: #ffb7c5;
+                    font-size: 16px;
+                    padding: 12px 35px;
+                    box-shadow: 0 0 15px rgba(255, 183, 197, 0.2);
+                    &:hover { background: #ffb7c5; color: #000; box-shadow: 0 0 30px #ffb7c5; }
+                }
+            }
+        }
+
+        .user-footer {
+            position: absolute;
+            bottom: 0px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            padding: 0 20px;
+
+            .version-info { color: rgba(255, 255, 255, 0.4); font-weight: 500; }
+            .user-display { 
+                font-weight: 900; 
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                color: #ffb7c5;
+                text-shadow: 0 0 10px rgba(255, 183, 197, 0.5);
+            }
+            .social-icons {
+                display: flex;
+                gap: 20px;
+                a {
+                    color: rgba(255, 255, 255, 0.5);
+                    text-decoration: none;
+                    transition: 0.3s;
+                    i { font-size: 20px; }
+                    &:hover { 
+                        color: #ff8c4a; 
+                        transform: translateY(-3px) scale(1.2);
+                    }
+                }
+            }
+        }
+
+        .skin-selector {
+            display: none; // Hiding legacy selector for new workshop
+        }
+    }
+}
+
+// Global UI Classes
+.glass {
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(35px) saturate(150%);
+    border: 1px solid rgba(255, 183, 197, 0.15);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 
+                inset 0 0 20px rgba(255, 183, 197, 0.05);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.market-card:hover {
+    background: rgba(255, 183, 197, 0.1) !important;
+    border: 1px solid rgba(255, 183, 197, 0.4) !important;
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(255, 183, 197, 0.1);
+}
+
+.premium-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+.premium-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+.premium-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ffb7c5, transparent);
+    border-radius: 10px;
+}
+
+// Custom Pedestal for Skin Workshop
+.skin-pedestal {
+    position: relative;
+    width: 250px;
+    height: 30px;
+    background: radial-gradient(ellipse at center, rgba(255, 183, 197, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    margin: -40px auto 0;
+    filter: blur(4px);
+    
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -10px;
+        border: 2px solid rgba(255, 183, 197, 0.2);
+        border-radius: 50%;
+        animation: spin 10s infinite linear;
+    }
+}
+
+// New Animations
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes glowRotate {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

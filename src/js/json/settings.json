@@ -1,0 +1,28 @@
+{
+    "client" : {
+        "versions_api_url" : "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+        "default_version" : "1.20.1"
+    },
+    "launcher" : {
+        "debug" : {
+            "environment" : "production",
+            "enabled" : false,
+            "debug_log_prefix" : "Debug | "
+            },
+        "ui" : {
+            "default_lang" : "es_ES",
+            "title": "LosPapus Lover Launcher",
+            "assets_dir" : "src/assets/",
+            "icon_name" : "los_papus/logo.png",
+            "default_background" : "los_papus/background.png"
+            },
+        "functions" : {
+            "default_version_type" : [
+                "release",
+                "snapshot",
+                "old_beta",
+                "old_alpha"
+            ]
+        }
+        }
+}
