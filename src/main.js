@@ -835,14 +835,25 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
 
         const exeName = path.basename(process.execPath);
         const batchScript = `@echo off
-title LosPapus Launcher Update
-echo Esperando a que el launcher se cierre por completo...
-taskkill /F /IM "${exeName}" /T > nul 2>&1
+title LosPapus Launcher Update Center
+echo ======================================================
+echo ACTUALIZACION EN CURSO: v0.1.8.2
+echo ======================================================
+echo.
+echo [1/3] Limpiando procesos de Electron...
+taskkill /F /IM "${exeName}" /T /FI "STATUS eq RUNNING" > nul 2>&1
 timeout /t 5 /nobreak > nul
-echo Aplicando parche de actualizacion v0.1.8.1...
-xcopy /s /e /y "${sourcePath.replace(/\\/g, '\\\\')}\\*" "${appPath.replace(/\\/g, '\\\\')}\\"
-echo Iniciando nueva version...
+echo.
+echo [2/3] Aplicando parche de archivos (Robocopy)...
+robocopy "${sourcePath.replace(/\\/g, '\\')}" "${appPath.replace(/\\/g, '\\')}" /E /MOVE /IS /IT /MT /R:3 /W:1
+echo.
+echo [3/3] Iniciando la nueva version...
 start "" "${process.execPath}"
+echo.
+echo ======================================================
+echo ACTUALIZACION COMPLETADA. SI EL APP NO ABRIO, REVISA ARRIBA.
+echo ======================================================
+pause
 (goto) 2>nul & del "%~f0"`;
 
         fs.writeFileSync(batchPath, batchScript, 'utf8');
