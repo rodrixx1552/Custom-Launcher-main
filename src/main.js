@@ -566,7 +566,7 @@ async function checkForUpdates(win) {
                         url: downloadUrl || 'https://github.com/MilleniumMods/Custom-Launcher/releases'
                     });
                 }
-            }, 3000);
+            }, 6000);
         } else {
             console.log('OTA: Launcher is up to date.');
         }
@@ -689,6 +689,82 @@ ipcMain.on('toggle-mod', (event, filename) => {
     } catch (e) {
         console.error('Error toggling mod:', e);
         event.sender.send('mod-toggled', { success: false, error: e.message });
+    }
+});
+
+const { spawn } = require('child_process');
+
+ipcMain.on('start-auto-update', async (event, { url }) => {
+    console.log('AUTO-UPDATE: Initialization started for:', url);
+    const tempZip = path.join(app.getPath('temp'), 'launcher-update.zip');
+    const extractPath = path.join(app.getPath('temp'), 'launcher-update-files');
+
+    try {
+        event.sender.send('auto-update-progress', { step: 'Resolviendo servidor...', progress: 10 });
+        
+        let downloadUrl = url;
+        if (url.includes('mediafire.com')) {
+            downloadUrl = await getMediafireDirectLink(url);
+        }
+
+        event.sender.send('auto-update-progress', { step: 'Descargando paquete...', progress: 20 });
+        
+        const response = await axios({
+            url: downloadUrl,
+            method: 'GET',
+            responseType: 'stream'
+        });
+
+        const writer = fs.createWriteStream(tempZip);
+        const totalLength = response.headers['content-length'];
+        let downloadedLength = 0;
+
+        response.data.on('data', (chunk) => {
+            downloadedLength += chunk.length;
+            const progress = 20 + Math.floor((downloadedLength / totalLength) * 50);
+            event.sender.send('auto-update-progress', { step: 'Descargando...', progress });
+        });
+
+        response.data.pipe(writer);
+
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+        });
+
+        event.sender.send('auto-update-progress', { step: 'Extrayendo archivos...', progress: 80 });
+        if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true, force: true });
+        
+        const zip = new AdmZip(tempZip);
+        zip.extractAllTo(extractPath, true);
+
+        const appPath = path.dirname(process.execPath);
+        const batchPath = path.join(app.getPath('temp'), 'launcher-updater.bat');
+        
+        let sourcePath = extractPath;
+        const entries = fs.readdirSync(extractPath);
+        if (entries.length === 1 && fs.statSync(path.join(extractPath, entries[0])).isDirectory()) {
+            sourcePath = path.join(extractPath, entries[0]);
+        }
+
+        const batchScript = `@echo off
+title LosPapus Launcher Update
+timeout /t 3 /nobreak > nul
+xcopy /s /e /y "${sourcePath}\\*" "${appPath}\\"
+start "" "${process.execPath}"
+(goto) 2>nul & del "%~f0"`;
+
+        fs.writeFileSync(batchPath, batchScript, 'utf8');
+        event.sender.send('auto-update-progress', { step: '¡Listo! Reiniciando...', progress: 100 });
+        
+        setTimeout(() => {
+            spawn('cmd.exe', ['/c', batchPath], { detached: true, stdio: 'ignore' }).unref();
+            app.quit();
+        }, 1500);
+
+    } catch (err) {
+        console.error('AUTO-UPDATE Error:', err);
+        event.sender.send('auto-update-error', err.message);
     }
 });
 

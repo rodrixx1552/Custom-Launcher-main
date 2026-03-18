@@ -706,56 +706,77 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================================================================
     // FEATURE 1: OTA Update Notification
     // =====================================================================
+    console.log('OTA UI: Registering listener...');
     window.electronAPI.onUpdateAvailable((data) => {
+        console.log('OTA UI: Update data received!', data);
         if (document.getElementById('ota-update-banner')) return;
-
-        // Inyectamos estilo de animación
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideDownFade {
-                from { transform: translateY(-30px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
 
         const banner = document.createElement('div');
         banner.id = 'ota-update-banner';
         banner.style.cssText = `
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            z-index: 10000; width: 450px; background: rgba(255, 140, 74, 0.9);
-            backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white; border-radius: 12px; padding: 12px 20px;
+            position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+            z-index: 100000; width: 480px; background: rgba(255, 140, 74, 0.95);
+            backdrop-filter: blur(15px); border: 2px solid rgba(255, 255, 255, 0.15);
+            color: white; border-radius: 12px; padding: 15px 25px;
             display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4); font-family: 'Poppins', sans-serif;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.5); font-family: 'Outfit', sans-serif;
             animation: slideDownFade 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         `;
         
         banner.innerHTML = `
             <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px;">
-                    <i class="fas fa-rocket" style="color: #fff;"></i>
+                <div style="background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-arrow-alt-circle-up" style="font-size: 20px;"></i>
                 </div>
                 <div>
-                    <div style="font-weight: 800; font-size: 13px; letter-spacing: 0.5px;">NUEVA VERSIÓN ${data.version}</div>
-                    <div style="font-size: 11px; opacity: 0.9;">Hay una actualización lista para instalar.</div>
+                    <div style="font-weight: 900; font-size: 14px; letter-spacing: 1px;">NUEVA VERSIÓN ${data.version}</div>
+                    <div style="font-size: 11px; opacity: 0.8; font-weight: 700;">Estamos en la ${CURRENT_VERSION}. Haz clic para descargar.</div>
                 </div>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                ${data.url ? `<button id="ota-down" style="background:#fff; color:#ff8c4a; border:none; padding:6px 12px; border-radius:6px; font-weight:700; font-size:11px; cursor:pointer; transition: 0.2s transform;">DESCARGAR</button>` : ''}
-                <button id="ota-close" style="background:none; border:none; color:white; font-size:16px; cursor:pointer; opacity:0.6;">✕</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                ${data.url ? `<button id="ota-down" class="btn-play-custom" style="padding: 8px 15px; font-size: 10px; margin:0; min-width:120px;">ACTUALIZAR AHORA</button>` : ''}
+                <button id="ota-close" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;" onclick="this.closest('#ota-update-banner').remove()">✕</button>
             </div>
         `;
 
         document.body.appendChild(banner);
 
         if (data.url) {
-            document.getElementById('ota-down').onclick = () => window.electronAPI.openExternal(data.url);
-            document.getElementById('ota-down').onmouseenter = (e) => e.target.style.transform = 'scale(1.05)';
-            document.getElementById('ota-down').onmouseleave = (e) => e.target.style.transform = 'scale(1)';
+            const btn = document.getElementById('ota-down');
+            const statusText = banner.querySelector('div div:last-child');
+
+            btn.onclick = () => {
+                if (btn.disabled) return;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PREPARANDO...';
+                window.electronAPI.startAutoUpdate(data.url);
+            };
+
+            window.electronAPI.onAutoUpdateProgress((info) => {
+                console.log('AUTO-UPDATE Progress:', info);
+                btn.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${info.progress}%`;
+                statusText.innerText = info.step;
+            });
+
+            window.electronAPI.onAutoUpdateError((err) => {
+                console.error('AUTO-UPDATE Error UI:', err);
+                btn.disabled = false;
+                btn.style.background = '#ff4444';
+                btn.innerHTML = 'REINTENTAR';
+                statusText.innerText = 'Error: ' + err;
+            });
         }
-        document.getElementById('ota-close').onclick = () => banner.remove();
     });
+
+    // Helper for manual testing via DevTools console
+    window.testUpdateBanner = () => {
+        window.electronAPI.onUpdateAvailable((data) => {
+            console.log('TEST BANNER TRIGGERED:', data);
+        });
+        const evt = new CustomEvent('manual-update', { detail: { version: '0.1.7', url: 'https://github.com' } });
+        // Simular llegada
+        window.dispatchEvent(evt);
+    };
 
     // SYNC MODS EVENTS
     window.electronAPI.onSyncProgress((data) => {
