@@ -34,9 +34,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onSyncError: (callback) => ipcRenderer.on('sync-error', (event, data) => callback(data)),
     logError: (err) => ipcRenderer.send('log-ui-error', err),
     toggleMod: (filename) => ipcRenderer.send('toggle-mod', filename),
-    onModToggled: (callback) => ipcRenderer.once('mod-toggled', (event, data) => callback(data)),
+    onModToggled: (callback) => ipcRenderer.on('mod-toggled', (event, data) => callback(data)),
     fetchNews: () => ipcRenderer.send('fetch-news'),
-    onNewsLoaded: (callback) => ipcRenderer.once('news-loaded', (event, data) => callback(data)),
+    onNewsLoaded: (callback) => ipcRenderer.on('news-loaded', (event, data) => callback(data)),
     // OTA Auto-Update
     startAutoUpdate: (url) => ipcRenderer.send('start-auto-update', { url }),
     onAutoUpdateProgress: (callback) => ipcRenderer.on('auto-update-progress', (event, data) => callback(data)),
