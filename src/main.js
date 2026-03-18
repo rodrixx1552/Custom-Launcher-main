@@ -835,32 +835,37 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
 
         const exeName = path.basename(process.execPath);
         const batchScript = `@echo off
-title LosPapus Launcher Update Center
+title LosPapus Update Center DEBUG
+color 0b
 echo ======================================================
-echo ACTUALIZACION EN CURSO: v0.1.8.2
+echo DEBUG: ACTUALIZADOR DE LOS PAPUS v0.1.8.3
+echo ======================================================
+echo ORIGEN: "${sourcePath}"
+echo DESTINO: "${appPath}"
+echo EXE: "${process.execPath}"
 echo ======================================================
 echo.
-echo [1/3] Limpiando procesos de Electron...
+echo [1/3] Matando proceso del launcher...
 taskkill /F /IM "${exeName}" /T /FI "STATUS eq RUNNING" > nul 2>&1
-timeout /t 5 /nobreak > nul
+timeout /t 6 /nobreak > nul
 echo.
-echo [2/3] Aplicando parche de archivos (Robocopy)...
-robocopy "${sourcePath.replace(/\\/g, '\\')}" "${appPath.replace(/\\/g, '\\')}" /E /MOVE /IS /IT /MT /R:3 /W:1
+echo [2/3] Intentando copiar archivos con ROBOCOPY...
+robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:3 /W:1 /LOG:"%TEMP%\\lospapus_up.log" /TEE
 echo.
-echo [3/3] Iniciando la nueva version...
+echo [3/3] Intentando iniciar nueva version...
 start "" "${process.execPath}"
 echo.
 echo ======================================================
-echo ACTUALIZACION COMPLETADA. SI EL APP NO ABRIO, REVISA ARRIBA.
+echo PROCESO COMPLETADO. Revisa arriba si hubo errores.
 echo ======================================================
 pause
-(goto) 2>nul & del "%~f0"`;
+`;
 
         fs.writeFileSync(batchPath, batchScript, 'utf8');
         event.sender.send('auto-update-progress', { step: '¡Listo! Reiniciando...', progress: 100 });
         
         setTimeout(() => {
-            spawn('cmd.exe', ['/c', batchPath], { detached: true, stdio: 'ignore' }).unref();
+            spawn('cmd.exe', ['/k', batchPath], { detached: true, stdio: 'ignore' }).unref();
             app.quit();
         }, 1500);
 

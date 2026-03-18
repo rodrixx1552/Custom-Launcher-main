@@ -1,6 +1,6 @@
 {
   "name": "custom-launcher",
-  "version": "0.1.8.2",
+  "version": "0.1.8.3",
   "description": "Launcher de Minecraft personalizable basado en ElectronJS",
   "main": "src/main.js",
   "scripts": {
@@ -21,8 +21,8 @@
     "custom-launcher"
   ],
   "author": "LosPapus Lover Team",
-  "launcher_version": "0.1.8.2",
-  "latest_launcher_version": "0.1.8.2",
+  "launcher_version": "0.1.8.3",
+  "latest_launcher_version": "0.1.8.3",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/MilleniumMods/Custom-Launcher/issues"
