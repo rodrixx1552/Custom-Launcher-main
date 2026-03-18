@@ -835,37 +835,33 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
 
         const exeName = path.basename(process.execPath);
         const batchScript = `@echo off
-title LosPapus Update Center DEBUG
-color 0b
+title LosPapus Update Center FINAL
+color 0a
 echo ======================================================
-echo DEBUG: ACTUALIZADOR DE LOS PAPUS v0.1.8.3
-echo ======================================================
-echo ORIGEN: "${sourcePath}"
-echo DESTINO: "${appPath}"
-echo EXE: "${process.execPath}"
+echo ACTUALIZADOR MAESTRO v0.1.8.4
 echo ======================================================
 echo.
-echo [1/3] Matando proceso del launcher...
-taskkill /F /IM "${exeName}" /T /FI "STATUS eq RUNNING" > nul 2>&1
-timeout /t 6 /nobreak > nul
+echo [1/3] Forzando cierre del proceso actual (PID: ${process.pid})...
+taskkill /F /PID ${process.pid} /T > nul 2>&1
+taskkill /F /IM "${exeName}" /T > nul 2>&1
+timeout /t 8 /nobreak > nul
 echo.
-echo [2/3] Intentando copiar archivos con ROBOCOPY...
-robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:3 /W:1 /LOG:"%TEMP%\\lospapus_up.log" /TEE
+echo [2/3] Instalando archivos nuevos (Modo Espejo)...
+robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:5 /W:2 /LOG:"%USERPROFILE%\\Desktop\\DEBUG_ACTUALIZACION.txt" /TEE
 echo.
-echo [3/3] Intentando iniciar nueva version...
+echo [3/3] Reiniciando launcher...
 start "" "${process.execPath}"
 echo.
 echo ======================================================
-echo PROCESO COMPLETADO. Revisa arriba si hubo errores.
+echo ACTUALIZACION FINALIZADA. Revisa el log en tu escritorio.
 echo ======================================================
-pause
-`;
+pause`;
 
         fs.writeFileSync(batchPath, batchScript, 'utf8');
         event.sender.send('auto-update-progress', { step: '¡Listo! Reiniciando...', progress: 100 });
         
         setTimeout(() => {
-            spawn('cmd.exe', ['/k', batchPath], { detached: true, stdio: 'ignore' }).unref();
+            spawn('cmd.exe', ['/c', 'start', 'cmd.exe', '/k', batchPath], { detached: true, stdio: 'ignore' }).unref();
             app.quit();
         }, 1500);
 
