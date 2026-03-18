@@ -2,7 +2,7 @@ const remoteMain = require('@electron/remote/main')
 remoteMain.initialize()
 
 const { app, BrowserWindow, ipcMain, screen, shell, dialog } = require("electron");
-app.disableHardwareAcceleration(); // GPU Stability Fix for some windows systems
+// app.disableHardwareAcceleration(); // RE-ENABLED GPU for BETTER FPS and SMOOTH TRANSITIONS 🚀 ✅
 const ejse = require('ejs-electron')
 const path = require("path");
 const fs = require("fs");
@@ -236,7 +236,13 @@ ipcMain.on('launch-game', async (event, options) => {
 
                 event.sender.send('launch-progress', { step: 'EXTRAYENDO MOTOR...', progress: 95 });
                 const zip = new AdmZip(javaZip);
-                zip.extractAllTo(runtimePath, true);
+                zip.getEntries().forEach(entry => {
+                    try {
+                        zip.extractEntryTo(entry, runtimePath, true, true);
+                    } catch (e) {
+                        console.warn('Java extraction silent warning:', e.message);
+                    }
+                });
                 if (fs.existsSync(javaZip)) fs.unlinkSync(javaZip);
                 
                 internalJava = findJavaInDir(runtimePath);

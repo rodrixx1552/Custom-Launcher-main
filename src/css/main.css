@@ -244,6 +244,8 @@
   align-items: center;
   margin-top: 20px;
   animation: scaleIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 #mainContainer .logo-wrapper::before {
   content: "";
@@ -262,6 +264,8 @@
   z-index: 2;
   filter: drop-shadow(0 0 50px rgba(255, 183, 197, 0.5));
   animation: logoFloat 6s infinite ease-in-out;
+  will-change: transform, filter;
+  transform: translateZ(0);
 }
 @keyframes pulseGlow {
   from {
@@ -290,6 +294,8 @@
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
   animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 #mainContainer .middle-section .news-card::after {
   content: "";
@@ -580,6 +586,9 @@ body {
   background: radial-gradient(circle at 20% 30%, rgba(162, 105, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(76, 173, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(255, 105, 180, 0.12) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(135, 92, 255, 0.1) 0%, transparent 50%);
   filter: blur(60px);
   animation: nebulaOrbit 60s infinite linear;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 .background-animation .clouds {
   position: absolute;
@@ -590,6 +599,8 @@ body {
   animation: gridScan 10s infinite linear;
   opacity: 0.3;
   z-index: 1;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 .background-animation .particles {
   position: absolute;
@@ -599,6 +610,8 @@ body {
   animation: particlesMoving 90s linear infinite;
   opacity: 0.5;
   z-index: 2;
+  will-change: background-position;
+  transform: translateZ(0);
 }
 .background-animation::after {
   content: "";
