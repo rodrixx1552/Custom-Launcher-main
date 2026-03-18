@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "dev:start": "sass src/scss/main.scss src/css/main.css && electron .",
-    "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build": "sass src/scss/main.scss src/css/main.css && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/main.ico --overwrite"
   },
   "repository": {
@@ -40,13 +40,13 @@
     "@electron/remote": "^2.0.8",
     "@fortawesome/fontawesome-free": "^6.1.2",
     "adm-zip": "^0.5.16",
-    "axios": "^0.27.2",
+    "axios": "^1.6.0",
     "bootstrap": "^5.2.0",
     "discord-rpc": "^4.0.1",
     "ejs": "^3.1.8",
     "ejs-electron": "^2.1.1",
     "form-data": "^4.0.5",
-    "mc-ping-updated": "^0.1.1",
+    "mcping-js": "^1.5.0",
     "minecraft-launcher-core": "^3.16.13",
     "msmc": "^5.0.5",
     "node-fetch": "^2.7.0",
@@ -58,14 +58,15 @@
     "appId": "com.lospapus.launcher",
     "productName": "LosPapus Launcher",
     "win": {
-      "target": "nsis",
+      "target": "squirrel",
       "icon": "src/assets/main.ico"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
     },
     "files": [
       "src/**/*",

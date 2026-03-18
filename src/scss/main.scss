@@ -58,6 +58,9 @@ body {
             radial-gradient(circle at 70% 70%, rgba(135, 92, 255, 0.1) 0%, transparent 50%);
         filter: blur(60px);
         animation: nebulaOrbit 60s infinite linear;
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
     }
 
     // Layer 2: Tactical Matrix Grid
@@ -72,6 +75,8 @@ body {
         animation: gridScan 10s infinite linear;
         opacity: 0.3;
         z-index: 1;
+        will-change: background-position;
+        transform: translateZ(0);
     }
 
     // Layer 3: Dynamic Particles (re-using the div)
@@ -84,6 +89,8 @@ body {
         animation: particlesMoving 90s linear infinite;
         opacity: 0.5;
         z-index: 2;
+        will-change: background-position;
+        transform: translateZ(0);
     }
 
     // Scanline Effect Overlay

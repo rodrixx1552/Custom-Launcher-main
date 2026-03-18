@@ -13,6 +13,8 @@ const lang = require(`./assets/lang/${settings.launcher.ui.default_lang}.json`);
 const axios = require('axios');
 const https = require('https');
 const translations = require("./js/json/lang.json");
+const AdmZip = require('adm-zip');
+const { spawn } = require('child_process');
 
 
 // check if the environment is dev
@@ -182,6 +184,69 @@ ipcMain.on('launch-game', async (event, options) => {
             console.log('Auth: Using Offline/Standard auth');
             auth = await Authenticator.getAuth(nick);
         }
+        
+        // --- Java Auto-Installer Logic ---
+        const runtimePath = path.join(app.getPath('userData'), 'runtime');
+        const javaExe = process.platform === 'win32' ? 'java.exe' : 'java';
+        
+        const findJavaInDir = (dir) => {
+            if (!fs.existsSync(dir)) return null;
+            const entries = fs.readdirSync(dir);
+            for (const ent of entries) {
+                const full = path.join(dir, ent);
+                const stat = fs.statSync(full);
+                if (stat.isDirectory()) {
+                    const found = findJavaInDir(full);
+                    if (found) return found;
+                } else if (ent === javaExe || ent === (javaExe + '.exe')) {
+                    if (full.toLowerCase().includes('bin')) return full; 
+                }
+            }
+            return null;
+        };
+
+        let internalJava = findJavaInDir(runtimePath);
+        
+        if (!internalJava && (!options.javaPath || !options.javaPath.trim())) {
+            console.log('Java Engine not found. Starting auto-download...');
+            event.sender.send('launch-progress', { step: 'PREPARANDO MOTOR JAVA...', progress: 5 });
+            
+            const javaZip = path.join(app.getPath('temp'), 'java-runtime.zip');
+            const javaUrl = "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk";
+
+            try {
+                const response = await axios({ url: javaUrl, method: 'GET', responseType: 'stream', timeout: 30000 });
+                const writer = fs.createWriteStream(javaZip);
+                const totalLength = parseInt(response.headers['content-length'] || "50000000"); // 50MB fallback
+                let downloadedLength = 0;
+
+                response.data.on('data', (chunk) => {
+                    downloadedLength += chunk.length;
+                    const progress = 5 + Math.floor((downloadedLength / totalLength) * 85);
+                    if (downloadedLength % (1024 * 1024) < 65536) { // Reduce IPC spam
+                        event.sender.send('launch-progress', { step: `DESCARGANDO JAVA: ${Math.floor(downloadedLength / 1024 / 1024)}MB`, progress });
+                    }
+                });
+
+                response.data.pipe(writer);
+                await new Promise((resolve, reject) => {
+                    writer.on('finish', resolve);
+                    writer.on('error', reject);
+                });
+
+                event.sender.send('launch-progress', { step: 'EXTRAYENDO MOTOR...', progress: 95 });
+                const zip = new AdmZip(javaZip);
+                zip.extractAllTo(runtimePath, true);
+                if (fs.existsSync(javaZip)) fs.unlinkSync(javaZip);
+                
+                internalJava = findJavaInDir(runtimePath);
+                console.log('Java Engine installed at:', internalJava);
+            } catch (err) {
+                console.error('Java Download Error:', err);
+                event.sender.send('launch-error', "No se pudo bajar Java automáticamente. Por favor instálalo manualmente.");
+                return;
+            }
+        }
 
         const launchOptions = {
             clientPackage: null,
@@ -209,6 +274,9 @@ ipcMain.on('launch-game', async (event, options) => {
 
         if (options.javaPath && options.javaPath.trim()) {
             launchOptions.javaPath = options.javaPath.trim();
+        } else if (internalJava) {
+            console.log('Using Internal Java Engine:', internalJava);
+            launchOptions.javaPath = internalJava;
         }
 
         if (options.forgeVersion) {
@@ -261,8 +329,8 @@ ipcMain.on('select-file', (event) => {
     });
 });
 
-const mcping = require('mc-ping-updated');
 
+const mcping = require('mcping-js');
 const msmc = require('msmc');
 const Auth = msmc.Auth || msmc.default?.Auth || msmc.default;
 
@@ -400,15 +468,21 @@ ipcMain.on('remove-account', (event, uuid) => {
 
 ipcMain.on('ping-server', (event, serverIP) => {
     const [host, port] = serverIP.split(':');
-    mcping(host, port || 25565, (err, res) => {
+    const server = new mcping.MinecraftServer(host, parseInt(port) || 25565);
+    
+    server.ping(5000, 763, (err, res) => {
         if (err) {
+            console.warn(`Server Ping Failed (${host}):`, err.message);
             event.sender.send('ping-result', { online: false, error: err.message });
         } else {
             event.sender.send('ping-result', { 
                 online: true, 
-                version: res.version, 
-                players: res.players,
-                description: res.description
+                version: res.version?.name || 'Unknown', 
+                players: {
+                    online: res.players?.online || 0,
+                    max: res.players?.max || 0
+                },
+                description: res.description?.text || res.description || 'Minecraft Server'
             });
         }
     });
@@ -447,7 +521,6 @@ async function downloadFile(url, dest) {
     });
 }
 
-const AdmZip = require('adm-zip');
 
 async function getMediafireDirectLink(url) {
     if (!url.includes('mediafire.com')) return url;
