@@ -833,10 +833,15 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
             sourcePath = path.join(extractPath, entries[0]);
         }
 
+        const exeName = path.basename(process.execPath);
         const batchScript = `@echo off
 title LosPapus Launcher Update
-timeout /t 3 /nobreak > nul
-xcopy /s /e /y "${sourcePath}\\*" "${appPath}\\"
+echo Esperando a que el launcher se cierre por completo...
+taskkill /F /IM "${exeName}" /T > nul 2>&1
+timeout /t 5 /nobreak > nul
+echo Aplicando parche de actualizacion v0.1.8.1...
+xcopy /s /e /y "${sourcePath.replace(/\\/g, '\\\\')}\\*" "${appPath.replace(/\\/g, '\\\\')}\\"
+echo Iniciando nueva version...
 start "" "${process.execPath}"
 (goto) 2>nul & del "%~f0"`;
 
