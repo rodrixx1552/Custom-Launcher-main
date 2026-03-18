@@ -37,6 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onModToggled: (callback) => ipcRenderer.on('mod-toggled', (event, data) => callback(data)),
     fetchNews: () => ipcRenderer.send('fetch-news'),
     onNewsLoaded: (callback) => ipcRenderer.on('news-loaded', (event, data) => callback(data)),
+    onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (event, data) => callback(data)),
     // OTA Auto-Update
     startAutoUpdate: (url) => ipcRenderer.send('start-auto-update', { url }),
     onAutoUpdateProgress: (callback) => ipcRenderer.on('auto-update-progress', (event, data) => callback(data)),

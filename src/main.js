@@ -563,6 +563,7 @@ async function checkForUpdates(win) {
                 if (win && !win.isDestroyed()) {
                     win.webContents.send('update-available', { 
                         version: latestVersion, 
+                        current: CURRENT_VERSION,
                         url: downloadUrl || 'https://github.com/MilleniumMods/Custom-Launcher/releases'
                     });
                 }

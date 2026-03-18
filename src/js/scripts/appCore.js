@@ -711,31 +711,44 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('OTA UI: Update data received!', data);
         if (document.getElementById('ota-update-banner')) return;
 
+        // Inyectamos estilo de animación si no está
+        if (!document.getElementById('ota-style')) {
+            const style = document.createElement('style');
+            style.id = 'ota-style';
+            style.textContent = `
+                @keyframes slideDownFade {
+                    from { transform: translate(-50%, -30px); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         const banner = document.createElement('div');
         banner.id = 'ota-update-banner';
         banner.style.cssText = `
             position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
-            z-index: 100000; width: 480px; background: rgba(255, 140, 74, 0.95);
-            backdrop-filter: blur(15px); border: 2px solid rgba(255, 255, 255, 0.15);
+            z-index: 100000; width: 480px; background: rgba(255, 140, 74, 0.98);
+            backdrop-filter: blur(20px); border: 2px solid rgba(255, 255, 255, 0.2);
             color: white; border-radius: 12px; padding: 15px 25px;
             display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 15px 45px rgba(0,0,0,0.5); font-family: 'Outfit', sans-serif;
-            animation: slideDownFade 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); font-family: 'Outfit', 'Segoe UI', sans-serif;
+            animation: slideDownFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
         `;
         
         banner.innerHTML = `
             <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-arrow-alt-circle-up" style="font-size: 20px;"></i>
+                <div style="background: rgba(255,255,255,0.25); width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-arrow-alt-circle-up" style="font-size: 22px;"></i>
                 </div>
                 <div>
-                    <div style="font-weight: 900; font-size: 14px; letter-spacing: 1px;">NUEVA VERSIÓN ${data.version}</div>
-                    <div style="font-size: 11px; opacity: 0.8; font-weight: 700;">Estamos en la ${CURRENT_VERSION}. Haz clic para descargar.</div>
+                    <div style="font-weight: 900; font-size: 14px; letter-spacing: 1px; text-transform: uppercase;">NUEVA VERSIÓN ${data.version}</div>
+                    <div style="font-size: 11px; opacity: 0.9; font-weight: 700;">Estás en la ${data.current || '0.1.7'}. Haz clic para recibir la mejora.</div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
-                ${data.url ? `<button id="ota-down" class="btn-play-custom" style="padding: 8px 15px; font-size: 10px; margin:0; min-width:120px;">ACTUALIZAR AHORA</button>` : ''}
-                <button id="ota-close" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;" onclick="this.closest('#ota-update-banner').remove()">✕</button>
+                ${data.url ? `<button id="ota-down" class="btn-play-custom" style="padding: 10px 18px; font-size: 11px; margin:0; min-width:135px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">ACTUALIZAR AHORA</button>` : ''}
+                <button id="ota-close" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; opacity: 0.8; padding: 5px;" onclick="this.closest('#ota-update-banner').remove()">✕</button>
             </div>
         `;
 
