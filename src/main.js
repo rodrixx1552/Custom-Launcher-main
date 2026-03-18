@@ -835,33 +835,39 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
 
         const exeName = path.basename(process.execPath);
         const batchScript = `@echo off
-title LosPapus Update Center FINAL
-color 0a
+title LosPapus Update Center ULTIMATE
+color 0e
 echo ======================================================
-echo ACTUALIZADOR MAESTRO v0.1.8.4
+echo ACTUALIZADOR FINAL v0.1.8.5
 echo ======================================================
 echo.
-echo [1/3] Forzando cierre del proceso actual (PID: ${process.pid})...
+echo [1/3] Limpiando procesos bloqueantes...
 taskkill /F /PID ${process.pid} /T > nul 2>&1
-taskkill /F /IM "${exeName}" /T > nul 2>&1
-timeout /t 8 /nobreak > nul
+taskkill /F /IM "LosPapus*" /T > nul 2>&1
+taskkill /F /IM "electron*" /T > nul 2>&1
+timeout /t 10 /nobreak > nul
 echo.
-echo [2/3] Instalando archivos nuevos (Modo Espejo)...
-robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:5 /W:2 /LOG:"%USERPROFILE%\\Desktop\\DEBUG_ACTUALIZACION.txt" /TEE
+echo [2/3] Sobrescribiendo archivos base...
+robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:5 /W:2 /LOG:"%TEMP%\\DEBUG_ACTUALIZACION.txt" /TEE
+if %ERRORLEVEL% GEQ 8 (
+    color 4f
+    echo ERROR CRITICO: Robocopy fallo. Revisa %TEMP%\\DEBUG_ACTUALIZACION.txt
+    pause
+)
 echo.
-echo [3/3] Reiniciando launcher...
+echo [3/3] Reiniciando launcher en la nueva version...
 start "" "${process.execPath}"
 echo.
 echo ======================================================
-echo ACTUALIZACION FINALIZADA. Revisa el log en tu escritorio.
+echo PROCESO FINALIZADO CON EXITO.
 echo ======================================================
-pause`;
+timeout /t 3 /nobreak > nul`;
 
         fs.writeFileSync(batchPath, batchScript, 'utf8');
         event.sender.send('auto-update-progress', { step: '¡Listo! Reiniciando...', progress: 100 });
         
         setTimeout(() => {
-            spawn('cmd.exe', ['/c', 'start', 'cmd.exe', '/k', batchPath], { detached: true, stdio: 'ignore' }).unref();
+            spawn('cmd.exe', ['/c', 'start', 'cmd.exe', '/c', batchPath], { detached: true, stdio: 'ignore' }).unref();
             app.quit();
         }, 1500);
 
