@@ -35,7 +35,7 @@
         "forge_engine": "MOTOR FORGE",
         "forge_active": "FORJA ACTIVA",
         "forge_inactive": "FORJA INACTIVA",
-        "forge_required_mods": "Requerido para Sincronizar Mods (1.19.2)"
+        "forge_required_mods": "Requerido para Sincronizar Mods (1.20.1)"
     },
     "en": {
         "play": "PLAY",
@@ -73,6 +73,6 @@
         "forge_engine": "FORGE ENGINE",
         "forge_active": "FORGE ACTIVE",
         "forge_inactive": "FORGE INACTIVE",
-        "forge_required_mods": "Required for Mods Sync (1.19.2)"
+        "forge_required_mods": "Required for Mods Sync (1.20.1)"
     }
 }

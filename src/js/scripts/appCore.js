@@ -857,6 +857,55 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled = false;
             btn.style.opacity = '1';
         }
+        console.log('UI: Game Launched.');
+    });
+
+    // UPDATE NOTIFICATIONS (Banner)
+    window.electronAPI.onUpdateAvailable((data) => {
+        console.log('UI: Update Available Received:', data);
+        const root = document.getElementById('root');
+        if (!root) return;
+
+        if (document.getElementById('ota-update-banner')) return;
+
+        const banner = document.createElement('div');
+        banner.id = 'ota-update-banner';
+        banner.className = 'glass';
+        banner.style.cssText = `
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-radius: 15px;
+            border: 1px solid #ffb7c5;
+            box-shadow: 0 0 30px rgba(255,183,197,0.3);
+            animation: slideDown 0.5s ease-out;
+        `;
+
+        banner.innerHTML = `
+            <div style="font-size: 11px; font-weight: 900; letter-spacing: 2px;">
+                <span style="color: #ffb7c5;">UPDATE DETECTED:</span> v${data.version}
+            </div>
+            <button class="btn-play-custom" id="ota-start-update" style="padding: 8px 20px; font-size: 10px; border-radius: 8px;">ACTUALIZAR AHORA</button>
+            <i class="fas fa-times" id="ota-close-banner" style="cursor: pointer; opacity: 0.5; font-size: 12px;"></i>
+        `;
+
+        root.appendChild(banner);
+
+        document.getElementById('ota-start-update').onclick = () => {
+             banner.innerHTML = '<div style="font-size: 11px; font-weight: 900; letter-spacing: 2px; color: #ffb7c5;">INICIANDO ACTUALIZACIÓN...</div>';
+             window.electronAPI.startAutoUpdate(data.url, data.version);
+        };
+
+        document.getElementById('ota-close-banner').onclick = () => {
+             banner.style.animation = 'slideUp 0.5s ease-in forwards';
+             setTimeout(() => banner.remove(), 500);
+        };
     });
 
     window.electronAPI.onLaunchError((err) => {

@@ -1,15 +1,20 @@
 {
-    "title": "LosPapus Lover Launcher",
+    "title": "Staff Broadcast",
     "posts": [
         {
             "date": "18/03/2026",
-            "tag": "WELCOME",
-            "text": "¡Bienvenidos al launcher! Gracias por unirse al servidor. Todo configurado y listo para jugar."
+            "tag": "UPDATE",
+            "text": "Versión 0.1.9 liberada. Sistema de actualización inteligente de mods activado. ¡Más rápido que nunca!"
         },
         {
-            "date": "18/03/2026",
+            "date": "17/03/2026",
+            "tag": "EVENT",
+            "text": "Mañana gran evento en el spawn a las 20:00 (Hora local). ¡No falten!"
+        },
+        {
+            "date": "15/03/2026",
             "tag": "INFO",
-            "text": "Recuerden hacer click en UPDATE MODS antes de jugar por primera vez para descargar el modpack completo."
+            "text": "Recuerden que el soporte técnico se atiende exclusivamente por Discord."
         }
     ]
 }
