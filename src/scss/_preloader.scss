@@ -5,18 +5,22 @@
   height: 100%;
   background: radial-gradient(circle at center, #1a0b16 0%, #000 100%);
   display: flex !important;
+  flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
   z-index: 999999;
   transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   text-align: center;
+  font-family: 'Outfit', sans-serif;
 
   .preloader-content-center {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 100%;
   }
 
   .logo-container {
@@ -84,9 +88,12 @@
       gap: 30px;
       padding: 0;
       margin: 0;
+      justify-content: center;
 
       li {
         list-style: none !important;
+        padding: 0;
+        margin: 0;
       }
 
       a {
@@ -94,6 +101,7 @@
         font-size: 26px;
         transition: all 0.3s ease;
         opacity: 0.6;
+        display: block;
 
         &:hover {
           color: #ffb7c5;
