@@ -579,10 +579,10 @@ async function getMediafireDirectLink(url) {
 // =====================================================================
 // FEATURE 1: OTA Version Checker - Fetches remote config from GitHub
 // =====================================================================
-const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/launcher-config.json';
-const CONFIG_PATH = path.join(__dirname, 'launcher-config.json');
-const NEWS_PATH = path.join(__dirname, 'launcher-news.json');
 const CURRENT_VERSION = require('../package.json').version;
+const REMOTE_NEWS_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/launcher-news.json';
+const MODS_MANIFEST_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/mods.json';
+const MODS_BASE_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/mods/';
 
 async function getRemoteConfig() {
     try {
@@ -619,9 +619,12 @@ function isNewerVersion(remote, local) {
     try {
         const r = remote.split('.').map(Number);
         const l = local.split('.').map(Number);
-        for (let i = 0; i < 3; i++) {
-            if ((r[i] || 0) > (l[i] || 0)) return true;
-            if ((r[i] || 0) < (l[i] || 0)) return false;
+        const maxLength = Math.max(r.length, l.length);
+        for (let i = 0; i < maxLength; i++) {
+            const vRemote = r[i] || 0;
+            const vLocal = l[i] || 0;
+            if (vRemote > vLocal) return true;
+            if (vRemote < vLocal) return false;
         }
     } catch (e) { /* ignore */ }
     return false;
@@ -656,61 +659,69 @@ async function checkForUpdates(win) {
 }
 
 ipcMain.on('sync-modpacks', async (event) => {
+    let manifestSuccess = false;
+    const modsPath = path.join(app.getPath('userData'), 'minecraft', 'mods');
     const tempZip = path.join(app.getPath('temp'), 'modpack.zip');
+
     try {
-        event.sender.send('sync-progress', { step: 'LOADING CONFIG...', progress: 5 });
-        const mediafireUrl = getModpackUrl();
+        event.sender.send('sync-progress', { step: 'SCANNING CLOUD...', progress: 5 });
+        console.log('OTA Mods: Fetching manifest from:', MODS_MANIFEST_URL);
+        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 10000 });
+        const modsToList = response.data;
 
-        event.sender.send('sync-progress', { step: 'CONNECTING TO NEXUS...', progress: 10 });
-        const directUrl = await getMediafireDirectLink(mediafireUrl);
-
-        event.sender.send('sync-progress', { step: 'DOWNLOADING ARCHIVE...', progress: 20 });
-        console.log('Download URL resolved:', directUrl);
-        await downloadFile(directUrl, tempZip);
-
-        if (!fs.existsSync(tempZip)) {
-            throw new Error('Download failed - file not created.');
-        }
-        
-        const stats = fs.statSync(tempZip);
-        console.log('Downloaded File Size:', stats.size, 'bytes');
-        
-        if (stats.size < 1000) { 
-             throw new Error(`Downloaded file is too small (${stats.size} bytes). Mediafire URL might be wrong.`);
-        }
-
-        event.sender.send('sync-progress', { step: 'DECOMPRESSING MATRIX...', progress: 60 });
-        const zip = new AdmZip(tempZip);
-        
-        const rootPath = path.join(app.getPath('userData'), 'minecraft');
-        if (!fs.existsSync(rootPath)) fs.mkdirSync(rootPath, { recursive: true });
-        
-        let hasRootModsFolder = false;
-        zip.getEntries().forEach(entry => {
-            if (entry.entryName.startsWith('mods/') || entry.entryName.startsWith('mods\\')) {
-                hasRootModsFolder = true;
-            }
-        });
-
-        if (hasRootModsFolder) {
-            console.log('Zip has mods/ structure. Extracting to .minecraft root');
-            zip.extractAllTo(rootPath, true);
-        } else {
-            console.log('Zip contains flat files. Extracting directly to .minecraft/mods');
-            const modsPath = path.join(rootPath, 'mods');
+        if (Array.isArray(modsToList)) {
+            console.log(`OTA Mods: Manifest found with ${modsToList.length} mods.`);
             if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
-            zip.extractAllTo(modsPath, true);
+
+            // 1. CLEANUP: Delete local mods not in manifest
+            event.sender.send('sync-progress', { step: 'CLEANING MATRIX...', progress: 15 });
+            const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
+            for (const file of localFiles) {
+                if (!modsToList.find(m => m.name === file)) {
+                    console.log('OTA Mods: Removing extra mod:', file);
+                    fs.unlinkSync(path.join(modsPath, file));
+                }
+            }
+
+            // 2. DOWNLOAD: Missing mods
+            for (let i = 0; i < modsToList.length; i++) {
+                const mod = modsToList[i];
+                const dest = path.join(modsPath, mod.name);
+                const progress = 20 + Math.floor((i / modsToList.length) * 75);
+
+                if (!fs.existsSync(dest)) {
+                    event.sender.send('sync-progress', { step: `DOWNLOADING: ${mod.name}`, progress });
+                    console.log('OTA Mods: Downloading missing mod:', mod.name);
+                    await downloadFile(MODS_BASE_URL + encodeURIComponent(mod.name), dest);
+                }
+            }
+
+            manifestSuccess = true;
+            event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
+            event.sender.send('sync-finished');
         }
-
-        event.sender.send('sync-progress', { step: 'CLEANING BUFFERS...', progress: 95 });
-        if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
-
-        event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
-        event.sender.send('sync-finished');
     } catch (err) {
-        console.error('Sync Error Detail:', err);
-        event.sender.send('sync-error', 'Matrix error: ' + err.message);
-        if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
+        console.warn('OTA Mods: Incremental sync failed, falling back to ZIP.', err.message);
+    }
+
+    if (!manifestSuccess) {
+        // FALLBACK: ZIP METHOD
+        try {
+            event.sender.send('sync-progress', { step: 'FALLBACK: LOADING ZIP...', progress: 5 });
+            const mediafireUrl = getModpackUrl();
+            const directUrl = await getMediafireDirectLink(mediafireUrl);
+            await downloadFile(directUrl, tempZip);
+            const zip = new AdmZip(tempZip);
+            const rootPath = path.join(app.getPath('userData'), 'minecraft');
+            zip.extractAllTo(rootPath, true);
+            if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
+            event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
+            event.sender.send('sync-finished');
+        } catch (zipErr) {
+            console.error('Sync Error Final Fallback:', zipErr);
+            event.sender.send('sync-error', 'Matrix error: ' + zipErr.message);
+            if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
+        }
     }
 });
 
@@ -835,23 +846,24 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
 
         const exeName = path.basename(process.execPath);
         const batchScript = `@echo off
-title LosPapus Update Center ULTIMATE
+title LosPapus Update Center - VERSION UPDATE
 color 0e
 echo ======================================================
-echo ACTUALIZADOR FINAL v0.1.8.5
+echo ACTUALIZADOR FINAL - PREPARANDO NUEVA VERSION
 echo ======================================================
 echo.
 echo [1/3] Limpiando procesos bloqueantes...
 taskkill /F /PID ${process.pid} /T > nul 2>&1
+taskkill /F /IM "${exeName}" /T > nul 2>&1
 taskkill /F /IM "LosPapus*" /T > nul 2>&1
 taskkill /F /IM "electron*" /T > nul 2>&1
-timeout /t 10 /nobreak > nul
+timeout /t 5 /nobreak > nul
 echo.
 echo [2/3] Sobrescribiendo archivos base...
-robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:5 /W:2 /LOG:"%TEMP%\\DEBUG_ACTUALIZACION.txt" /TEE
+robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:5 /W:2 /LOG:"%TEMP%\\DEBUG_ACTUALIZACION_ROBO.txt" /TEE
 if %ERRORLEVEL% GEQ 8 (
     color 4f
-    echo ERROR CRITICO: Robocopy fallo. Revisa %TEMP%\\DEBUG_ACTUALIZACION.txt
+    echo ERROR CRITICO: Robocopy fallo. Revisa %TEMP%\\DEBUG_ACTUALIZACION_ROBO.txt
     pause
 )
 echo.
@@ -861,7 +873,7 @@ echo.
 echo ======================================================
 echo PROCESO FINALIZADO CON EXITO.
 echo ======================================================
-timeout /t 3 /nobreak > nul`;
+timeout /t 2 /nobreak > nul`;
 
         fs.writeFileSync(batchPath, batchScript, 'utf8');
         event.sender.send('auto-update-progress', { step: '¡Listo! Reiniciando...', progress: 100 });
@@ -879,11 +891,24 @@ timeout /t 3 /nobreak > nul`;
 
 
 ipcMain.on('fetch-news', async (event) => {
-    // Try local file first (always bundled with the app)
+    // Try remote news first
     try {
-        if (fs.existsSync(NEWS_PATH)) {
-            const data = JSON.parse(fs.readFileSync(NEWS_PATH, 'utf8'));
-            console.log('News loaded from local file.');
+        console.log('OTA News: Fetching from:', REMOTE_NEWS_URL);
+        const response = await axios.get(REMOTE_NEWS_URL, { timeout: 8000 });
+        if (response.data && response.data.posts) {
+            console.log('OTA News: Remote news loaded.');
+            event.sender.send('news-loaded', response.data);
+            return;
+        }
+    } catch (e) {
+        console.warn('OTA News: Remote fetch failed, using local fallback.');
+    }
+
+    // Try local file next
+    try {
+        const localNewsPath = path.join(__dirname, 'launcher-news.json');
+        if (fs.existsSync(localNewsPath)) {
+            const data = JSON.parse(fs.readFileSync(localNewsPath, 'utf8'));
             event.sender.send('news-loaded', data);
             return;
         }
