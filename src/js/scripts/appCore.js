@@ -22,10 +22,12 @@ window.alert = (msg) => {
     else console.warn('ALERT:', msg);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('UI: DOMContentLoaded');
-    
-    // PRELOADER FADE-OUT
+    const initCore = () => {
+        if (window.CORE_INITIALIZED) return;
+        window.CORE_INITIALIZED = true;
+        console.log('UI: Core Initializing...');
+        
+        // PRELOADER FADE-OUT
     const preloader = document.getElementById('preloader');
     const root = document.getElementById('root');
     const userHub = document.getElementById('user-hub');
@@ -1195,6 +1197,14 @@ document.addEventListener('DOMContentLoaded', () => {
             input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); };
         }
     };
+    };
+    
+    // AUTO-INIT CHECK
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCore);
+    } else {
+        initCore();
+    }
 });
 
 // ACCOUNT LOGIC
