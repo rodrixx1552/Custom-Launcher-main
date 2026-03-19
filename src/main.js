@@ -647,7 +647,7 @@ async function checkForUpdates(win) {
                     win.webContents.send('update-available', { 
                         version: latestVersion, 
                         current: CURRENT_VERSION,
-                        url: downloadUrl || 'https://github.com/MilleniumMods/Custom-Launcher/releases'
+                        url: 'https://github.com/rodrixx1552/Custom-Launcher-main/releases'
                     });
                 }
             }, 6000);
