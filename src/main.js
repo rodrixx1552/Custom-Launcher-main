@@ -62,9 +62,10 @@ const createWindow = () => {
             ...details.responseHeaders,
             'Content-Security-Policy': [
                 "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; " +
-                "script-src 'self' 'unsafe-inline' https://unpkg.com 'unsafe-eval'; " +
+                "script-src 'self' 'unsafe-inline' https://unpkg.com https://www.youtube.com https://s.ytimg.com 'unsafe-eval'; " +
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-                "img-src 'self' data: https: https://mc-heads.net https://mineskin.org; " +
+                "img-src 'self' data: https: https://mc-heads.net https://mineskin.org https://i.ytimg.com; " +
+                "frame-src https://www.youtube.com; " +
                 "connect-src 'self' https:;"
             ]
           }
@@ -388,43 +389,52 @@ ipcMain.on('login-microsoft', async (event) => {
                 webPreferences: {
                     nodeIntegration: false,
                     contextIsolation: true,
-                    partition: 'persist:microsoft_login' // Clear session context
+                    partition: 'session_' + Date.now() // FRESH SESSION EACH TIME
                 }
             });
 
-            // Modern User Agent to avoid 'browser not supported' or blank screens
-            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
             
             loginWindow.setMenu(null);
             loginWindow.loadURL(authManager.createLink(), { userAgent });
 
+            let processed = false;
+            const handleRedirect = async (url) => {
+                if (processed || !url.includes("code=")) return;
+                processed = true;
+                console.log('MSMC: Code captured. Processing login...');
+                
+                try {
+                    const result = await authManager.login(url);
+                    loginWindow.removeAllListeners('closed');
+                    loginWindow.close();
+                    resolve(result);
+                } catch (e) {
+                    processed = false; // Allow retry on failure
+                    reject(e);
+                }
+            };
+
             loginWindow.on('closed', () => {
-                reject(new Error("error.gui.closed"));
+                if (!processed) reject(new Error("error.gui.closed"));
             });
 
             loginWindow.webContents.on('will-redirect', (event, url) => {
-                console.log('MSMC Redirect Detected:', url);
-                if (url.includes("code=")) {
-                    loginWindow.removeAllListeners('closed');
-                    loginWindow.close();
-                    // Extract code and login
-                    authManager.login(url).then(resolve).catch(reject);
-                }
+                handleRedirect(url);
             });
 
-            // Fallback for some redirect types or if the window doesn't fire will-redirect
             loginWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
-                 if (newUrl.includes("code=")) {
-                    loginWindow.removeAllListeners('closed');
-                    loginWindow.close();
-                    authManager.login(newUrl).then(resolve).catch(reject);
-                }
+                handleRedirect(newUrl);
             });
         });
 
         console.log('MSMC: Auth successful, fetching Minecraft profile...');
         const mcToken = await xboxManagerResult.getMinecraft();
         
+        if (!mcToken || !mcToken.profile) {
+            throw new Error("No se encontró un perfil de Minecraft en esta cuenta. Asegúrate de tener un nombre de usuario elegido en Minecraft.net.");
+        }
+
         const account = {
             name: mcToken.profile.name,
             uuid: mcToken.profile.id,
@@ -441,10 +451,21 @@ ipcMain.on('login-microsoft', async (event) => {
         console.log('MSMC: Login success for', account.name);
         event.sender.send('login-success', account);
     } catch (err) {
-        console.error('MSMC Error Detail:', err);
-        // Try to provide a more user-friendly message for common MSMC errors
-        let errorMsg = err.message || 'Error occurred during Microsoft login.';
-        if (errorMsg.includes('error.gui.closed')) errorMsg = 'Login window was closed before completion.';
+        console.error('--- MSMC FULL ERROR ---');
+        console.error(err);
+        
+        let errorMsg = 'Error occurred during Microsoft login.';
+        
+        if (typeof err === 'string') errorMsg = err;
+        else if (err.message) errorMsg = err.message;
+
+        if (errorMsg.includes('error.gui.closed')) {
+            errorMsg = 'La ventana de login fue cerrada antes de terminar.';
+        } else if (errorMsg.includes('ERR_CONNECTION_REFUSED') || errorMsg.includes('timeout')) {
+            errorMsg = 'Error de conexión. Revisa tu internet o la hora de tu PC.';
+        } else if (errorMsg.includes('profile') || errorMsg.includes('404')) {
+            errorMsg = 'No tienes un perfil de Minecraft Java creado en esta cuenta.';
+        }
         
         event.sender.send('login-error', errorMsg);
     }
