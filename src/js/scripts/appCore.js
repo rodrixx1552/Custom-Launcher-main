@@ -24,7 +24,43 @@ window.alert = (msg) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('UI: DOMContentLoaded');
-    // alert('UI Loaded: Checking API...'); 
+    
+    // PRELOADER FADE-OUT
+    const preloader = document.getElementById('preloader');
+    const root = document.getElementById('root');
+    const userHub = document.getElementById('user-hub');
+    const bgAnim = document.getElementById('bg-anim');
+    
+    // Hide UI initially
+    if (root) root.style.opacity = '0';
+    if (userHub) userHub.style.opacity = '0';
+    if (bgAnim) bgAnim.style.opacity = '0';
+
+    if (preloader) {
+        setTimeout(() => {
+            preloader.style.opacity = '0';
+            preloader.style.transform = 'scale(1.05)';
+            
+            // Show UI exactly when splash begins to fade
+            if (root) {
+                root.style.transition = 'opacity 1.2s ease';
+                root.style.opacity = '1';
+            }
+            if (bgAnim) {
+                bgAnim.style.transition = 'opacity 1.2s ease';
+                bgAnim.style.opacity = '1';
+            }
+            if (userHub) {
+                userHub.style.transition = 'opacity 1.2s ease';
+                userHub.style.opacity = '1';
+            }
+
+            setTimeout(() => {
+                preloader.style.visibility = 'hidden';
+                preloader.remove(); // Clean up DOM
+            }, 1200);
+        }, 3500); // 3.5s splash visibility
+    }
     if (!window.electronAPI) {
         console.error('CRITICAL: electronAPI not found!');
         alert('SYSTEM ERROR: window.electronAPI is undefined. Preload script failed.');

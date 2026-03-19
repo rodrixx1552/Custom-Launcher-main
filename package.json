@@ -61,7 +61,7 @@
     "productName": "LosPapus Launcher",
     "win": {
       "target": "nsis",
-      "icon": "src/assets/main.ico"
+      "icon": "src/assets/los_papus/logo.png"
     },
     "nsis": {
       "oneClick": true,

@@ -15,7 +15,8 @@
     <title> <%=title%> </title>
 </head>
 <body>
-    <div class="background-animation">
+    <%- include('preloader.ejs') %>
+    <div id="bg-anim" class="background-animation" style="opacity: 0;">
         <div class="background-image"></div>
         <div class="clouds"></div>
         <div class="particles"></div>
