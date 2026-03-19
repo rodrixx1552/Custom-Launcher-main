@@ -405,7 +405,14 @@ ipcMain.on('login-microsoft', async (event) => {
                 console.log('MSMC: Code captured. Processing login...');
                 
                 try {
-                    const result = await authManager.login(url);
+                    const params = new URL(url).searchParams;
+                    const code = params.get('code');
+                    
+                    if (!code) throw new Error("No se pudo extraer el código de Microsoft.");
+
+                    console.log('MSMC: Code extracted. Validating with Microsoft...');
+                    
+                    const result = await authManager.login(code);
                     loginWindow.removeAllListeners('closed');
                     loginWindow.close();
                     resolve(result);
