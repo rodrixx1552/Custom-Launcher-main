@@ -5,7 +5,33 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <script src="../js/scripts/appCore.js"></script>
+    <!-- HOT UPDATE LOADER: Fetches latest UI logic from GitHub for instant updates -->
+    <script>
+        (async () => {
+            const REMOTE_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/js/scripts/appCore.js?t=' + Date.now();
+            const LOCAL_JS = '../js/scripts/appCore.js';
+            const logOTA = (msg) => console.log('%c[OTA] ' + msg, 'color: #ffb7c5; font-weight: bold;');
+            
+            try {
+                logOTA('Checking for Remote Core (Hot Update)...');
+                const response = await fetch(REMOTE_URL);
+                if (!response.ok) throw new Error('Remote fetch returned ' + response.status);
+                const code = await response.text();
+                
+                if (code.length < 100) throw new Error('Remote code suspiciously small');
+                
+                const script = document.createElement('script');
+                script.text = code;
+                document.head.appendChild(script);
+                logOTA('HOT UPDATE APPLIED! Core logic is now LIVE 🚀');
+            } catch (e) {
+                console.warn('[OTA] Remote fetch failed. Using fallback local core.', e.message);
+                const script = document.createElement('script');
+                script.src = LOCAL_JS;
+                document.head.appendChild(script);
+            }
+        })();
+    </script>
     <script src="../../node_modules/skinview3d/bundles/skinview3d.bundle.js"></script>
     <link rel="stylesheet" href="../../node_modules/@fortawesome/fontawesome-free/css/all.css">
     <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.css">
