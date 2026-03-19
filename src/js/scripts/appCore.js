@@ -642,25 +642,32 @@ window.playClick = () => {
     };
 
     // LISTENERS
-    function initPlayListeners() {            document.getElementById('play-btn')?.addEventListener('click', () => {
-                const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
-                if (!acc) return alert(t('access_denied'));
-                
-                let selectedVersion = '1.20.1';
-                const ram = localStorage.getItem('maxRam') || '3';
-                const forgeEnabled = localStorage.getItem('forgeEnabled') !== 'false';
+    function initPlayListeners() {
+        document.getElementById('play-btn')?.addEventListener('click', () => {
+            const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
+            if (!acc) return alert(t('access_denied'));
+            
+            let selectedVersion = localStorage.getItem('selectedVersion') || '1.20.1';
+            let ram = localStorage.getItem('maxRam') || '3';
+            const forgeEnabled = localStorage.getItem('forgeEnabled') !== 'false';
 
-                let forgeVersion = null;
-                if (forgeEnabled && selectedVersion === '1.20.1') {
-                    forgeVersion = '47.4.17';
-                }
+            // Boost RAM for Modded Gameplay if not manually increased
+            if (forgeEnabled && selectedVersion === '1.20.1' && parseInt(ram) < 4) {
+                console.log('[DEBUG] Boosting RAM for Forge Stability...');
+                ram = '4'; 
+            }
 
-                const btn = document.getElementById('play-btn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerText = 'INITIALIZING...';
-                    btn.style.opacity = '0.5';
-                }
+            let forgeVersion = null;
+            if (forgeEnabled && selectedVersion === '1.20.1') {
+                forgeVersion = '47.4.17';
+            }
+
+            const btn = document.getElementById('play-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> INITIALIZING...';
+                btn.style.opacity = '0.5';
+            }
 
                 window.electronAPI.launchGame({
                     nick: acc.name,
