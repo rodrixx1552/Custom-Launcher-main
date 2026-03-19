@@ -22,6 +22,17 @@ window.alert = (msg) => {
     else console.warn('ALERT:', msg);
 };
 
+// AUDIO SYSTEM: Minecraft-style click sounds 🔊
+const CLICK_SOUND_URL = 'https://www.myinstants.com/media/sounds/minecraft-button-click-sound.mp3';
+const clickAudio = new Audio(CLICK_SOUND_URL);
+window.playClick = () => {
+    try {
+        clickAudio.currentTime = 0;
+        clickAudio.volume = 0.4;
+        clickAudio.play().catch(e => console.warn('Audio play failed:', e.message));
+    } catch(e) {}
+};
+
     const initCore = () => {
         if (window.CORE_INITIALIZED) return;
         window.CORE_INITIALIZED = true;
@@ -810,6 +821,7 @@ window.alert = (msg) => {
         item.addEventListener('click', () => {
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
+            window.playClick();
             
             const spanText = item.querySelector('span')?.innerText.toLowerCase();
             const dataTab = item.getAttribute('data-tab');
@@ -1196,6 +1208,13 @@ window.alert = (msg) => {
         if (input) {
             input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); };
         }
+        
+        // Dynamic sound injection for all buttons and tabs
+        document.body.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.closest('.v-opt') || e.target.closest('.nav-item') || e.target.closest('.premium-card') || e.target.closest('.vault-item')) {
+                window.playClick();
+            }
+        });
     };
 }; // End of initCore
 
