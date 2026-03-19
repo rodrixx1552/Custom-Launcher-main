@@ -580,6 +580,7 @@ async function getMediafireDirectLink(url) {
 // FEATURE 1: OTA Version Checker - Fetches remote config from GitHub
 // =====================================================================
 const CURRENT_VERSION = require('../package.json').version;
+const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/launcher-config.json';
 const REMOTE_NEWS_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/launcher-news.json';
 const MODS_MANIFEST_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/mods.json';
 const MODS_BASE_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/mods/';
