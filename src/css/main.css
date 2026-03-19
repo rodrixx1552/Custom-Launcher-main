@@ -76,33 +76,38 @@
 }
 
 #preloader {
+  position: fixed;
+  inset: 0;
   width: 100%;
   height: 100%;
   background: radial-gradient(circle at center, #1a0b16 0%, #000 100%);
-  position: fixed;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
   z-index: 999999;
-  transition: opacity 1s ease, visibility 1s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  text-align: center;
+  font-family: "Outfit", sans-serif;
 }
-#preloader .preloader-content {
-  position: relative;
-  z-index: 10;
+#preloader .preloader-content-center {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
+  justify-content: center;
+  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
 }
 #preloader .logo-container {
   position: relative;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
 }
 #preloader .logo-container .splash-logo {
-  width: 300px;
-  filter: drop-shadow(0 0 30px rgba(255, 105, 180, 0.4));
-  animation: splashPulse 2s infinite ease-in-out;
+  width: 380px;
+  max-width: 80vw;
+  filter: drop-shadow(0 0 40px rgba(255, 183, 197, 0.4));
+  animation: logoFloat 4s infinite ease-in-out;
 }
 #preloader .logo-container .logo-glow {
   position: absolute;
@@ -115,104 +120,70 @@
   z-index: -1;
   animation: glowRotate 10s infinite linear;
 }
-#preloader .heart-progress {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 30px;
+#preloader h5 {
+  font-weight: 900 !important;
+  letter-spacing: 6px !important;
+  color: #fff !important;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  text-shadow: 0 0 15px rgba(255, 183, 197, 0.5);
 }
-#preloader .heart-progress .heart {
-  font-size: 24px;
-  color: rgba(255, 255, 255, 0.1);
-  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
-  transition: all 0.5s ease;
-}
-#preloader .heart-progress .heart.active {
+#preloader span {
+  font-size: 14px;
   color: #ffb7c5;
-  filter: drop-shadow(0 0 10px #ffb7c5);
-  animation: heartBeat 1s infinite alternate;
-}
-#preloader .loading-status h5 {
-  font-weight: 900;
-  letter-spacing: 4px;
-  color: white;
-  margin: 0 0 10px 0;
-  text-shadow: 0 0 10px rgba(255, 183, 197, 0.5);
-}
-#preloader .loading-status .splash-subtitle {
-  font-size: 13px;
-  color: #888;
   font-style: italic;
+  font-weight: 500;
+  opacity: 0.8;
+  letter-spacing: 1px;
+  max-width: 500px;
 }
-#preloader .splash-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
+#preloader .media-container {
+  margin-top: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  animation: slideUpFade 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
 }
-#preloader .splash-bg .floating-cube {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 183, 197, 0.05);
-  border: 1px solid rgba(255, 183, 197, 0.1);
-  animation: floatSplash 15s infinite linear;
+#preloader .media-container label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.4);
 }
-#preloader .splash-bg .floating-cube:nth-child(1) {
-  top: 20%;
-  left: 10%;
-  animation-duration: 20s;
+#preloader .media-container .social-list {
+  display: flex;
+  list-style: none !important;
+  gap: 30px;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
 }
-#preloader .splash-bg .floating-cube:nth-child(2) {
-  top: 70%;
-  left: 80%;
-  animation-duration: 25s;
-  width: 60px;
-  height: 60px;
+#preloader .media-container .social-list li {
+  list-style: none !important;
+  padding: 0;
+  margin: 0;
 }
-#preloader .splash-bg .floating-cube:nth-child(3) {
-  top: 40%;
-  left: 60%;
-  animation-duration: 18s;
-  width: 30px;
-  height: 30px;
+#preloader .media-container .social-list a {
+  color: #fff;
+  font-size: 26px;
+  transition: all 0.3s ease;
+  opacity: 0.6;
+  display: block;
+}
+#preloader .media-container .social-list a:hover {
+  color: #ffb7c5;
+  opacity: 1;
+  transform: translateY(-5px) scale(1.1);
 }
 
-@keyframes splashPulse {
+@keyframes logoFloat {
   0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 30px rgba(255, 105, 180, 0.4));
+    transform: translateY(0);
   }
   50% {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 50px rgba(255, 105, 180, 0.7));
-  }
-}
-@keyframes glowRotate {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-@keyframes heartBeat {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.2);
-  }
-}
-@keyframes floatSplash {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-    padding: 0.5;
-  }
-  100% {
-    transform: translate(100px, -100px) rotate(360deg);
-    opacity: 0;
+    transform: translateY(-15px);
   }
 }
 #mainContainer {

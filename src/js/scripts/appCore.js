@@ -214,76 +214,170 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.renderSkinsTab = () => {
         mainContent.innerHTML = `
-            <div style="padding: 40px; animation: slideUpFade 0.6s ease; height: 100%; display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div style="padding: 35px; animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1); height: 100%; display: flex; flex-direction: column; overflow: hidden; background: radial-gradient(circle at top right, rgba(255, 183, 197, 0.05) 0%, transparent 60%);">
+                <!-- HEADER AREA -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; flex-shrink: 0;">
                     <div>
-                        <h1 style="font-weight: 900; letter-spacing: 5px; color: #ffb7c5; margin:0;">SKIN WORKSHOP</h1>
-                        <span style="opacity:0.5; font-size:11px; font-weight:900;">YOUR PERSONAL SKIN LIBRARY</span>
+                        <h1 style="font-weight: 950; letter-spacing: 7px; color: #ffb7c5; margin:0; font-size: 28px; text-shadow: 0 0 20px rgba(255, 183, 197, 0.3);">SKIN SYSTEM</h1>
+                        <div style="height: 3px; width: 60px; background: #ffb7c5; margin: 8px 0; border-radius: 2px; box-shadow: 0 0 10px #ffb7c5;"></div>
+                        <span style="opacity:0.4; font-size:10px; font-weight:900; letter-spacing: 2px;">AUTHORING PILOT APPEARANCE ASSETS</span>
                     </div>
-                    <button id="uploadSkin" class="btn-play-custom btn-outline" style="padding: 10px 25px; font-size: 12px;"><i class="fas fa-plus-circle"></i> UPLOAD SKIN</button>
+                    
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div class="glass" style="display: flex; align-items: center; padding: 4px 20px; border-radius: 50px; border: 1px solid rgba(255,183,197,0.15); background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); transition: all 0.3s ease;" id="searchBoxWrap">
+                            <i class="fas fa-search" style="color: #ffb7c5; font-size: 13px; margin-right: 12px; opacity: 0.7;"></i>
+                            <input type="text" id="skinSearchInput" placeholder="NICKNAME SEARCH..." style="background:none; border:none; color:#fff; font-size:12px; font-weight:800; outline:none; width: 200px; padding: 10px 0; letter-spacing: 1px;">
+                        </div>
+                        <button id="uploadSkin" class="v-opt" style="padding: 12px 25px; font-size: 11px; border-radius: 50px; border: 1px solid #ffb7c5; background: none; color: #ffb7c5; font-weight: 900; cursor: pointer; transition: all 0.3s ease;"><i class="fas fa-file-export" style="margin-right:8px;"></i> IMPORT PNG</button>
+                    </div>
                 </div>
-                <div style="flex: 1; display: grid; grid-template-columns: 260px 1fr 260px; gap: 25px; min-height: 0;">
-                    <div class="glass premium-scroll" style="padding: 20px; border-radius: 20px; border: 1px solid rgba(255,183,197,0.1); overflow-y: auto; display:flex; flex-direction:column; gap:8px;">
-                        <h3 style="font-size: 11px; font-weight: 900; opacity: 0.5; margin-bottom: 12px; letter-spacing: 2px; flex-shrink:0;">SKIN LIBRARY</h3>
-                        <div id="skins-grid" style="display: flex; flex-direction: column; gap: 10px; flex:1;"></div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <div id="skin-viewer-canvas" style="width: 260px; height: 340px; cursor: grab; filter: drop-shadow(0 0 25px rgba(255,183,197,0.3));"><div style="opacity:0.3; padding-top:120px; text-align:center; font-size:10px;">LOADING...</div></div>
-                        <div style="width: 160px; height: 8px; background: radial-gradient(circle, #ffb7c5 0%, transparent 70%); opacity: 0.3; filter: blur(4px); margin-top:-4px;"></div>
-                        <div id="skin-active-label" style="font-size:10px; opacity:0.5; margin-top:12px; letter-spacing:2px; font-weight:900; text-align:center;"></div>
-                        <div style="display:flex; gap: 10px; margin-top: 15px;">
-                            <button class="btn-play-custom btn-secondary" id="previewSkinBtn" style="padding: 10px 20px; font-size: 12px;"><i class="fas fa-eye"></i> PREVIEW</button>
-                            <button class="btn-play-custom" id="applySkinLocal" style="padding: 10px 25px; font-size: 12px;"><i class="fas fa-sync"></i> APPLY SKIN</button>
+
+                <div style="flex: 1; display: grid; grid-template-columns: 290px 1fr 340px; gap: 30px; min-height: 0;">
+                    <!-- LEFT PANEL: PERSONAL VAULT -->
+                    <div style="display: flex; flex-direction: column; gap: 20px; min-height: 0;">
+                        <div class="glass" style="flex: 1; padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; overflow: hidden; background: rgba(10,10,10,0.4);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
+                                <h3 style="font-size: 11px; font-weight: 900; opacity: 0.6; letter-spacing: 3px;"><i class="fas fa-box-open" style="margin-right: 10px; color: #ffb7c5;"></i>PERSONAL VAULT</h3>
+                                <span id="skin-lib-count" style="font-size: 9px; font-weight: 900; background: rgba(255,183,197,0.1); color: #ffb7c5; padding: 2px 8px; border-radius: 50px;">0</span>
+                            </div>
+                            <div id="skins-grid" class="premium-scroll" style="flex:1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;"></div>
                         </div>
                     </div>
-                    <div class="glass premium-scroll" style="padding: 20px; border-radius: 20px; border: 1px solid rgba(255,183,197,0.1); overflow-y: auto;">
-                        <h3 style="font-size: 11px; font-weight: 900; opacity: 0.5; margin-bottom: 20px; letter-spacing: 2px;">HOW TO USE</h3>
-                        <div style="font-size: 12px; line-height: 1.9; opacity: 0.7;">
-                            <p style="margin-bottom:12px;"><i class="fas fa-plus-circle" style="color:#ffb7c5; margin-right:6px;"></i><b>Upload Skin</b> — Import a PNG from your device into your library.</p>
-                            <p style="margin-bottom:12px;"><i class="fas fa-hand-pointer" style="color:#ffb7c5; margin-right:6px;"></i><b>Select</b> — Click a skin from your library to select it.</p>
-                            <p style="margin-bottom:12px;"><i class="fas fa-eye" style="color:#ffb7c5; margin-right:6px;"></i><b>Preview</b> — Preview it on the 3D viewer.</p>
-                            <p style="margin-bottom:12px;"><i class="fas fa-sync" style="color:#ffb7c5; margin-right:6px;"></i><b>Apply Skin</b> — Apply it! Microsoft accounts sync to Mojang servers. Offline accounts use it locally.</p>
-                            <p><i class="fas fa-trash" style="color:#e84118; margin-right:6px;"></i><b>Delete</b> — Remove a skin from your library.</p>
-                            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
-                            <p style="font-size:11px; opacity:0.6;">Skins are saved locally in your launcher.</p>
+
+                    <!-- CENTER PANEL: 3D CORE -->
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                        <div id="skin-viewer-canvas" style="width: 320px; height: 420px; cursor: grab; filter: drop-shadow(0 15px 45px rgba(0,0,0,0.5)); transition: transform 0.3s ease;"><div style="opacity:0.2; padding-top:180px; text-align:center; font-size:10px; letter-spacing:5px;">NEURAL LINK ESTABLISHED...</div></div>
+                        <div style="width: 220px; height: 12px; background: radial-gradient(circle, rgba(255, 183, 197, 0.45) 0%, transparent 75%); filter: blur(8px); margin-top:-10px; opacity: 0.4;"></div>
+                        
+                        <div id="skin-active-label" style="font-size:11px; font-weight:900; margin-top:30px; letter-spacing:4px; text-align:center; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); background: rgba(255,255,255,0.03); padding: 8px 25px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.05);">UNLINKED</div>
+                        
+                        <div style="display:flex; gap: 15px; margin-top: 25px; z-index: 10;">
+                            <button class="btn-play-custom btn-secondary" id="previewSkinBtn" style="padding: 15px 35px; border-radius: 15px; font-size: 12px; font-weight: 900;"><i class="fas fa-atom"></i> PREVIEW</button>
+                            <button class="btn-play-custom" id="applySkinLocal" style="padding: 15px 45px; border-radius: 15px; font-size: 12px; font-weight: 950; box-shadow: 0 10px 30px rgba(255,183,197,0.3);"><i class="fas fa-link"></i> DEPLOY SKIN</button>
+                        </div>
+                        
+                        <div id="skin-save-searched-wrap" style="margin-top: 20px; display: none; animation: slideUpFade 0.4s ease;">
+                            <button class="v-opt" id="saveSearchedSkin" style="padding: 12px 30px; font-size: 11px; border-radius: 50px; border: 1px solid #4cd137; background: rgba(76,209,51,0.1); color: #4cd137; font-weight: 950; cursor: pointer; box-shadow: 0 0 20px rgba(76,209,51,0.2);"><i class="fas fa-download" style="margin-right:8px;"></i> ARCHIVE TO VAULT</button>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT PANEL: GLOBAL SKIN STREAM (Isometric Body Renders) -->
+                    <div class="glass" style="padding: 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; overflow: hidden; background: rgba(10,10,10,0.4);">
+                        <h3 style="font-size: 11px; font-weight: 900; opacity: 0.6; margin-bottom: 25px; letter-spacing: 3px;"><i class="fas fa-satellite-dish" style="margin-right: 10px; color: #ffb7c5;"></i>GLOBAL STREAM</h3>
+                        <div id="trending-skins" class="premium-scroll" style="flex:1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-right: 5px;">
+                            ${['Dream', 'Technoblade', 'GeorgeNotFound', 'Sapnap', 'Philza', 'TommyInnit', 'WilburSoot', 'Ranboo', 'Tubbo', 'Nihachu'].map(name => `
+                                <div class="trending-item premium-card" data-name="${name}" style="padding: 15px 5px; border-radius: 20px; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.03); background: rgba(0,0,0,0.2); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                    <div style="position: relative; margin-bottom: 15px; height: 110px; display: flex; justify-content: center; align-items: center;">
+                                        <img src="https://mc-heads.net/body/${name}/right" style="height: 100px; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.4)); opacity: 0.9;">
+                                        <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50px; height: 4px; background: rgba(255,255,255,0.05); filter: blur(4px); border-radius: 50%;"></div>
+                                    </div>
+                                    <div style="font-size: 8px; font-weight: 950; letter-spacing: 1px; color: rgba(255,183,197,0.7);">${name.toUpperCase()}</div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
             </div>
+
+            <style>
+                .premium-card:hover {
+                    background: rgba(255,183,197,0.08) !important;
+                    border-color: rgba(255,183,197,0.2) !important;
+                    transform: translateY(-8px) scale(1.02);
+                }
+                .premium-card:hover img {
+                    transform: scale(1.1);
+                    opacity: 1 !important;
+                }
+                .premium-card.active {
+                    background: rgba(255,183,197,0.12) !important;
+                    border-color: #ffb7c5 !important;
+                    box-shadow: 0 0 25px rgba(255,183,197,0.15);
+                }
+                .premium-card img {
+                    transition: all 0.4s ease;
+                }
+                #searchBoxWrap:focus-within {
+                    border-color: #ffb7c5 !important;
+                    background: rgba(0,0,0,0.6) !important;
+                    box-shadow: 0 0 20px rgba(255,183,197,0.1);
+                }
+                .vault-item {
+                    transition: all 0.3s ease;
+                    border: 1px solid transparent;
+                }
+                .vault-item:hover {
+                    background: rgba(255,255,255,0.05) !important;
+                    transform: translateX(5px);
+                }
+                .vault-item.active {
+                    background: rgba(255,183,197,0.1) !important;
+                    border-color: rgba(255,183,197,0.2) !important;
+                }
+            </style>
         `;
         
         let currentSkinData = null;
         let selectedSkinName = null;
         let skinViewer = null;
+        let lastSearchedName = null;
 
         const getSkinLibrary = () => { try { return JSON.parse(localStorage.getItem('skinLibrary') || '[]'); } catch { return []; } };
         const saveSkinLibrary = (lib) => localStorage.setItem('skinLibrary', JSON.stringify(lib));
 
         const renderLibrary = () => {
             const lib = getSkinLibrary();
+            const countEl = document.getElementById('skin-lib-count');
+            if (countEl) countEl.innerText = lib.length;
             const grid = document.getElementById('skins-grid');
             if (!grid) return;
             const activeSkin = localStorage.getItem('activeSkinName') || '';
-            if (lib.length === 0) {
-                grid.innerHTML = `<div style="font-size:11px; opacity:0.4; text-align:center; padding:20px 10px;">Your library is empty.<br><br>Upload a skin PNG to get started.</div>`;
-                return;
+            if (lib.length === 0) { 
+                grid.innerHTML = `<div style="font-size:10px; opacity:0.25; text-align:center; padding:60px 20px; border: 1px dashed rgba(255,255,255,0.1); border-radius: 20px; margin-top:20px;">VAULT EMPTY.<br><br>SEARCH FOR A NICKNAME TO BEGIN.</div>`; 
+                return; 
             }
             grid.innerHTML = lib.map((s, i) => `
-                <div class="v-opt ${s.name === activeSkin ? 'active' : ''}" id="skin-item-${i}" style="display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; border-radius:12px;">
-                    <img src="${s.data}" style="width:28px;height:28px; image-rendering:pixelated; border-radius:5px; border:1px solid rgba(255,183,197,0.2);" onerror="this.style.display='none'">
-                    <span style="flex:1; font-size:11px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${s.name}">${s.name}</span>
-                    <button onclick="event.stopPropagation(); window.deleteSkin(${i})" style="background:none; border:none; color:rgba(255,100,100,0.7); cursor:pointer; font-size:12px; padding:2px 5px;"><i class="fas fa-trash"></i></button>
+                <div class="vault-item ${s.name === activeSkin ? 'active' : ''}" id="skin-item-${i}" style="display:flex; align-items:center; gap:12px; padding:12px 15px; cursor:pointer; border-radius:15px; background: rgba(255,255,255,0.02);">
+                    <div style="width: 34px; height: 34px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                        <img src="${s.data}" style="width:100%; height:100%; image-rendering:pixelated;" onerror="this.src='../assets/user.png'">
+                    </div>
+                    <span style="flex:1; font-size:11px; font-weight:900; letter-spacing:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color: rgba(255,255,255,0.8);" title="${s.name}">${s.name.toUpperCase()}</span>
+                    <button onclick="event.stopPropagation(); window.deleteSkin(${i})" style="background:none; border:none; color:rgba(255,255,255,0.2); cursor:pointer; font-size:11px; transition: color 0.3s;"><i class="fas fa-times-circle"></i></button>
                 </div>
             `).join('');
             lib.forEach((s, i) => {
                 document.getElementById(`skin-item-${i}`)?.addEventListener('click', () => {
                     selectedSkinName = s.name;
                     currentSkinData = s.data;
-                    const label = document.getElementById('skin-active-label');
-                    if (label) label.innerText = `SELECTED: ${s.name.toUpperCase()}`;
-                    document.querySelectorAll('[id^="skin-item-"]').forEach(el => el.classList.remove('active'));
+                    document.getElementById('skin-save-searched-wrap').style.display = 'none';
+                    document.getElementById('skin-active-label').innerText = `VAULT: ${s.name.toUpperCase()}`;
+                    document.querySelectorAll('.vault-item').forEach(el => el.classList.remove('active'));
+                    document.querySelectorAll('.trending-item').forEach(el => el.classList.remove('active'));
                     document.getElementById(`skin-item-${i}`)?.classList.add('active');
+                    if (skinViewer) skinViewer.loadSkin(s.data);
                 });
+            });
+        };
+
+        const attachDiscoveryEvents = () => {
+            document.querySelectorAll('.trending-item').forEach(item => {
+                const name = item.getAttribute('data-name');
+                item.onclick = () => {
+                    lastSearchedName = name;
+                    selectedSkinName = name;
+                    document.querySelectorAll('.trending-item').forEach(el => el.classList.remove('active'));
+                    document.querySelectorAll('.vault-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    document.getElementById('skin-active-label').innerText = `DISCOVERY: ${name.toUpperCase()}`;
+                    const skinUrl = `https://mc-heads.net/skin/${name}`;
+                    if (skinViewer) skinViewer.loadSkin(skinUrl);
+                    document.getElementById('skin-save-searched-wrap').style.display = 'block';
+                    fetch(skinUrl).then(r => r.blob()).then(blob => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => { currentSkinData = reader.result; };
+                        reader.readAsDataURL(blob);
+                    });
+                };
             });
         };
 
@@ -305,72 +399,104 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!container) return;
                 container.innerHTML = '';
                 const canvas = document.createElement('canvas');
-                skinViewer = new skinview3d.SkinViewer({ canvas, width: 260, height: 340, skin: skinSource });
+                skinViewer = new skinview3d.SkinViewer({ canvas, width: 320, height: 420, skin: skinSource });
                 container.appendChild(canvas);
                 skinViewer.autoRotate = true;
                 skinViewer.animation = new skinview3d.WalkingAnimation();
             } catch(e) {
                 const c = document.getElementById('skin-viewer-canvas');
-                if(c) c.innerHTML = `<div style="opacity:0.3; padding-top:120px; text-align:center; font-size:10px;">SKIN ENGINE OFFLINE<br>${e.message}</div>`;
+                if(c) c.innerHTML = `<div style="opacity:0.3; padding-top:200px; text-align:center; font-size:10px; letter-spacing:3px;">VIEWER ERROR</div>`;
             }
         };
+
         initViewer(defaultSkinSource);
         renderLibrary();
+        attachDiscoveryEvents();
 
-        let _fileUploadPending = false;
+        const searchInput = document.getElementById('skinSearchInput');
+        searchInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const name = searchInput.value.trim();
+                if (!name) return;
+                lastSearchedName = name;
+                document.getElementById('skin-active-label').innerText = `SCANNING: ${name.toUpperCase()}...`;
+                const skinUrl = `https://mc-heads.net/skin/${name}`;
+                if (skinViewer) skinViewer.loadSkin(skinUrl);
+                document.getElementById('skin-save-searched-wrap').style.display = 'block';
+                
+                // Add to Discovery Feed at the top
+                const discoveryGrid = document.getElementById('trending-skins');
+                if (discoveryGrid) {
+                    const existing = discoveryGrid.querySelector(`[data-name="${name}"]`);
+                    if (existing) existing.remove();
+                    const newCard = document.createElement('div');
+                    newCard.className = 'trending-item premium-card active';
+                    newCard.setAttribute('data-name', name);
+                    newCard.style = 'padding: 15px 5px; border-radius: 20px; text-align: center; cursor: pointer; border: 1px solid #ffb7c5; background: rgba(255,183,197,0.12); animation: scaleIn 0.4s ease;';
+                    newCard.innerHTML = `
+                        <div style="position: relative; margin-bottom: 15px; height: 110px; display: flex; justify-content: center; align-items: center;">
+                            <img src="https://mc-heads.net/body/${name}/right" style="height: 100px; filter: drop-shadow(0 0 10px rgba(255,183,197,0.3));">
+                            <div style="position: absolute; top: -5px; right: 5px; background: #ffb7c5; color: #000; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 5px; letter-spacing: 1px;">MATCH</div>
+                        </div>
+                        <div style="font-size: 8px; font-weight: 950; letter-spacing: 1px; color: #fff;">${name.toUpperCase()}</div>
+                    `;
+                    discoveryGrid.prepend(newCard);
+                    attachDiscoveryEvents();
+                }
+
+                fetch(skinUrl).then(r => r.blob()).then(blob => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => { currentSkinData = reader.result; };
+                    reader.readAsDataURL(blob);
+                });
+            }
+        });
+
+        document.getElementById('saveSearchedSkin')?.addEventListener('click', () => {
+            if (!currentSkinData || !lastSearchedName) return;
+            const lib = getSkinLibrary();
+            if (lib.find(s => s.name === lastSearchedName)) { alert('Skin already in vault!'); return; }
+            lib.push({ name: lastSearchedName, data: currentSkinData });
+            saveSkinLibrary(lib);
+            renderLibrary();
+            document.getElementById('skin-save-searched-wrap').style.display = 'none';
+        });
+
         document.getElementById('uploadSkin')?.addEventListener('click', () => {
-            if (_fileUploadPending) return;
-            _fileUploadPending = true;
             window.electronAPI.selectFile();
-            // Use a one-time ipc response flag
             const handler = (data) => {
-                _fileUploadPending = false;
-                window.showModal('NAME YOUR SKIN', 'Skin name (e.g. My Cool Skin)', (name) => {
-                    if (!name || !name.trim()) { alert('Please enter a valid name.'); return; }
+                window.showModal('ARCHIVE IDENTIFIER', 'Name for these assets...', (name) => {
+                    if (!name || !name.trim()) return;
                     const lib = getSkinLibrary();
                     lib.push({ name: name.trim(), data });
                     saveSkinLibrary(lib);
                     selectedSkinName = name.trim();
                     currentSkinData = data;
-                    const label = document.getElementById('skin-active-label');
-                    if (label) label.innerText = `SELECTED: ${name.trim().toUpperCase()}`;
                     renderLibrary();
                     if (skinViewer) skinViewer.loadSkin(data);
                 });
             };
-            // Listen once: we flag to avoid re-fires
             window.electronAPI.onFileSelected(handler);
         });
 
-        document.getElementById('previewSkinBtn')?.addEventListener('click', () => {
-            if (!currentSkinData) { alert('Select a skin from your library first!'); return; }
-            if (skinViewer) skinViewer.loadSkin(currentSkinData);
-        });
-
         document.getElementById('applySkinLocal')?.addEventListener('click', () => {
-            if (!currentSkinData) { alert('Select a skin from your library first!'); return; }
-            localStorage.setItem('activeSkinName', selectedSkinName || '');
+            if (!currentSkinData) { alert('Select skin first!'); return; }
+            localStorage.setItem('activeSkinName', selectedSkinName || lastSearchedName || 'Custom');
             localStorage.setItem('activeSkinData', currentSkinData);
             renderLibrary();
-            if (skinViewer) skinViewer.loadSkin(currentSkinData);
             if (acc && acc.type === 'microsoft') {
                 const btn = document.getElementById('applySkinLocal');
                 if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SYNCING...';
                 window.electronAPI.uploadSkin({ accessToken: acc.access_token, base64Image: currentSkinData });
             } else {
-                alert('SKIN APPLIED! (Offline accounts use skins locally in the launcher.)');
+                alert('SKIN DEPLOYED SUCCESSFULLY!');
             }
         });
 
         window.electronAPI.onSkinUploadSuccess(() => {
             const btn = document.getElementById('applySkinLocal');
-            if (btn) btn.innerHTML = '<i class="fas fa-sync"></i> APPLY SKIN';
-            alert('SKIN SYNC: Texture uploaded to Mojang!');
-        });
-        window.electronAPI.onSkinUploadError((err) => {
-            const btn = document.getElementById('applySkinLocal');
-            if (btn) btn.innerHTML = '<i class="fas fa-sync"></i> APPLY SKIN';
-            alert('SKIN ERROR: ' + err);
+            if (btn) btn.innerHTML = '<i class="fas fa-link"></i> DEPLOY SKIN';
+            alert('SKIN SYNC: Remote texture updated!');
         });
     };
 
