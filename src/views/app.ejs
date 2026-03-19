@@ -14,19 +14,25 @@
             
             try {
                 logOTA('Checking for Remote Core (Hot Update)...');
-                const response = await fetch(REMOTE_URL);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+                
+                const response = await fetch(REMOTE_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
                 if (!response.ok) throw new Error('Remote fetch returned ' + response.status);
                 const code = await response.text();
                 
-                if (code.length < 100) throw new Error('Remote code suspiciously small');
+                if (code.length < 500) throw new Error('Remote code suspiciously small');
                 
                 const script = document.createElement('script');
                 script.text = code;
                 document.head.appendChild(script);
                 logOTA('HOT UPDATE APPLIED! Core logic is now LIVE 🚀');
             } catch (e) {
-                console.warn('[OTA] Remote fetch failed. Using fallback local core.', e.message);
+                console.warn('[OTA] Remote fetch failed or timed out. Using fallback local core.', e.message);
                 const script = document.createElement('script');
+                script.id = 'app-core-script';
                 script.src = LOCAL_JS;
                 document.head.appendChild(script);
             }

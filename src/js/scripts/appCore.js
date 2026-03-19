@@ -1197,15 +1197,14 @@ window.alert = (msg) => {
             input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); };
         }
     };
-    };
-    
-    // AUTO-INIT CHECK
+}; // End of initCore
+
+// AUTO-INIT CHECK: Ensures UI loads even if DOMContentLoaded already fired (needed for Hot Update)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initCore);
     } else {
         initCore();
     }
-});
 
 // ACCOUNT LOGIC
 
