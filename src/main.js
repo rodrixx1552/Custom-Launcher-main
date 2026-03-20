@@ -676,7 +676,7 @@ async function checkForUpdates(win) {
                     win.webContents.send('update-available', { 
                         version: latestVersion, 
                         current: CURRENT_VERSION,
-                        url: 'https://github.com/rodrixx1552/Custom-Launcher-main/releases'
+                        url: downloadUrl || 'https://github.com/rodrixx1552/Custom-Launcher-main/releases'
                     });
                 }
             }, 6000);
