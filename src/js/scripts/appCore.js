@@ -211,7 +211,7 @@ document.addEventListener('mousedown', (e) => {
         `;
         initPlayListeners();
         window.updateGlobalUI();
-        window.electronAPI.pingServer('play.hypixel.net');
+        window.electronAPI.pingServer('LosPapusLovers.aternos.me:44481');
         // Fetch news for the panel
         window.electronAPI.fetchNews();
         
