@@ -1303,25 +1303,30 @@ window.setActive = (uuid) => {
     window.electronAPI.getAccounts();
 };
 
-// --- PET GUARDIAN SYSTEM ---
+// =====================================================================
+// FEATURE: EL GUARDIÁN DEL LAUNCHER (PET SYSTEM)
+// =====================================================================
 window.initializePet = () => {
     const petContainer = document.getElementById('pet-container');
     const petCanvas = document.getElementById('pet-canvas');
     const petSpeech = document.getElementById('pet-speech');
-    if (!petContainer || !petCanvas) return;
+    if (!petContainer || !petCanvas || !window.skinview3d) return;
+
+    console.log('[GUARDIÁN] Inicializando el protector del portal...');
 
     try {
         const petViewer = new skinview3d.SkinViewer({
             canvas: document.createElement('canvas'),
             width: 120,
             height: 150,
-            skin: 'https://mc-heads.net/skin/MHF_Wolf'
+            skin: 'https://mc-heads.net/skin/MHF_Wolf' 
         });
         petCanvas.appendChild(petViewer.canvas);
 
         petViewer.animation = new skinview3d.WalkingAnimation();
-        petViewer.animation.speed = 0.5;
-        petViewer.fov = 40;
+        petViewer.animation.speed = 0.4;
+        petViewer.fov = 35;
+        petViewer.zoom = 0.8;
 
         setTimeout(() => {
             petContainer.classList.add('visible');
@@ -1332,15 +1337,15 @@ window.initializePet = () => {
             if (!rect) return;
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-            const rotX = Math.max(-0.4, Math.min(0.4, (e.clientY - centerY) / 800));
-            const rotY = Math.max(-0.6, Math.min(0.6, (e.clientX - centerX) / 800));
+            const rotX = Math.max(-0.3, Math.min(0.3, (e.clientY - centerY) / 600));
+            const rotY = Math.max(-0.5, Math.min(0.5, (e.clientX - centerX) / 800));
             if (petViewer.playerObject) {
                 petViewer.playerObject.rotation.x = rotX;
                 petViewer.playerObject.rotation.y = rotY;
             }
         });
 
-        const showMessage = (msg, duration = 3000) => {
+        const showMessage = (msg, duration = 4000) => {
             if (!petSpeech) return;
             petSpeech.innerText = msg;
             petSpeech.style.opacity = '1';
@@ -1351,22 +1356,44 @@ window.initializePet = () => {
             }, duration);
         };
 
-        setInterval(() => {
-            if (Math.random() > 0.85) {
-                const msgs = ['¿VAMOS A MINAR?', '¡MIRA ESA SKIN!', 'SOY TU GUARDIÁN', '¿DÓNDE ESTÁ EL DIAMANTE?'];
-                showMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+        let idleTimer;
+        const resetIdle = () => {
+            clearTimeout(idleTimer);
+            if (petViewer.animation instanceof skinview3d.IdleAnimation) {
+                petViewer.animation = new skinview3d.WalkingAnimation();
+                petViewer.animation.speed = 0.4;
+                showMessage('¡VOLVISTE!', 2000);
             }
-        }, 20000);
+            idleTimer = setTimeout(() => {
+                petViewer.animation = new skinview3d.IdleAnimation();
+                showMessage('ZZZ... ZZZ...', 5000);
+            }, 60000);
+        };
+        document.addEventListener('mousemove', resetIdle);
 
         document.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.btn-play-custom')) {
-                showMessage('¡A DARLE ÁTOMOS!', 5000);
+            const btn = e.target.closest('.btn-play-custom') || e.target.closest('#play-btn');
+            if (btn) {
+                showMessage('¡A DARLE ÁTOMOS!', 6000);
                 petViewer.animation = new skinview3d.RunningAnimation();
-                setTimeout(() => petViewer.animation = new skinview3d.WalkingAnimation(), 5000);
+                petViewer.animation.speed = 2.0;
             }
         });
+
+        petCanvas.addEventListener('click', () => {
+            const jokes = ['¡NO ME TOQUES, PAPU!', '¿TIENES DIAMANTES?', '¡CUIDADO CON EL CREEPER!', 'SOY EL REY DEL LAUNCHER'];
+            showMessage(jokes[Math.floor(Math.random() * jokes.length)], 3000);
+            petViewer.animation = new skinview3d.BodySwingAnimation();
+            setTimeout(() => {
+                petViewer.animation = new skinview3d.WalkingAnimation();
+                petViewer.animation.speed = 0.4;
+            }, 2000);
+        });
+
+        setTimeout(() => showMessage('¡HOLA, EXPLORADOR!'), 5000);
+
     } catch (err) {
-        console.error('[PET] Failed to init:', err);
+        console.error('[PET] Error:', err);
     }
 };
 
