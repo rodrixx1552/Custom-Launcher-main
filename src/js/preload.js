@@ -41,7 +41,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // OTA Auto-Update
     startAutoUpdate: (url) => ipcRenderer.send('start-auto-update', { url }),
     onAutoUpdateProgress: (callback) => ipcRenderer.on('auto-update-progress', (event, data) => callback(data)),
-    onAutoUpdateError: (callback) => ipcRenderer.on('auto-update-error', (event, error) => callback(error))
+    onAutoUpdateError: (callback) => ipcRenderer.on('auto-update-error', (event, error) => callback(error)),
+    checkModsStatus: () => ipcRenderer.invoke('check-mods-status')
 });
 
 window.addEventListener("DOMContentLoaded", () => {

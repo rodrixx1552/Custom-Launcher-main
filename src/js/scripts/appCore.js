@@ -211,6 +211,18 @@ document.addEventListener('mousedown', (e) => {
         window.electronAPI.pingServer('play.hypixel.net');
         // Fetch news for the panel
         window.electronAPI.fetchNews();
+        
+        // --- NEW: Mod Update Detection ---
+        window.electronAPI.checkModsStatus().then(hasUpdate => {
+            if (hasUpdate) {
+                const btn = document.getElementById('sync-mods-btn');
+                if (btn) {
+                    btn.classList.add('pulse-green-border');
+                    const status = document.getElementById('sync-mod-status');
+                    if (status) status.innerText = 'UPDATE READY!';
+                }
+            }
+        });
     };
 
     window.renderAccountsTab = () => {
@@ -997,7 +1009,10 @@ document.addEventListener('mousedown', (e) => {
         const playBtn = document.getElementById('play-btn');
         if (status) status.innerText = 'UPDATED & READY';
         if (prog) setTimeout(() => prog.style.display = 'none', 1500);
-        if (btn) btn.disabled = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('pulse-green-border');
+        }
         if (playBtn) playBtn.disabled = false;
     });
 

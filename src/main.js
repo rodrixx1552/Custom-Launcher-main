@@ -755,6 +755,27 @@ ipcMain.on('sync-modpacks', async (event) => {
     }
 });
 
+ipcMain.handle('check-mods-status', async () => {
+    try {
+        const modsPath = path.join(app.getPath('userData'), 'minecraft', 'mods');
+        if (!fs.existsSync(modsPath)) return true;
+
+        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 5000 });
+        const remoteMods = response.data;
+        if (!Array.isArray(remoteMods)) return typeof remoteMods === 'object' && remoteMods.length > 0; // if it is an object but not array, check its length if it has one
+
+        if (Array.isArray(remoteMods)) {
+            const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
+            for (const mod of remoteMods) {
+                if (!localFiles.includes(mod.name)) return true;
+            }
+        }
+        return false;
+    } catch (e) {
+        return false;
+    }
+});
+
 // =====================================================================
 // FEATURE 2: Mod List fetching + Toggle Mod Enable/Disable
 // =====================================================================
