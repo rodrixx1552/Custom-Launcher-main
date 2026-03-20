@@ -64,6 +64,7 @@ const createWindow = () => {
                 "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; " +
                 "script-src 'self' 'unsafe-inline' https://unpkg.com https://www.youtube.com https://s.ytimg.com 'unsafe-eval'; " +
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                "media-src 'self' data:; " +
                 "img-src 'self' data: https: https://mc-heads.net https://mineskin.org https://i.ytimg.com; " +
                 "frame-src https://www.youtube.com; " +
                 "connect-src 'self' https:;"

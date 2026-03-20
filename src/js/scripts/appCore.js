@@ -25,7 +25,7 @@ window.alert = (msg) => {
 };
 
 // AUDIO SYSTEM: Universal Mechanical Click 🔊
-const CLICK_SOUND_URL = 'https://www.soundjay.com/buttons/sounds/button-16.mp3';
+const CLICK_SOUND_URL = '../assets/click.mp3';
 const clickAudio = new Audio(CLICK_SOUND_URL);
 clickAudio.preload = 'auto'; // Force browser to cache it ASAP
 window.playClick = () => {
