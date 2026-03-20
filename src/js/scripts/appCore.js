@@ -23,13 +23,17 @@ window.alert = (msg) => {
 };
 
 // AUDIO SYSTEM: Minecraft-style click sounds 🔊
-const CLICK_SOUND_URL = 'https://www.myinstants.com/media/sounds/minecraft-button-click-sound.mp3';
+const CLICK_SOUND_URL = 'https://github.com/the-aslak/minecraft-sounds/raw/master/sounds/random/click.ogg';
 const clickAudio = new Audio(CLICK_SOUND_URL);
+clickAudio.preload = 'auto'; // Force browser to cache it ASAP
 window.playClick = () => {
     try {
         clickAudio.currentTime = 0;
-        clickAudio.volume = 0.4;
-        clickAudio.play().catch(e => console.warn('Audio play failed:', e.message));
+        clickAudio.volume = 0.65; // Boosted volume
+        clickAudio.play().catch(e => {
+            // Silence warning if user hasn't interacted, but usually works on click.
+            console.warn('[Audio Engine] Click sound skipped:', e.message);
+        });
     } catch(e) {}
 };
 
