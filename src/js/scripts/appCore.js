@@ -24,15 +24,15 @@ window.alert = (msg) => {
     else console.warn('ALERT:', msg);
 };
 
-// AUDIO SYSTEM: Minecraft-style click sounds 🔊
-const CLICK_SOUND_URL = 'https://github.com/the-aslak/minecraft-sounds/raw/master/sounds/random/click.ogg';
+// AUDIO SYSTEM: Universal Mechanical Click 🔊
+const CLICK_SOUND_URL = 'https://www.soundjay.com/buttons/sounds/button-16.mp3';
 const clickAudio = new Audio(CLICK_SOUND_URL);
 clickAudio.preload = 'auto'; // Force browser to cache it ASAP
 window.playClick = () => {
-    console.log('[AUDIO] 🔊 Play signal received.');
+    console.log('[AUDIO] 🔊 System signal issued.');
     clickAudio.currentTime = 0;
-    clickAudio.volume = 0.9;
-    clickAudio.play().catch(e => console.warn('[AUDIO] 🚫 Skip:', e.message));
+    clickAudio.volume = 0.8;
+    clickAudio.play().catch(e => console.warn('[AUDIO] 🚫 Blocked:', e.message));
 };
 
 // GLOBAL LISTENER - AT THE VERY TOP
