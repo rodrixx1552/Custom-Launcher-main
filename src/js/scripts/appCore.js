@@ -130,28 +130,20 @@ document.addEventListener('mousedown', (e) => {
         window.applyBackground();
     };
 
-    window.activeLobbyViewers = []; // Global to manage cleanup
-
     window.applyBackground = async () => {
-        const bgFX = localStorage.getItem('bgFX') || 'matrix';
+        let bgFX = localStorage.getItem('bgFX') || 'matrix';
+        if (bgFX === 'lobby3d') {
+            bgFX = 'matrix';
+            localStorage.setItem('bgFX', 'matrix');
+        }
         const bgElem = document.getElementById('bg-anim');
         if (!bgElem) return;
 
-        // --- CLEANUP ---
-        bgElem.className = 'background-animation'; 
+        // Cleanup
+        bgElem.className = 'background-animation'; // Reset classes
         bgElem.style.backgroundImage = '';
         bgElem.style.background = '';
         
-        // Remove 3D Lobby Canvas if exists
-        const oldLobby = document.getElementById('lobby-3d-container');
-        if (oldLobby) oldLobby.remove();
-        
-        // Clean up active viewers to prevent memory leaks
-        if (window.activeLobbyViewers && window.activeLobbyViewers.length > 0) {
-            window.activeLobbyViewers.forEach(v => { try { v.dispose(); } catch(e){} });
-            window.activeLobbyViewers = [];
-        }
-
         const particles = bgElem.querySelector('.particles');
         const clouds = bgElem.querySelector('.clouds');
         if (particles) particles.innerHTML = '';
@@ -166,54 +158,7 @@ document.addEventListener('mousedown', (e) => {
             return;
         }
 
-        if (bgFX === 'lobby3d') {
-            bgElem.classList.add('bg-lobby3d');
-            bgElem.style.background = 'radial-gradient(circle at center, #1b1e2b 0%, #000 100%)';
-            
-            const container = document.createElement('div');
-            container.id = 'lobby-3d-container';
-            container.style.cssText = 'position:absolute; inset:0; display:flex; gap:20px; align-items:center; justify-content:center; overflow:hidden; mask-image: linear-gradient(to top, black 80%, transparent 100%);';
-            bgElem.appendChild(container);
-
-            const players = (window.lastPingData?.players?.list || []).slice(0, 6); // Limit to 6 for performance
-            
-            if (players.length === 0) {
-                container.innerHTML = `<div style="text-align:center; opacity:0.1; font-size:40px; font-weight:950; letter-spacing:10px;">SALA VACIA</div>`;
-                return;
-            }
-
-            players.forEach((p, index) => {
-                const viewerDiv = document.createElement('div');
-                viewerDiv.style.cssText = `width:200px; height:350px; flex-shrink:0; transform: translateY(${index % 2 === 0 ? '20px' : '-20px'}); filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); transition: transform 0.5s ease;`;
-                container.appendChild(viewerDiv);
-
-                try {
-                    const skinViewer = new skinview3d.SkinViewer({
-                        canvas: document.createElement('canvas'),
-                        width: 200,
-                        height: 350,
-                        skin: `https://mc-heads.net/skin/${p.name}`
-                    });
-                    viewerDiv.appendChild(skinViewer.canvas);
-                    
-                    // Animations
-                    skinViewer.animation = new skinview3d.WalkingAnimation();
-                    skinViewer.animation.speed = 0.4 + (index * 0.1);
-                    skinViewer.autoRotate = true;
-                    skinViewer.autoRotateSpeed = 0.5;
-                    skinViewer.fov = 35;
-                    
-                    // Label
-                    const label = document.createElement('div');
-                    label.innerText = p.name.toUpperCase();
-                    label.style.cssText = 'position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#ffb7c5; font-size:9px; font-weight:900; letter-spacing:2px; background:rgba(0,0,0,0.5); padding:3px 10px; border-radius:50px; white-space:nowrap; border:1px solid rgba(255,183,197,0.3);';
-                    viewerDiv.appendChild(label);
-
-                    window.activeLobbyViewers.push(skinViewer);
-                } catch(e) { console.error('Lobby3D Error:', e); }
-            });
-
-        } else if (bgFX === 'weather') {
+        if (bgFX === 'weather') {
             bgElem.classList.add('bg-weather');
             try {
                 // 1. Get Location
@@ -680,8 +625,7 @@ document.addEventListener('mousedown', (e) => {
             { id: 'bg2', label: 'Custom BG 2', desc: 'Background image 2', img: '../assets/backgrounds/background2.png' },
             { id: 'bg3', label: t('lang')==='es'?'Fondo 3':'Custom BG 3', desc: 'Background image 3', img: '../assets/backgrounds/background3.png' },
             { id: 'bg4', label: t('lang')==='es'?'Fondo 4':'Custom BG 4', desc: 'Background image 4', img: '../assets/backgrounds/background4.png' },
-            { id: 'weather', label: t('lang')==='es'?'CLIMA REAL':'LIVE WEATHER', desc: t('lang')==='es'?'Sincronizado con tu ciudad':'Real-time weather sync', icon: 'fa-cloud-sun-rain' },
-            { id: 'lobby3d', label: t('lang')==='es'?'SALA DE ESPERA 3D':'3D LOBBY ROOM', desc: t('lang')==='es'?'Mira quién está online en 3D':'See online players in 3D', icon: 'fa-users' }
+            { id: 'weather', label: t('lang')==='es'?'CLIMA REAL':'LIVE WEATHER', desc: t('lang')==='es'?'Sincronizado con tu ciudad':'Real-time weather sync', icon: 'fa-cloud-sun-rain' }
         ];
 
         mainContent.innerHTML = `
@@ -1029,11 +973,6 @@ document.addEventListener('mousedown', (e) => {
                 dot.style.background = '#e84118';
                 dot.style.boxShadow = '0 0 15px #e84118';
             }
-        }
-
-        // Live Lobby Refresh
-        if (localStorage.getItem('bgFX') === 'lobby3d') {
-            window.applyBackground();
         }
     });
 
