@@ -730,6 +730,31 @@ document.addEventListener('mousedown', (e) => {
             `;
             document.body.appendChild(overlay);
         });
+
+        document.querySelector('.server-status-pill')?.addEventListener('click', () => {
+            const data = window.lastPingData;
+            if (!data || !data.online) return;
+
+            const players = data.players.list || [];
+            
+            let content;
+            if (players.length === 0) {
+                content = `<div style="padding: 20px; opacity: 0.5;">${data.players.online} Papus jugando ahora (lista privada o llena)</div>`;
+            } else {
+                content = `
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-height: 250px; overflow-y: auto; padding: 10px;" class="premium-scroll">
+                        ${players.map(p => `
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; background: rgba(255,183,197,0.05); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,183,197,0.1);">
+                                <img src="https://mc-heads.net/avatar/${p.name}/40" style="border-radius: 8px;">
+                                <span style="font-size: 10px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; width: 100%; white-space: nowrap;">${p.name.toUpperCase()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            window.showModal('PAPUS ACTIVOS', content, null, true);
+        });
     }
 
     window.setVersion = (v) => {
@@ -866,8 +891,16 @@ document.addEventListener('mousedown', (e) => {
 
     // PING HANDLER
     window.electronAPI.onPingResult((data) => {
+        window.lastPingData = data;
         const pingText = document.getElementById('server-ping-text');
         const dot = document.getElementById('server-dot');
+        const pill = document.querySelector('.server-status-pill');
+        
+        if (pill) {
+            pill.style.cursor = data.online ? 'pointer' : 'default';
+            pill.title = data.online ? 'Ver quién está jugando' : '';
+        }
+
         if (pingText && dot) {
             if (data.online) {
                 pingText.innerText = `ONLINE | ${data.players.online}/${data.players.max}`;

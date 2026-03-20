@@ -515,7 +515,8 @@ ipcMain.on('ping-server', (event, serverIP) => {
                 version: res.version?.name || 'Unknown', 
                 players: {
                     online: res.players?.online || 0,
-                    max: res.players?.max || 0
+                    max: res.players?.max || 0,
+                    list: res.players?.sample || []
                 },
                 description: res.description?.text || res.description || 'Minecraft Server'
             });
