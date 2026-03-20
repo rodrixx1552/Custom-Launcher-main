@@ -501,28 +501,31 @@ ipcMain.on('remove-account', (event, uuid) => {
     event.sender.send('accounts-list', accounts);
 });
 
-ipcMain.on('ping-server', (event, serverIP) => {
-    const [host, port] = serverIP.split(':');
-    const server = new mcping.MinecraftServer(host, parseInt(port) || 25565);
-    
-    // Probar primero con el protocolo 47 (clásico) para maximizar la compatibilidad con el sample de nombres
-    server.ping(8000, 47, (err, res) => {
-        if (err) {
-            console.warn(`Server Ping Failed (${host}):`, err.message);
-            event.sender.send('ping-result', { online: false, error: err.message });
-        } else {
+ipcMain.on('ping-server', async (event, serverIP) => {
+    try {
+        console.log(`Ping API: Fetching status for ${serverIP}...`);
+        // Usamos la API de mcsrvstat.us que es mucho más fiable para servidores como Aternos
+        const response = await axios.get(`https://api.mcsrvstat.us/2/${serverIP}`, { timeout: 8000 });
+        const data = response.data;
+
+        if (data.online) {
             event.sender.send('ping-result', { 
                 online: true, 
-                version: res.version?.name || 'Unknown', 
+                version: data.version || 'Unknown', 
                 players: {
-                    online: res.players?.online || 0,
-                    max: res.players?.max || 0,
-                    list: res.players?.sample || []
+                    online: data.players?.online || 0,
+                    max: data.players?.max || 0,
+                    list: data.players?.list ? data.players.list.map(name => ({ name })) : []
                 },
-                description: res.description?.text || res.description || 'Minecraft Server'
+                description: data.motd?.clean?.[0] || 'Minecraft Server'
             });
+        } else {
+            event.sender.send('ping-result', { online: false });
         }
-    });
+    } catch (err) {
+        console.warn(`Ping API Failed (${serverIP}):`, err.message);
+        event.sender.send('ping-result', { online: false, error: err.message });
+    }
 });
 
 ipcMain.on('upload-skin', async (event, { accessToken, base64Image }) => {
