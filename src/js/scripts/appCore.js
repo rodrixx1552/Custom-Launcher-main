@@ -739,14 +739,20 @@ document.addEventListener('mousedown', (e) => {
             
             let content;
             if (players.length === 0) {
-                content = `<div style="padding: 20px; opacity: 0.5;">${data.players.online} Papus jugando ahora (lista privada o llena)</div>`;
+                content = `
+                    <div style="padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                        <i class="fas fa-user-secret" style="font-size: 40px; color: #ffb7c5; opacity: 0.5;"></i>
+                        <div style="font-size: 13px; opacity: 0.8; font-weight: 700;">${data.players.online} Papus jugando ahora</div>
+                        <div style="font-size: 10px; opacity: 0.4; font-weight: 900; letter-spacing: 1px; line-height: 1.5;">LA LISTA DE NOMBRES ES PRIVADA<br>O EL SERVIDOR ESTA LLENO</div>
+                    </div>
+                `;
             } else {
                 content = `
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-height: 250px; overflow-y: auto; padding: 10px;" class="premium-scroll">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-height: 350px; overflow-y: auto; padding: 15px;" class="premium-scroll">
                         ${players.map(p => `
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; background: rgba(255,183,197,0.05); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,183,197,0.1);">
-                                <img src="https://mc-heads.net/avatar/${p.name}/40" style="border-radius: 8px;">
-                                <span style="font-size: 10px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; width: 100%; white-space: nowrap;">${p.name.toUpperCase()}</span>
+                            <div class="premium-card" style="display: flex; flex-direction: column; align-items: center; gap: 10px; background: rgba(255,183,197,0.08); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,183,197,0.1); transition: all 0.3s ease;">
+                                <img src="https://mc-heads.net/avatar/${p.name}/45" style="border-radius: 12px; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));">
+                                <span style="font-size: 10px; font-weight: 950; overflow: hidden; text-overflow: ellipsis; width: 100%; white-space: nowrap; color: #ffb7c5; letter-spacing: 1px;">${p.name.toUpperCase()}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -1162,28 +1168,39 @@ document.addEventListener('mousedown', (e) => {
         }
     });
 
-    // CUSTOM MODAL SYSTEM
+    // CUSTOM MODAL SYSTEM - PREMIUM REDESIGN 💎
     window.showModal = (title, content, callback, isAlert = false) => {
+        // Remove existing modals before opening a new one
+        const existing = document.getElementById('custom-modal-overlay');
+        if (existing) existing.remove();
+
         const overlay = document.createElement('div');
         overlay.className = 'glass-overlay';
         overlay.id = 'custom-modal-overlay';
+        overlay.style.cssText = `
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000; animation: fadeIn 0.4s ease;
+        `;
         
         const contentHtml = isAlert 
-            ? `<p style="font-size: 14px; opacity: 0.8; margin-bottom: 30px; line-height: 1.5; color: white;">${content}</p>` 
-            : `<input type="text" id="modalInput" placeholder="${content}" class="v-opt" style="width: 100%; padding: 15px; margin-bottom: 30px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-weight: 900; letter-spacing: 1px;">`;
+            ? `<div style="font-size: 14px; opacity: 0.9; margin-bottom: 35px; line-height: 1.6; color: #fff; font-weight: 700;">${content}</div>` 
+            : `<input type="text" id="modalInput" placeholder="${content}" class="v-opt" style="width: 100%; padding: 18px; margin-bottom: 35px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,183,197,0.3); color: #fff; font-weight: 950; letter-spacing: 2px; border-radius: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">`;
 
         const buttonsHtml = isAlert 
-            ? `<button id="modalConfirm" class="btn-play-custom" style="width: 100%; padding: 12px; font-size: 12px;">ACKNOWLEDGE</button>`
-            : `<button id="modalConfirm" class="btn-play-custom" style="flex: 1; padding: 12px; font-size: 12px;">CONFIRM</button>
-               <button id="modalCancel" class="btn-play-custom btn-secondary" style="flex: 1; padding: 12px; font-size: 12px;">CANCEL</button>`;
+            ? `<button id="modalConfirm" class="btn-play-custom" style="width: 100%; padding: 15px; font-size: 12px; letter-spacing: 4px; box-shadow: 0 10px 20px rgba(255,183,197,0.2);">ENTENDIDO</button>`
+            : `<div style="display: flex; gap: 20px; width: 100%;">
+                 <button id="modalConfirm" class="btn-play-custom" style="flex: 1; padding: 13px; font-size: 11px; letter-spacing: 3px;">CONFIRMAR</button>
+                 <button id="modalCancel" class="btn-play-custom btn-secondary" style="flex: 1; padding: 13px; font-size: 11px; letter-spacing: 3px;">CANCELAR</button>
+               </div>`;
 
         overlay.innerHTML = `
-            <div class="glass" style="padding: 40px; border-radius: 30px; width: 400px; text-align: center; border: 1px solid rgba(255,183,197,0.3); animation: scaleIn 0.3s ease-out;">
-                <h2 style="font-weight: 900; letter-spacing: 5px; color: #ffb7c5; margin-bottom: 25px; font-size: 18px;">${title.toUpperCase()}</h2>
+            <div class="glass" style="padding: 45px; border-radius: 35px; width: 420px; text-align: center; border: 1px solid rgba(255,183,197,0.4); background: linear-gradient(135deg, rgba(30,30,30,0.95) 0%, rgba(10,10,10,0.98) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.6); animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <div style="width: 50px; height: 4px; background: #ffb7c5; border-radius: 10px; margin: 0 auto 25px; box-shadow: 0 0 15px #ffb7c5;"></div>
+                <h2 style="font-weight: 950; letter-spacing: 6px; color: #ffb7c5; margin-bottom: 30px; font-size: 20px; text-shadow: 0 0 15px rgba(255,183,197,0.4); text-transform: uppercase;">${title}</h2>
                 ${contentHtml}
-                <div style="display: flex; gap: 15px;">
-                    ${buttonsHtml}
-                </div>
+                ${buttonsHtml}
             </div>
         `;
         document.body.appendChild(overlay);
@@ -1205,13 +1222,6 @@ document.addEventListener('mousedown', (e) => {
         if (input) {
             input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); };
         }
-        
-        // Dynamic sound injection for all buttons and tabs
-        document.body.addEventListener('click', (e) => {
-            if (e.target.closest('button') || e.target.closest('.v-opt') || e.target.closest('.nav-item') || e.target.closest('.premium-card') || e.target.closest('.vault-item')) {
-                window.playClick();
-            }
-        });
     };
 }; // End of initCore
 
