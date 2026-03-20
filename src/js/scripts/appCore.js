@@ -1304,22 +1304,76 @@ window.setActive = (uuid) => {
 };
 
 // =====================================================================
-// FEATURE: EL GUARDIÁN DEL LAUNCHER (PET SYSTEM)
+// FEATURE: EL GUARDIÁN DEL LAUNCHER (PET SYSTEM - SELF-INJECTING)
 // =====================================================================
 window.initializePet = () => {
-    const petContainer = document.getElementById('pet-container');
-    const petCanvas = document.getElementById('pet-canvas');
-    const petSpeech = document.getElementById('pet-speech');
-    if (!petContainer || !petCanvas || !window.skinview3d) return;
+    if (document.getElementById('pet-container')) return;
 
-    console.log('[GUARDIÁN] Inicializando el protector del portal...');
+    console.log('[GUARDIÁN] Inyectando protector del portal...');
+
+    // 1. INJECT CSS
+    const petStyles = `
+        #pet-container {
+            position: fixed; bottom: 25px; right: 25px; 
+            width: 140px; height: 180px; 
+            border-radius: 30px; z-index: 1000; 
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,183,197,0.2); 
+            box-shadow: 0 15px 45px rgba(0,0,0,0.5); 
+            pointer-events: none; opacity: 0; 
+            transform: translateY(20px); 
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #pet-container.visible { opacity: 1; transform: translateY(0); }
+        #pet-speech {
+            position: absolute; top: -45px; right: 10px; 
+            background: #ffb7c5; color: #000; 
+            padding: 6px 15px; border-radius: 15px 15px 0 15px; 
+            font-size: 10px; font-weight: 950; 
+            opacity: 0; transform: scale(0.8); 
+            transition: all 0.3s; white-space: nowrap; 
+            box-shadow: 0 5px 15px rgba(255,183,197,0.4); 
+            border: 2px solid white;
+        }
+        @keyframes petFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        @keyframes petFloatShadow {
+            0%, 100% { transform: scale(0.6); opacity: 0.3; }
+            50% { transform: scale(1); opacity: 0.6; }
+        }
+    `;
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = petStyles;
+    document.head.appendChild(styleSheet);
+
+    // 2. INJECT HTML
+    const container = document.createElement('div');
+    container.id = 'pet-container';
+    container.innerHTML = `
+        <div id="pet-speech">¡HOLA PAPU!</div>
+        <div id="pet-canvas" style="width: 120px; height: 150px; cursor: pointer; pointer-events: auto; animation: petFloat 4s infinite ease-in-out;"></div>
+        <div style="width: 60px; height: 5px; background: radial-gradient(circle, rgba(255,183,197,0.4) 0%, transparent 80%); filter: blur(3px); margin-top: -5px; opacity: 0.6; animation: petFloatShadow 4s infinite ease-in-out;"></div>
+    `;
+    document.body.appendChild(container);
+
+    if (!window.skinview3d) {
+        console.warn('[PET] skinview3d not found, skipping 3D render.');
+        return;
+    }
 
     try {
+        const petCanvas = document.getElementById('pet-canvas');
+        const petSpeech = document.getElementById('pet-speech');
+        
         const petViewer = new skinview3d.SkinViewer({
             canvas: document.createElement('canvas'),
-            width: 120,
-            height: 150,
-            skin: 'https://mc-heads.net/skin/MHF_Wolf' 
+            width: 120, height: 150,
+            skin: 'https://mc-heads.net/skin/MHF_Wolf'
         });
         petCanvas.appendChild(petViewer.canvas);
 
@@ -1328,13 +1382,11 @@ window.initializePet = () => {
         petViewer.fov = 35;
         petViewer.zoom = 0.8;
 
-        setTimeout(() => {
-            petContainer.classList.add('visible');
-        }, 2000);
+        setTimeout(() => container.classList.add('visible'), 2000);
 
+        // IA: Tracking
         document.addEventListener('mousemove', (e) => {
-            const rect = petContainer.getBoundingClientRect();
-            if (!rect) return;
+            const rect = container.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
             const rotX = Math.max(-0.3, Math.min(0.3, (e.clientY - centerY) / 600));
@@ -1346,7 +1398,6 @@ window.initializePet = () => {
         });
 
         const showMessage = (msg, duration = 4000) => {
-            if (!petSpeech) return;
             petSpeech.innerText = msg;
             petSpeech.style.opacity = '1';
             petSpeech.style.transform = 'scale(1)';
@@ -1356,38 +1407,21 @@ window.initializePet = () => {
             }, duration);
         };
 
-        let idleTimer;
-        const resetIdle = () => {
-            clearTimeout(idleTimer);
-            if (petViewer.animation instanceof skinview3d.IdleAnimation) {
-                petViewer.animation = new skinview3d.WalkingAnimation();
-                petViewer.animation.speed = 0.4;
-                showMessage('¡VOLVISTE!', 2000);
-            }
-            idleTimer = setTimeout(() => {
-                petViewer.animation = new skinview3d.IdleAnimation();
-                showMessage('ZZZ... ZZZ...', 5000);
-            }, 60000);
-        };
-        document.addEventListener('mousemove', resetIdle);
-
-        document.addEventListener('mousedown', (e) => {
-            const btn = e.target.closest('.btn-play-custom') || e.target.closest('#play-btn');
-            if (btn) {
-                showMessage('¡A DARLE ÁTOMOS!', 6000);
-                petViewer.animation = new skinview3d.RunningAnimation();
-                petViewer.animation.speed = 2.0;
-            }
-        });
-
+        // Click interaction
         petCanvas.addEventListener('click', () => {
             const jokes = ['¡NO ME TOQUES, PAPU!', '¿TIENES DIAMANTES?', '¡CUIDADO CON EL CREEPER!', 'SOY EL REY DEL LAUNCHER'];
             showMessage(jokes[Math.floor(Math.random() * jokes.length)], 3000);
             petViewer.animation = new skinview3d.BodySwingAnimation();
-            setTimeout(() => {
-                petViewer.animation = new skinview3d.WalkingAnimation();
-                petViewer.animation.speed = 0.4;
-            }, 2000);
+            setTimeout(() => { petViewer.animation = new skinview3d.WalkingAnimation(); petViewer.animation.speed = 0.4; }, 2000);
+        });
+
+        // Launch reaction
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.btn-play-custom') || e.target.closest('#play-btn')) {
+                showMessage('¡A DARLE ÁTOMOS!', 6000);
+                petViewer.animation = new skinview3d.RunningAnimation();
+                petViewer.animation.speed = 2.0;
+            }
         });
 
         setTimeout(() => showMessage('¡HOLA, EXPLORADOR!'), 5000);
@@ -1397,6 +1431,7 @@ window.initializePet = () => {
     }
 };
 
+// Auto-init
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(window.initializePet, 1500);
 } else {
