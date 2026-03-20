@@ -211,7 +211,7 @@ document.addEventListener('mousedown', (e) => {
         `;
         initPlayListeners();
         window.updateGlobalUI();
-        window.electronAPI.pingServer('LosPapusLovers.aternos.me:44481');
+        window.electronAPI.pingServer('sprat.aternos.host:44481');
         // Fetch news for the panel
         window.electronAPI.fetchNews();
         
