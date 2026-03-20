@@ -126,6 +126,74 @@ document.addEventListener('mousedown', (e) => {
             userAvatar.onerror = () => userAvatar.src = '../assets/user.png';
         }
         if (verText) verText.innerText = `Minecraft ${ver}`;
+        
+        window.applyBackground();
+    };
+
+    window.applyBackground = async () => {
+        const bgFX = localStorage.getItem('bgFX') || 'matrix';
+        const bgElem = document.getElementById('bg-anim');
+        if (!bgElem) return;
+
+        // Cleanup
+        bgElem.className = 'background-animation'; // Reset classes
+        bgElem.style.backgroundImage = '';
+        bgElem.style.background = '';
+        
+        const particles = bgElem.querySelector('.particles');
+        const clouds = bgElem.querySelector('.clouds');
+        if (particles) particles.innerHTML = '';
+        if (clouds) clouds.innerHTML = '';
+
+        const imgBGs = { bg1: '../assets/backgrounds/background1.png', bg2: '../assets/backgrounds/background2.png', bg3: '../assets/backgrounds/background3.png', bg4: '../assets/backgrounds/background4.png' };
+        
+        if (imgBGs[bgFX]) {
+            bgElem.style.backgroundImage = `url('${imgBGs[bgFX]}')`;
+            bgElem.style.backgroundSize = 'cover';
+            bgElem.style.backgroundPosition = 'center';
+            return;
+        }
+
+        if (bgFX === 'weather') {
+            bgElem.classList.add('bg-weather');
+            try {
+                // 1. Get Location
+                const geoReq = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                const geo = await geoReq.json();
+                
+                // 2. Get Weather
+                const weatherReq = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current_weather=true`);
+                const weather = await weatherReq.json();
+                
+                const code = weather.current_weather.weathercode;
+                const isDay = weather.current_weather.is_day === 1;
+                
+                // Set background based on day/night and conditions
+                if (isDay) {
+                    bgElem.style.background = 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)';
+                } else {
+                    bgElem.style.background = 'linear-gradient(180deg, #09203f 0%, #537895 100%)';
+                }
+
+                // Add effects with random distribution
+                if (code >= 51 && code <= 67) { // Rain
+                    bgElem.classList.add('weather-rain');
+                    if (particles) particles.innerHTML = Array(60).fill(0).map(() => `<div class="rain-drop" style="left: ${Math.random()*100}%; animation-delay: ${Math.random()*2}s; opacity: ${0.2+Math.random()*0.8}"></div>`).join('');
+                } else if (code >= 71 && code <= 86) { // Snow
+                    bgElem.classList.add('weather-snow');
+                    if (particles) particles.innerHTML = Array(40).fill(0).map(() => `<div class="snow-flake" style="left: ${Math.random()*100}%; animation-delay: ${Math.random()*5}s; opacity: ${0.4+Math.random()*0.6}; width: ${3+Math.random()*5}px; height: ${3+Math.random()*5}px;"></div>`).join('');
+                } else if (code > 0 && code <= 3) { // Cloudy
+                    if (clouds) clouds.innerHTML = Array(6).fill(0).map(() => `<div class="cloud" style="top: ${Math.random()*45}%; left: ${-Math.random()*400}px; animation-duration: ${30+Math.random()*30}s; opacity: ${0.4+Math.random()*0.6}; transform: scale(${0.5 + Math.random()})"></div>`).join('');
+                }
+
+                console.log(`[WEATHER] Data applied for ${geo.city}: Code ${code}, Day: ${isDay}`);
+            } catch (e) {
+                console.error('[WEATHER] Failed to sync weather:', e);
+                bgElem.style.background = 'radial-gradient(circle, #1a080a, #000)';
+            }
+        } else if (bgFX !== 'matrix') {
+            bgElem.classList.add(`bg-${bgFX}`);
+        }
     };
 
     // TAB RENDERING FUNCTIONS
@@ -551,8 +619,9 @@ document.addEventListener('mousedown', (e) => {
             { id: 'emerald', label: 'Emerald Grid', desc: 'Matrix-style green grid' },
             { id: 'bg1', label: 'Custom BG 1', desc: 'Background image 1', img: '../assets/backgrounds/background1.png' },
             { id: 'bg2', label: 'Custom BG 2', desc: 'Background image 2', img: '../assets/backgrounds/background2.png' },
-            { id: 'bg3', label: 'Custom BG 3', desc: 'Background image 3', img: '../assets/backgrounds/background3.png' },
-            { id: 'bg4', label: 'Custom BG 4', desc: 'Background image 4', img: '../assets/backgrounds/background4.png' },
+            { id: 'bg3', label: t('lang')==='es'?'Fondo 3':'Custom BG 3', desc: 'Background image 3', img: '../assets/backgrounds/background3.png' },
+            { id: 'bg4', label: t('lang')==='es'?'Fondo 4':'Custom BG 4', desc: 'Background image 4', img: '../assets/backgrounds/background4.png' },
+            { id: 'weather', label: t('lang')==='es'?'CLIMA REAL':'LIVE WEATHER', desc: t('lang')==='es'?'Sincronizado con tu ciudad':'Real-time weather sync', icon: 'fa-cloud-sun-rain' }
         ];
 
         mainContent.innerHTML = `
@@ -601,7 +670,7 @@ document.addEventListener('mousedown', (e) => {
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px;">
                         ${backgrounds.map(bg => `
                             <div class="bg-option ${bgFX === bg.id ? 'bg-active' : ''}" onclick="selectBG('${bg.id}')" style="cursor:pointer; border-radius:12px; overflow:hidden; border: 2px solid ${bgFX === bg.id ? '#ffb7c5' : 'rgba(255,255,255,0.05)'}; transition: all 0.3s; position:relative;">
-                                ${bg.img ? `<img src="${bg.img}" style="width:100%; height:70px; object-fit:cover; display:block;">` : `<div style="width:100%; height:70px; background: ${bg.id==='matrix' ? 'radial-gradient(circle, #1a080a, #000)' : bg.id==='void' ? '#000' : 'radial-gradient(circle, #081a0e, #000)'}; display:flex; align-items:center; justify-content:center;"><i class="fas fa-star" style="color:rgba(255,183,197,0.3); font-size:20px;"></i></div>`}
+                                ${bg.img ? `<img src="${bg.img}" style="width:100%; height:70px; object-fit:cover; display:block;">` : `<div style="width:100%; height:70px; background: ${bg.id==='matrix' ? 'radial-gradient(circle, #1a080a, #000)' : bg.id==='void' ? '#000' : bg.id==='weather' ? 'linear-gradient(180deg, #1a1e21, #000)' : 'radial-gradient(circle, #081a0e, #000)'}; display:flex; align-items:center; justify-content:center;"><i class="fas ${bg.icon || 'fa-star'}" style="color:rgba(255,183,197,0.3); font-size:20px;"></i></div>`}
                                 <div style="padding: 8px 8px 10px; background: rgba(0,0,0,0.7);">
                                     <div style="font-size:10px; font-weight:900; color:${bgFX === bg.id ? '#ffb7c5' : '#fff'};">${bg.label}</div>
                                     <div style="font-size:9px; opacity:0.5; margin-top:2px;">${bg.desc}</div>
@@ -908,25 +977,8 @@ document.addEventListener('mousedown', (e) => {
     document.getElementById('frameBtn_minimize')?.addEventListener('click', () => window.electronAPI.minimizeWindow());
 
     // STARTUP
-    const bgFX = localStorage.getItem('bgFX') || 'matrix';
-    const bgElem = document.querySelector('.background-animation');
-    // Handle custom image backgrounds
-    const imgBGs = { bg1: '../assets/backgrounds/background1.png', bg2: '../assets/backgrounds/background2.png', bg3: '../assets/backgrounds/background3.png', bg4: '../assets/backgrounds/background4.png' };
-    if (imgBGs[bgFX]) {
-        if (bgElem) {
-            bgElem.style.backgroundImage = `url('${imgBGs[bgFX]}')`;
-            bgElem.style.backgroundSize = 'cover';
-            bgElem.style.backgroundPosition = 'center';
-            bgElem.querySelector('.particles')?.remove();
-            bgElem.querySelector('.clouds')?.remove();
-        }
-    }
-    if (bgElem) {
-        bgElem.classList.remove('bg-void', 'bg-emerald');
-        if (bgFX !== 'matrix') bgElem.classList.add(`bg-${bgFX}`);
-    }
-
     setLang(currentLang); // Initialize sidebar and HUD
+    window.applyBackground();
     renderPlayTab();
 
     // Helper for manual testing via DevTools console
