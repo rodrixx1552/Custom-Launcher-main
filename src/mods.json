@@ -1,15 +1,15 @@
 [
     {
         "name": "AI-Improvements-1.20-0.5.2.jar",
-        "size": "0.03 MB"
+        "size": "28.86 KB"
     },
     {
         "name": "Atlas Lib-1.20.1-1.1.12.jar",
-        "size": "0.12 MB"
+        "size": "121.52 KB"
     },
     {
         "name": "balm-forge-1.20.1-7.3.38-all.jar",
-        "size": "0.56 MB"
+        "size": "577.54 KB"
     },
     {
         "name": "BiomesOPlenty-1.20.1-18.0.0.592.jar",
@@ -21,27 +21,31 @@
     },
     {
         "name": "coroutil-forge-1.20.1-1.3.7.jar",
-        "size": "0.06 MB"
+        "size": "62.68 KB"
     },
     {
         "name": "corpse-forge-1.20.1-1.0.23.jar",
-        "size": "0.23 MB"
+        "size": "239.89 KB"
     },
     {
         "name": "CreativeCore_FORGE_v2.12.35_mc1.20.1.jar",
         "size": "1.09 MB"
     },
     {
+        "name": "CustomSkinLoader_ForgeV2-14.27.jar",
+        "size": "151.85 KB"
+    },
+    {
         "name": "Dayzombies_rebooted-1.0.5_1.20.1.jar",
-        "size": "0.05 MB"
+        "size": "50.3 KB"
     },
     {
         "name": "emotecraft-for-MC1.20.1-2.2.7-b.build.50-forge.jar",
-        "size": "0.65 MB"
+        "size": "664.31 KB"
     },
     {
         "name": "etched-3.0.4.jar",
-        "size": "0.58 MB"
+        "size": "597.16 KB"
     },
     {
         "name": "FarmersDelight-1.20.1-1.2.10.jar",
@@ -49,23 +53,23 @@
     },
     {
         "name": "FazRoleplayClothes-1.20.1-2.4.jar",
-        "size": "0.67 MB"
+        "size": "683.63 KB"
     },
     {
         "name": "ferritecore-6.0.1-forge.jar",
-        "size": "0.12 MB"
+        "size": "120.15 KB"
     },
     {
         "name": "framework-forge-1.20.1-0.8.0.jar",
-        "size": "0.37 MB"
+        "size": "374.87 KB"
     },
     {
         "name": "geckolib-forge-1.20.1-4.8.3.jar",
-        "size": "0.99 MB"
+        "size": "1014.69 KB"
     },
     {
         "name": "ImmediatelyFast-Forge-1.5.4+1.20.4.jar",
-        "size": "0.51 MB"
+        "size": "526.36 KB"
     },
     {
         "name": "Immersive Vehicles-1.20.1-23.0.0.jar",
@@ -73,7 +77,7 @@
     },
     {
         "name": "Jade-1.20.1-Forge-11.13.2.jar",
-        "size": "0.53 MB"
+        "size": "539.54 KB"
     },
     {
         "name": "jei-1.20.1-forge-15.20.0.112.jar",
@@ -89,11 +93,11 @@
     },
     {
         "name": "lootr-forge-1.20-0.7.35.94.jar",
-        "size": "0.44 MB"
+        "size": "452.62 KB"
     },
     {
         "name": "map_atlases-1.20-6.0.19.jar",
-        "size": "0.71 MB"
+        "size": "725.86 KB"
     },
     {
         "name": "mcw-furniture-3.4.1-mc1.20.1forge.jar",
@@ -101,11 +105,11 @@
     },
     {
         "name": "mighty_mail-forge-1.20.1-1.1.4.jar",
-        "size": "0.19 MB"
+        "size": "195.54 KB"
     },
     {
         "name": "minopp-1.4.0+1.20.1+forge.jar",
-        "size": "0.28 MB"
+        "size": "291.43 KB"
     },
     {
         "name": "moonlight-1.20-2.16.28-forge.jar",
@@ -129,11 +133,11 @@
     },
     {
         "name": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
-        "size": "0.17 MB"
+        "size": "177.18 KB"
     },
     {
         "name": "sophisticatedbackpacks-1.20.1-3.24.27.1580.jar",
-        "size": "0.96 MB"
+        "size": "987.94 KB"
     },
     {
         "name": "sophisticatedcore-1.20.1-1.3.8.1524.jar",
@@ -141,19 +145,19 @@
     },
     {
         "name": "sound-physics-remastered-forge-1.20.1-1.5.1.jar",
-        "size": "0.20 MB"
+        "size": "202.13 KB"
     },
     {
         "name": "table_top_craft-1.20.1-6.1.2.jar",
-        "size": "1.40 MB"
+        "size": "1.4 MB"
     },
     {
         "name": "TerraBlender-forge-1.20.1-3.0.1.10.jar",
-        "size": "0.10 MB"
+        "size": "105.01 KB"
     },
     {
         "name": "The-Hordes-1.20.1-1.5.4c.jar",
-        "size": "0.56 MB"
+        "size": "572.63 KB"
     },
     {
         "name": "voicechat-forge-1.20.1-2.6.12.jar",
@@ -161,7 +165,7 @@
     },
     {
         "name": "waterframes-FORGE-mc1.20.1-v2.1.22.jar",
-        "size": "0.24 MB"
+        "size": "249.49 KB"
     },
     {
         "name": "watermedia-2.1.37.jar",
@@ -173,18 +177,18 @@
     },
     {
         "name": "watervision-FG-mc1.20.1-v0.1.0-alpha.jar",
-        "size": "0.08 MB"
+        "size": "80.16 KB"
     },
     {
         "name": "watut-forge-1.20.1-1.2.3.jar",
-        "size": "0.42 MB"
+        "size": "425.29 KB"
     },
     {
         "name": "waystones-forge-1.20.1-14.1.20.jar",
-        "size": "0.51 MB"
+        "size": "521.23 KB"
     },
     {
         "name": "zombieawareness-1.20.1-1.13.1.jar",
-        "size": "0.28 MB"
+        "size": "284.32 KB"
     }
 ]
