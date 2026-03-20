@@ -17,6 +17,8 @@ window.onunhandledrejection = function(event) {
     }
 };
 
+console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
+
 window.alert = (msg) => {
     if (window.showModal) window.showModal('SYSTEM MESSAGE', msg, null, true);
     else console.warn('ALERT:', msg);
@@ -27,17 +29,17 @@ const CLICK_SOUND_URL = 'https://github.com/the-aslak/minecraft-sounds/raw/maste
 const clickAudio = new Audio(CLICK_SOUND_URL);
 clickAudio.preload = 'auto'; // Force browser to cache it ASAP
 window.playClick = () => {
-    console.log('[DEBUG] 🔊 Click sound triggered!');
-    try {
-        clickAudio.currentTime = 0;
-        clickAudio.volume = 0.85; // Extra boost
-        clickAudio.play().then(() => {
-            console.log('[DEBUG] 🔊 Click sound played successfully.');
-        }).catch(e => {
-            console.error('[DEBUG] 🚫 Audio Engine failed:', e.message);
-        });
-    } catch(e) { console.error('[DEBUG] 🚫 Audio Exception:', e); }
+    console.log('[AUDIO] 🔊 Play signal received.');
+    clickAudio.currentTime = 0;
+    clickAudio.volume = 0.9;
+    clickAudio.play().catch(e => console.warn('[AUDIO] 🚫 Skip:', e.message));
 };
+
+// GLOBAL LISTENER - AT THE VERY TOP
+document.addEventListener('mousedown', (e) => {
+    const el = e.target.closest('button, .nav-item, .v-opt, .premium-card');
+    if (el) window.playClick();
+}, true); // Use capture phase for maximum reliability
 
     const initCore = () => {
         if (window.CORE_INITIALIZED) return;
