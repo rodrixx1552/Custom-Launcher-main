@@ -27,14 +27,16 @@ const CLICK_SOUND_URL = 'https://github.com/the-aslak/minecraft-sounds/raw/maste
 const clickAudio = new Audio(CLICK_SOUND_URL);
 clickAudio.preload = 'auto'; // Force browser to cache it ASAP
 window.playClick = () => {
+    console.log('[DEBUG] 🔊 Click sound triggered!');
     try {
         clickAudio.currentTime = 0;
-        clickAudio.volume = 0.65; // Boosted volume
-        clickAudio.play().catch(e => {
-            // Silence warning if user hasn't interacted, but usually works on click.
-            console.warn('[Audio Engine] Click sound skipped:', e.message);
+        clickAudio.volume = 0.85; // Extra boost
+        clickAudio.play().then(() => {
+            console.log('[DEBUG] 🔊 Click sound played successfully.');
+        }).catch(e => {
+            console.error('[DEBUG] 🚫 Audio Engine failed:', e.message);
         });
-    } catch(e) {}
+    } catch(e) { console.error('[DEBUG] 🚫 Audio Exception:', e); }
 };
 
     const initCore = () => {
