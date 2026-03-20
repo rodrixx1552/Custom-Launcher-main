@@ -115,7 +115,10 @@ document.addEventListener('mousedown', (e) => {
         const userAvatar = document.getElementById('user-avatar');
         const verText = document.getElementById('selected-version-text');
         const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
-        const ver = localStorage.getItem('selectedVersion') || settings.client.default_version;
+        
+        // Fix: Use localized version defaults if settings object fails 
+        const defaultVer = (settings && settings.client) ? settings.client.default_version : '1.20.1';
+        const ver = localStorage.getItem('selectedVersion') || defaultVer;
 
         if (userText) userText.innerText = acc ? acc.name.toUpperCase() : t('pilot_offline');
         if (userAvatar) {
@@ -761,64 +764,62 @@ document.addEventListener('mousedown', (e) => {
         loadMods();
 
         document.getElementById('refreshMods')?.addEventListener('click', loadMods);
-
-        const renderMods = (mods) => {
-            const grid = document.getElementById('mods-grid');
-            if (!grid) return;
-
-            if (!mods || mods.length === 0) {
-                grid.innerHTML = `
-                    <div class="glass" style="grid-column: 1 / -1; padding: 50px; text-align: center; border-radius: 20px;">
-                        <i class="fas fa-box-open" style="font-size: 40px; color: rgba(255,255,255,0.2); margin-bottom: 15px;"></i>
-                        <h3 style="font-weight: 900; color: #ffb7c5;">NO MODS DETECTED</h3>
-                        <p style="opacity: 0.5; font-size: 13px;">Click 'UPDATE MODS' on the Play tab to download the server modpack.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            grid.innerHTML = mods.map(m => `
-                <div class="glass version-card" style="padding: 15px 18px; border-radius: 16px; text-align: left; display: flex; align-items: center; gap: 12px; transition: opacity 0.3s; ${!m.enabled ? 'opacity: 0.45;' : ''}" id="mod-card-${CSS.escape(m.filename)}">
-                    <div style="width: 36px; height: 36px; background: rgba(255,183,197,0.08); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,183,197,0.${m.enabled ? '2' : '05'}); flex-shrink:0;">
-                        <i class="fas fa-puzzle-piece" style="color: ${m.enabled ? '#ffb7c5' : 'rgba(255,255,255,0.2)'}; font-size: 15px;"></i>
-                    </div>
-                    <div style="flex: 1; overflow: hidden;">
-                        <div style="font-weight: 900; font-size: 12px; color: ${m.enabled ? '#fff' : 'rgba(255,255,255,0.4)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${m.filename}">${m.name}</div>
-                        <div style="font-size: 9px; opacity: 0.5; margin-top: 2px; font-weight: 900; color: #ff8c4a;">${m.size}</div>
-                    </div>
-                    <div>
-                        <!-- Toggle Switch -->
-                        <label style="position: relative; display: inline-block; width: 38px; height: 20px; cursor: pointer;">
-                            <input type="checkbox" ${m.enabled ? 'checked' : ''} id="toggle-${CSS.escape(m.filename)}" style="opacity:0; width:0; height:0;">
-                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: ${m.enabled ? '#ffb7c5' : 'rgba(255,255,255,0.1)'}; border-radius: 20px; transition: 0.3s;">
-                                <span style="position: absolute; height: 14px; width: 14px; left: ${m.enabled ? '21px' : '3px'}; bottom: 3px; background: ${m.enabled ? '#000' : 'rgba(255,255,255,0.5)'}; border-radius: 50%; transition: 0.3s;"></span>
-                            </span>
-                        </label>
-                    </div>
-                </div>
-            `).join('');
-
-            mods.forEach(m => {
-                const chk = document.getElementById(`toggle-${CSS.escape(m.filename)}`);
-                if (!chk) return;
-                chk.addEventListener('change', () => {
-                    chk.disabled = true;
-                    window.electronAPI.toggleMod(m.filename);
-                });
-            });
-        };
-
-        window.electronAPI.onModsList(renderMods);
-
-        window.electronAPI.onModToggled((data) => {
-            if (data.success) {
-                // Just reload the list
-                loadMods();
-            } else {
-                alert('MOD ERROR: ' + data.error);
-            }
-        });
     };
+
+    // MOVE IPC MOD HANDLERS OUT TO PREVENT MEMORY LEAKS
+    window.electronAPI.onModsList((mods) => {
+        const grid = document.getElementById('mods-grid');
+        if (!grid) return;
+
+        if (!mods || mods.length === 0) {
+            grid.innerHTML = `
+                <div class="glass" style="grid-column: 1 / -1; padding: 50px; text-align: center; border-radius: 20px;">
+                    <i class="fas fa-box-open" style="font-size: 40px; color: rgba(255,255,255,0.2); margin-bottom: 15px;"></i>
+                    <h3 style="font-weight: 900; color: #ffb7c5;">NO MODS DETECTED</h3>
+                    <p style="opacity: 0.5; font-size: 13px;">Click 'UPDATE MODS' on the Play tab to download the server modpack.</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = mods.map(m => `
+            <div class="glass version-card" style="padding: 15px 18px; border-radius: 16px; text-align: left; display: flex; align-items: center; gap: 12px; transition: opacity 0.3s; ${!m.enabled ? 'opacity: 0.45;' : ''}" id="mod-card-${CSS.escape(m.filename)}">
+                <div style="width: 36px; height: 36px; background: rgba(255,183,197,0.08); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,183,197,0.${m.enabled ? '2' : '05'}); flex-shrink:0;">
+                    <i class="fas fa-puzzle-piece" style="color: ${m.enabled ? '#ffb7c5' : 'rgba(255,255,255,0.2)'}; font-size: 15px;"></i>
+                </div>
+                <div style="flex: 1; overflow: hidden;">
+                    <div style="font-weight: 900; font-size: 12px; color: ${m.enabled ? '#fff' : 'rgba(255,255,255,0.4)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${m.filename}">${m.name}</div>
+                    <div style="font-size: 9px; opacity: 0.5; margin-top: 2px; font-weight: 900; color: #ff8c4a;">${m.size}</div>
+                </div>
+                <div>
+                    <!-- Toggle Switch -->
+                    <label style="position: relative; display: inline-block; width: 38px; height: 20px; cursor: pointer;">
+                        <input type="checkbox" ${m.enabled ? 'checked' : ''} id="toggle-${CSS.escape(m.filename)}" style="opacity:0; width:0; height:0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: ${m.enabled ? '#ffb7c5' : 'rgba(255,255,255,0.1)'}; border-radius: 20px; transition: 0.3s;">
+                            <span style="position: absolute; height: 14px; width: 14px; left: ${m.enabled ? '21px' : '3px'}; bottom: 3px; background: ${m.enabled ? '#000' : 'rgba(255,255,255,0.5)'}; border-radius: 50%; transition: 0.3s;"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        `).join('');
+
+        mods.forEach(m => {
+            const chk = document.getElementById(`toggle-${CSS.escape(m.filename)}`);
+            if (!chk) return;
+            chk.addEventListener('change', () => {
+                chk.disabled = true;
+                window.electronAPI.toggleMod(m.filename);
+            });
+        });
+    });
+
+    window.electronAPI.onModToggled((data) => {
+        if (data.success) {
+            window.electronAPI.getModsList();
+        } else {
+            alert('MOD ERROR: ' + data.error);
+        }
+    });
 
     window.renderCommunityTab = () => {
         mainContent.innerHTML = `

@@ -96,7 +96,7 @@ const createWindow = () => {
 };
 
 ipcMain.on('window-control', (event, action) => {
-    const win = BrowserWindow.getFocusedWindow();
+    const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
         if (action === 'close') win.close();
         if (action === 'minimize') win.minimize();
