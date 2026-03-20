@@ -1309,7 +1309,7 @@ window.setActive = (uuid) => {
 window.initializePet = () => {
     if (document.getElementById('pet-container')) return;
 
-    console.log('[GUARDIÁN] Inyectando protector del portal...');
+    console.log('[GUARDIÁN] Inyectando verdadero Lobo de Minecraft...');
 
     // 1. INJECT CSS
     const petStyles = `
@@ -1338,14 +1338,6 @@ window.initializePet = () => {
             box-shadow: 0 5px 15px rgba(255,183,197,0.4); 
             border: 2px solid white;
         }
-        @keyframes petFloat {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(2deg); }
-        }
-        @keyframes petFloatShadow {
-            0%, 100% { transform: scale(0.6); opacity: 0.3; }
-            50% { transform: scale(1); opacity: 0.6; }
-        }
     `;
     const styleSheet = document.createElement("style");
     styleSheet.innerText = petStyles;
@@ -1355,14 +1347,15 @@ window.initializePet = () => {
     const container = document.createElement('div');
     container.id = 'pet-container';
     container.innerHTML = `
-        <div id="pet-speech">¡HOLA PAPU!</div>
-        <div id="pet-canvas" style="width: 120px; height: 150px; cursor: pointer; pointer-events: auto; animation: petFloat 4s infinite ease-in-out;"></div>
-        <div style="width: 60px; height: 5px; background: radial-gradient(circle, rgba(255,183,197,0.4) 0%, transparent 80%); filter: blur(3px); margin-top: -5px; opacity: 0.6; animation: petFloatShadow 4s infinite ease-in-out;"></div>
+        <div id="pet-speech">¡GUAU!</div>
+        <div id="pet-canvas" style="width: 120px; height: 150px; cursor: pointer; pointer-events: auto;"></div>
+        <div style="width: 60px; height: 5px; background: radial-gradient(circle, rgba(255,183,197,0.4) 0%, transparent 80%); filter: blur(3px); margin-top: -5px; opacity: 0.6; position: absolute; bottom: 20px;"></div>
     `;
     document.body.appendChild(container);
 
-    if (!window.skinview3d) {
-        console.warn('[PET] skinview3d not found, skipping 3D render.');
+    const THREE = window.THREE || (window.skinview3d ? window.skinview3d.THREE : null);
+    if (!THREE) {
+        console.warn('[PET] Three.js not found for Wolf render.');
         return;
     }
 
@@ -1370,31 +1363,109 @@ window.initializePet = () => {
         const petCanvas = document.getElementById('pet-canvas');
         const petSpeech = document.getElementById('pet-speech');
         
-        const petViewer = new skinview3d.SkinViewer({
-            canvas: document.createElement('canvas'),
-            width: 120, height: 150,
-            skin: 'https://mc-heads.net/skin/MHF_Wolf'
-        });
-        petCanvas.appendChild(petViewer.canvas);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, 120 / 150, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(120, 150);
+        petCanvas.appendChild(renderer.domElement);
 
-        petViewer.animation = new skinview3d.WalkingAnimation();
-        petViewer.animation.speed = 0.4;
-        petViewer.fov = 35;
-        petViewer.zoom = 0.8;
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 0.5);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        // Wolf Group
+        const wolf = new THREE.Group();
+        scene.add(wolf);
+
+        // Materials
+        const wolfMat = new THREE.MeshLambertMaterial({ color: 0xd1d1d1 }); // Light Gray
+        const darkMat = new THREE.MeshLambertMaterial({ color: 0x444444 }); // Dark Gray
+        const noseMat = new THREE.MeshLambertMaterial({ color: 0x000000 }); // Black
+
+        // Body: 6x6x9
+        const body = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 5), wolfMat);
+        body.position.y = 1;
+        wolf.add(body);
+
+        // Neck (Mane): 6x6x6
+        const neck = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 3), wolfMat);
+        neck.position.set(0, 1.5, 2.5);
+        wolf.add(neck);
+
+        // Head Group (for rotation)
+        const headGroup = new THREE.Group();
+        headGroup.position.set(0, 1.8, 3.5);
+        wolf.add(headGroup);
+
+        const head = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), wolfMat);
+        headGroup.add(head);
+
+        const nose = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 2), darkMat);
+        nose.position.z = 1.8;
+        nose.position.y = -0.5;
+        headGroup.add(nose);
+
+        const tip = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.2), noseMat);
+        tip.position.z = 2.8;
+        tip.position.y = -0.4;
+        headGroup.add(tip);
+
+        // Ears
+        const ear1 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.5), darkMat);
+        ear1.position.set(1, 1.8, 0.5);
+        headGroup.add(ear1);
+        const ear2 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 0.5), darkMat);
+        ear2.position.set(-1, 1.8, 0.5);
+        headGroup.add(ear2);
+
+        // Legs
+        const legGeo = new THREE.BoxGeometry(1.2, 3, 1.2);
+        const leg1 = new THREE.Mesh(legGeo, wolfMat); leg1.position.set(0.9, -1, 2); wolf.add(leg1);
+        const leg2 = new THREE.Mesh(legGeo, wolfMat); leg2.position.set(-0.9, -1, 2); wolf.add(leg2);
+        const leg3 = new THREE.Mesh(legGeo, wolfMat); leg3.position.set(0.9, -1, -2); wolf.add(leg3);
+        const leg4 = new THREE.Mesh(legGeo, wolfMat); leg4.position.set(-0.9, -1, -2); wolf.add(leg4);
+
+        // Tail
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 4), wolfMat);
+        tail.position.set(0, 1.5, -3.5);
+        tail.rotation.x = -0.5;
+        wolf.add(tail);
+
+        camera.position.set(0, 3, 12);
+        camera.lookAt(0, 1, 0);
 
         setTimeout(() => container.classList.add('visible'), 2000);
 
-        // IA: Tracking
+        // Animations
+        const clock = new THREE.Clock();
+        const animate = () => {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+            
+            // Floating
+            wolf.position.y = Math.sin(time * 2) * 0.2;
+            
+            // Tail wagging
+            tail.rotation.y = Math.sin(time * 4) * 0.3;
+            
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        // Mouse follow logic
         document.addEventListener('mousemove', (e) => {
             const rect = container.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-            const rotX = Math.max(-0.3, Math.min(0.3, (e.clientY - centerY) / 600));
-            const rotY = Math.max(-0.5, Math.min(0.5, (e.clientX - centerX) / 800));
-            if (petViewer.playerObject) {
-                petViewer.playerObject.rotation.x = rotX;
-                petViewer.playerObject.rotation.y = rotY;
-            }
+            
+            const rotX = Math.max(-0.4, Math.min(0.4, (e.clientY - centerY) / 600));
+            const rotY = Math.max(-0.6, Math.min(0.6, (e.clientX - centerX) / 800));
+            
+            headGroup.rotation.x = rotX;
+            headGroup.rotation.y = rotY;
         });
 
         const showMessage = (msg, duration = 4000) => {
@@ -1407,27 +1478,17 @@ window.initializePet = () => {
             }, duration);
         };
 
-        // Click interaction
         petCanvas.addEventListener('click', () => {
-            const jokes = ['¡NO ME TOQUES, PAPU!', '¿TIENES DIAMANTES?', '¡CUIDADO CON EL CREEPER!', 'SOY EL REY DEL LAUNCHER'];
+            const jokes = ['¡GUAU!', '¿ME DAS UN HUESO?', '¡BUSCA!', 'SOY EL GUARDIÁN'];
             showMessage(jokes[Math.floor(Math.random() * jokes.length)], 3000);
-            petViewer.animation = new skinview3d.BodySwingAnimation();
-            setTimeout(() => { petViewer.animation = new skinview3d.WalkingAnimation(); petViewer.animation.speed = 0.4; }, 2000);
-        });
-
-        // Launch reaction
-        document.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.btn-play-custom') || e.target.closest('#play-btn')) {
-                showMessage('¡A DARLE ÁTOMOS!', 6000);
-                petViewer.animation = new skinview3d.RunningAnimation();
-                petViewer.animation.speed = 2.0;
-            }
+            headGroup.rotation.z += 0.5;
+            setTimeout(() => headGroup.rotation.z = 0, 500);
         });
 
         setTimeout(() => showMessage('¡HOLA, EXPLORADOR!'), 5000);
 
     } catch (err) {
-        console.error('[PET] Error:', err);
+        console.error('[PET] Wolf Render Error:', err);
     }
 };
 
