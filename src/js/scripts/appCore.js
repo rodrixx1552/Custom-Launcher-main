@@ -716,22 +716,6 @@ document.addEventListener('mousedown', (e) => {
         });
 
         document.getElementById('version-selector-card')?.addEventListener('click', () => {
-            const versions = ['1.20.1'];
-            const listItems = versions.map(v => `<div class="v-opt" onclick="setVersion('${v}')">${v}</div>`).join('');
-            
-            const overlay = document.createElement('div');
-            overlay.className = 'glass-overlay';
-            overlay.innerHTML = `
-                <div class="glass" style="padding: 30px; border-radius: 20px; width: 300px;">
-                    <h3 style="margin-bottom: 20px; font-weight: 900; font-size: 14px; color: #ffb7c5;">SWITCH CORE</h3>
-                    ${listItems}
-                    <button class="btn-play-custom btn-secondary" style="width: 100%; margin-top: 20px; padding: 10px; font-size: 12px;" onclick="document.querySelector('.glass-overlay').remove()">CLOSE</button>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-        });
-
-        document.querySelector('.server-status-pill')?.addEventListener('click', () => {
             const data = window.lastPingData;
             if (!data || !data.online) return;
 
@@ -743,7 +727,7 @@ document.addEventListener('mousedown', (e) => {
                     <div style="padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
                         <i class="fas fa-user-secret" style="font-size: 40px; color: #ffb7c5; opacity: 0.5;"></i>
                         <div style="font-size: 13px; opacity: 0.8; font-weight: 700;">${data.players.online} Papus jugando ahora</div>
-                        <div style="font-size: 10px; opacity: 0.4; font-weight: 900; letter-spacing: 1px; line-height: 1.5;">LA LISTA DE NOMBRES ES PRIVADA<br>O EL SERVIDOR ESTA LLENO</div>
+                        <div style="font-size: 10px; opacity: 0.4; font-weight: 900; letter-spacing: 1px; line-height: 1.5;">LA LISTA DE NOMBRES ES PRIVADA<br>O EL SERVIDOR ESTÁ LLENO</div>
                     </div>
                 `;
             } else {
@@ -903,8 +887,7 @@ document.addEventListener('mousedown', (e) => {
         const pill = document.querySelector('.server-status-pill');
         
         if (pill) {
-            pill.style.cursor = data.online ? 'pointer' : 'default';
-            pill.title = data.online ? 'Ver quién está jugando' : '';
+            // Pill is inside the card, we don't need a separate title here as the whole card handles it
         }
 
         if (pingText && dot) {
