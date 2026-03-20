@@ -505,7 +505,8 @@ ipcMain.on('ping-server', (event, serverIP) => {
     const [host, port] = serverIP.split(':');
     const server = new mcping.MinecraftServer(host, parseInt(port) || 25565);
     
-    server.ping(5000, 763, (err, res) => {
+    // Probar primero con el protocolo 47 (clásico) para maximizar la compatibilidad con el sample de nombres
+    server.ping(8000, 47, (err, res) => {
         if (err) {
             console.warn(`Server Ping Failed (${host}):`, err.message);
             event.sender.send('ping-result', { online: false, error: err.message });
