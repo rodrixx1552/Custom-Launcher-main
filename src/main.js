@@ -502,11 +502,25 @@ ipcMain.on('remove-account', (event, uuid) => {
 });
 
 ipcMain.on('ping-server', async (event, serverIP) => {
+    const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36' };
+    
     try {
-        console.log(`Ping API: Fetching status for ${serverIP}...`);
-        // Usamos la API de mcsrvstat.us que es mucho más fiable para servidores como Aternos
-        const response = await axios.get(`https://api.mcsrvstat.us/2/${serverIP}`, { timeout: 8000 });
-        const data = response.data;
+        console.log(`Radar Dual: Consultando estado para ${serverIP}...`);
+        
+        // --- RADAR 1: mcsrvstat.us ---
+        let response = await axios.get(`https://api.mcsrvstat.us/2/${serverIP}`, { headers, timeout: 6000 });
+        let data = response.data;
+        let playersList = data.players?.list ? data.players.list.map(name => ({ name })) : [];
+
+        // --- RADAR 2 (Respaldo): mcstatus.io si el primero no trae nombres ---
+        if (data.online && playersList.length === 0) {
+            console.log("Radar 1 no detectó nombres. Activando Radar 2 (mcstatus.io)...");
+            const res2 = await axios.get(`https://api.mcstatus.io/v2/status/${serverIP}`, { headers, timeout: 6000 });
+            const data2 = res2.data;
+            if (data2.online && data2.players?.list) {
+                playersList = data2.players.list.map(p => ({ name: p.name_clean || p.name }));
+            }
+        }
 
         if (data.online) {
             event.sender.send('ping-result', { 
@@ -515,7 +529,7 @@ ipcMain.on('ping-server', async (event, serverIP) => {
                 players: {
                     online: data.players?.online || 0,
                     max: data.players?.max || 0,
-                    list: data.players?.list ? data.players.list.map(name => ({ name })) : []
+                    list: playersList
                 },
                 description: data.motd?.clean?.[0] || 'Minecraft Server'
             });
@@ -523,7 +537,7 @@ ipcMain.on('ping-server', async (event, serverIP) => {
             event.sender.send('ping-result', { online: false });
         }
     } catch (err) {
-        console.warn(`Ping API Failed (${serverIP}):`, err.message);
+        console.warn(`Radar Dual Fallido para ${serverIP}:`, err.message);
         event.sender.send('ping-result', { online: false, error: err.message });
     }
 });
