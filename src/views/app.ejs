@@ -8,34 +8,14 @@
     <!-- HOT UPDATE LOADER: Fetches latest UI logic from GitHub for instant updates -->
     <script>
         (async () => {
-            const REMOTE_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/js/scripts/appCore.js?t=' + Date.now();
             const LOCAL_JS = '../js/scripts/appCore.js';
-            const logOTA = (msg) => console.log('%c[OTA] ' + msg, 'color: #ffb7c5; font-weight: bold;');
+            const logOTA = (msg) => console.log('%c[LOCAL] ' + msg, 'color: #ffb7c5; font-weight: bold;');
             
-            try {
-                logOTA('Checking for Remote Core (Hot Update)...');
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-                
-                const response = await fetch(REMOTE_URL, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) throw new Error('Remote fetch returned ' + response.status);
-                const code = await response.text();
-                
-                if (code.length < 500) throw new Error('Remote code suspiciously small');
-                
-                const script = document.createElement('script');
-                script.text = code;
-                document.head.appendChild(script);
-                logOTA('HOT UPDATE APPLIED! Core logic is now LIVE 🚀');
-            } catch (e) {
-                console.warn('[OTA] Remote fetch failed or timed out. Using fallback local core.', e.message);
-                const script = document.createElement('script');
-                script.id = 'app-core-script';
-                script.src = LOCAL_JS;
-                document.head.appendChild(script);
-            }
+            logOTA('Local Mode Override Active. Using local appCore.js.');
+            const script = document.createElement('script');
+            script.id = 'app-core-script';
+            script.src = LOCAL_JS;
+            document.head.appendChild(script);
         })();
     </script>
     <script src="../../node_modules/skinview3d/bundles/skinview3d.bundle.js"></script>
@@ -103,5 +83,14 @@
     </div> 
 
     <script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+
+    <!-- EL GUARDIÁN DEL LAUNCHER (PET) -->
+    <div id="pet-container" class="glass" style="position: fixed; bottom: 25px; right: 25px; width: 140px; height: 180px; border-radius: 30px; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(25px); border: 1px solid rgba(255,183,197,0.2); box-shadow: 0 15px 45px rgba(0,0,0,0.5); pointer-events: none; opacity: 0; transform: translateY(20px); transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div id="pet-speech" style="position: absolute; top: -45px; right: 10px; background: #ffb7c5; color: #000; padding: 6px 15px; border-radius: 15px 15px 0 15px; font-size: 10px; font-weight: 950; opacity: 0; transform: scale(0.8); transition: all 0.3s; white-space: nowrap; box-shadow: 0 5px 15px rgba(255,183,197,0.4); border: 2px solid white;">
+            ¡HOLA PAPU!
+        </div>
+        <div id="pet-canvas" style="width: 120px; height: 150px; cursor: pointer; pointer-events: auto;"></div>
+        <div style="width: 60px; height: 5px; background: radial-gradient(circle, rgba(255,183,197,0.4) 0%, transparent 80%); filter: blur(3px); margin-top: -5px; opacity: 0.6; animation: petFloatShadow 4s infinite ease-in-out;"></div>
+    </div>
 </body>
 </html>

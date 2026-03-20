@@ -1302,3 +1302,76 @@ window.setActive = (uuid) => {
     });
     window.electronAPI.getAccounts();
 };
+
+// --- PET GUARDIAN SYSTEM ---
+window.initializePet = () => {
+    const petContainer = document.getElementById('pet-container');
+    const petCanvas = document.getElementById('pet-canvas');
+    const petSpeech = document.getElementById('pet-speech');
+    if (!petContainer || !petCanvas) return;
+
+    try {
+        const petViewer = new skinview3d.SkinViewer({
+            canvas: document.createElement('canvas'),
+            width: 120,
+            height: 150,
+            skin: 'https://mc-heads.net/skin/MHF_Wolf'
+        });
+        petCanvas.appendChild(petViewer.canvas);
+
+        petViewer.animation = new skinview3d.WalkingAnimation();
+        petViewer.animation.speed = 0.5;
+        petViewer.fov = 40;
+
+        setTimeout(() => {
+            petContainer.classList.add('visible');
+        }, 2000);
+
+        document.addEventListener('mousemove', (e) => {
+            const rect = petContainer.getBoundingClientRect();
+            if (!rect) return;
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const rotX = Math.max(-0.4, Math.min(0.4, (e.clientY - centerY) / 800));
+            const rotY = Math.max(-0.6, Math.min(0.6, (e.clientX - centerX) / 800));
+            if (petViewer.playerObject) {
+                petViewer.playerObject.rotation.x = rotX;
+                petViewer.playerObject.rotation.y = rotY;
+            }
+        });
+
+        const showMessage = (msg, duration = 3000) => {
+            if (!petSpeech) return;
+            petSpeech.innerText = msg;
+            petSpeech.style.opacity = '1';
+            petSpeech.style.transform = 'scale(1)';
+            setTimeout(() => {
+                petSpeech.style.opacity = '0';
+                petSpeech.style.transform = 'scale(0.8)';
+            }, duration);
+        };
+
+        setInterval(() => {
+            if (Math.random() > 0.85) {
+                const msgs = ['¿VAMOS A MINAR?', '¡MIRA ESA SKIN!', 'SOY TU GUARDIÁN', '¿DÓNDE ESTÁ EL DIAMANTE?'];
+                showMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+            }
+        }, 20000);
+
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.btn-play-custom')) {
+                showMessage('¡A DARLE ÁTOMOS!', 5000);
+                petViewer.animation = new skinview3d.RunningAnimation();
+                setTimeout(() => petViewer.animation = new skinview3d.WalkingAnimation(), 5000);
+            }
+        });
+    } catch (err) {
+        console.error('[PET] Failed to init:', err);
+    }
+};
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(window.initializePet, 1500);
+} else {
+    window.addEventListener('load', () => setTimeout(window.initializePet, 1500));
+}
