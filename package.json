@@ -61,11 +61,11 @@
     "productName": "LosPapus Launcher",
     "win": {
       "target": "nsis",
-      "icon": "src/assets/los_papus/logo.png"
+      "icon": "src/assets/main.ico"
     },
     "nsis": {
-      "oneClick": true,
-      "allowToChangeInstallationDirectory": false,
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "runAfterFinish": true
