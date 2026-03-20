@@ -906,90 +906,12 @@ document.addEventListener('mousedown', (e) => {
     setLang(currentLang); // Initialize sidebar and HUD
     renderPlayTab();
 
-    // =====================================================================
-    // FEATURE 1: OTA Update Notification
-    // =====================================================================
-    console.log('OTA UI: Registering listener...');
-    window.electronAPI.onUpdateAvailable((data) => {
-        console.log('OTA UI: Update data received!', data);
-        if (document.getElementById('ota-update-banner')) return;
-
-        // Inyectamos estilo de animación si no está
-        if (!document.getElementById('ota-style')) {
-            const style = document.createElement('style');
-            style.id = 'ota-style';
-            style.textContent = `
-                @keyframes slideDownFade {
-                    from { transform: translate(-50%, -30px); opacity: 0; }
-                    to { transform: translate(-50%, 0); opacity: 1; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        const banner = document.createElement('div');
-        banner.id = 'ota-update-banner';
-        banner.style.cssText = `
-            position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
-            z-index: 100000; width: 480px; background: rgba(255, 140, 74, 0.98);
-            backdrop-filter: blur(20px); border: 2px solid rgba(255, 255, 255, 0.2);
-            color: white; border-radius: 12px; padding: 15px 25px;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6); font-family: 'Outfit', 'Segoe UI', sans-serif;
-            animation: slideDownFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        `;
-        
-        banner.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="background: rgba(255,255,255,0.25); width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-arrow-alt-circle-up" style="font-size: 22px;"></i>
-                </div>
-                <div>
-                    <div style="font-weight: 900; font-size: 14px; letter-spacing: 1px; text-transform: uppercase;">NUEVA VERSIÓN ${data.version}</div>
-                    <div style="font-size: 11px; opacity: 0.9; font-weight: 700;">Estás en la ${data.current || '0.1.7'}. Haz clic para recibir la mejora.</div>
-                </div>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                ${data.url ? `<button id="ota-down" class="btn-play-custom" style="padding: 10px 18px; font-size: 11px; margin:0; min-width:135px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">ACTUALIZAR AHORA</button>` : ''}
-                <button id="ota-close" style="background:none; border:none; color:white; font-size:20px; cursor:pointer; opacity: 0.8; padding: 5px;" onclick="this.closest('#ota-update-banner').remove()">✕</button>
-            </div>
-        `;
-
-        document.body.appendChild(banner);
-
-        if (data.url) {
-            const btn = document.getElementById('ota-down');
-            const statusText = banner.querySelector('div div:last-child');
-
-            btn.onclick = () => {
-                if (btn.disabled) return;
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PREPARANDO...';
-                window.electronAPI.startAutoUpdate(data.url);
-            };
-
-            window.electronAPI.onAutoUpdateProgress((info) => {
-                console.log('AUTO-UPDATE Progress:', info);
-                btn.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${info.progress}%`;
-                statusText.innerText = info.step;
-            });
-
-            window.electronAPI.onAutoUpdateError((err) => {
-                console.error('AUTO-UPDATE Error UI:', err);
-                btn.disabled = false;
-                btn.style.background = '#ff4444';
-                btn.innerHTML = 'REINTENTAR';
-                statusText.innerText = 'Error: ' + err;
-            });
-        }
-    });
-
     // Helper for manual testing via DevTools console
     window.testUpdateBanner = () => {
         window.electronAPI.onUpdateAvailable((data) => {
             console.log('TEST BANNER TRIGGERED:', data);
         });
-        const evt = new CustomEvent('manual-update', { detail: { version: '0.1.7', url: 'https://github.com' } });
+        const evt = new CustomEvent('manual-update', { detail: { version: '1.0.0', url: 'https://github.com' } });
         // Simular llegada
         window.dispatchEvent(evt);
     };
@@ -1078,24 +1000,18 @@ document.addEventListener('mousedown', (e) => {
         banner.id = 'ota-update-banner';
         banner.className = 'glass';
         banner.style.cssText = `
-            position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            padding: 15px 30px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            border-radius: 15px;
-            border: 1px solid #ffb7c5;
-            box-shadow: 0 0 30px rgba(255,183,197,0.3);
-            animation: slideDown 0.5s ease-out;
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; padding: 15px 30px; display: flex; align-items: center;
+            gap: 20px; border-radius: 15px; border: 1px solid #ffb7c5;
+            box-shadow: 0 0 30px rgba(255,183,197,0.3); animation: slideDown 0.5s ease-out;
         `;
 
         banner.innerHTML = `
-            <div style="font-size: 11px; font-weight: 900; letter-spacing: 2px;">
-                <span style="color: #ffb7c5;">UPDATE DETECTED:</span> v${data.version}
+            <div id="ota-status-wrap">
+                <div style="font-size: 11px; font-weight: 900; letter-spacing: 2px;">
+                    <span style="color: #ffb7c5;">ACTUALIZACIÓN DETECTADA:</span> v${data.version}
+                </div>
+                <div style="font-size: 9px; opacity: 0.6; margin-top: 3px;">INSTALADA: ${data.current || 'v0.2.0'}</div>
             </div>
             <button class="btn-play-custom" id="ota-start-update" style="padding: 8px 20px; font-size: 10px; border-radius: 8px;">ACTUALIZAR AHORA</button>
             <i class="fas fa-times" id="ota-close-banner" style="cursor: pointer; opacity: 0.5; font-size: 12px;"></i>
@@ -1103,10 +1019,27 @@ document.addEventListener('mousedown', (e) => {
 
         root.appendChild(banner);
 
-        document.getElementById('ota-start-update').onclick = () => {
-             banner.innerHTML = '<div style="font-size: 11px; font-weight: 900; letter-spacing: 2px; color: #ffb7c5;">INICIANDO ACTUALIZACIÓN...</div>';
-             window.electronAPI.startAutoUpdate(data.url, data.version);
+        const btn = document.getElementById('ota-start-update');
+        const statusWrap = document.getElementById('ota-status-wrap');
+
+        btn.onclick = () => {
+             if (btn.disabled) return;
+             btn.disabled = true;
+             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PREPARANDO...';
+             window.electronAPI.startAutoUpdate(data.url);
         };
+
+        window.electronAPI.onAutoUpdateProgress((info) => {
+            btn.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${info.progress}%`;
+            statusWrap.innerHTML = `<div style="font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #ffb7c5;">${info.step.toUpperCase()}</div>`;
+        });
+
+        window.electronAPI.onAutoUpdateError((err) => {
+            btn.disabled = false;
+            btn.style.background = '#ff4444';
+            btn.innerHTML = 'REINTENTAR';
+            statusWrap.innerHTML = `<div style="font-size: 10px; color: #ff4444;">ERROR: ${err}</div>`;
+        });
 
         document.getElementById('ota-close-banner').onclick = () => {
              banner.style.animation = 'slideUp 0.5s ease-in forwards';
