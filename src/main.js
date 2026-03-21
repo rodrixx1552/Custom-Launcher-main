@@ -574,7 +574,30 @@ ipcMain.on('ping-server', async (event, serverIP) => {
                 description: data.motd?.clean?.[0] || 'Minecraft Server'
             });
         } else {
-            event.sender.send('ping-result', { online: false });
+            // --- RADAR 3 (FINAL): Query Directo con mcping ---
+            console.log("Webs fallaron. Activando Radar 3 (mcping directo)...");
+            const parts = serverIP.split(':');
+            const host = parts[0];
+            const port = parseInt(parts[1]) || 25565;
+            
+            const server = new mcping.MinecraftServer(host, port);
+            server.ping(2000, 47, (err, res) => {
+               if (err) {
+                   console.log("Radar 3 final falló también. Servidor realmente offline.");
+                   event.sender.send('ping-result', { online: false });
+               } else {
+                   console.log("Radar 3 detectó el servidor ONLINE!");
+                   event.sender.send('ping-result', { 
+                       online: true, 
+                       version: res.version?.name || 'Java', 
+                       players: {
+                           online: res.players?.online || 0,
+                           max: res.players?.max || 20,
+                           list: res.players?.sample || []
+                       }
+                   });
+               }
+            });
         }
     } catch (err) {
         console.warn(`Radar Dual Fallido para ${serverIP}:`, err.message);
