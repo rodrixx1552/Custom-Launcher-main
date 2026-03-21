@@ -311,8 +311,15 @@ ipcMain.on('launch-game', async (event, options) => {
         console.log('Launching with options:', JSON.stringify(launchOptions, null, 2));
         launcher.launch(launchOptions);
 
+        let gameLaunched = false;
         launcher.on('debug', (e) => console.log('Launcher Debug:', e));
-        launcher.on('data', (e) => console.log('Launcher Data:', e));
+        launcher.on('data', (e) => {
+            console.log('Launcher Data:', e);
+            if (!gameLaunched) {
+                gameLaunched = true;
+                event.sender.send('game-started');
+            }
+        });
         launcher.on('progress', (e) => event.sender.send('launch-progress', e));
         launcher.on('close', (e) => event.sender.send('launch-finished', e));
 

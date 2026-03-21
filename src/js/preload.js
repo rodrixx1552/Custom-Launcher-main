@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     launchGame: (options) => ipcRenderer.send('launch-game', options),
     onLaunchProgress: (callback) => ipcRenderer.on('launch-progress', (event, data) => callback(data)),
     onLaunchFinished: (callback) => ipcRenderer.on('launch-finished', (event, data) => callback(data)),
+    onGameStarted: (callback) => ipcRenderer.on('game-started', (event) => callback()),
     onLaunchError: (callback) => ipcRenderer.on('launch-error', (event, data) => callback(data)),
     pingServer: (serverIP) => ipcRenderer.send('ping-server', serverIP),
     onPingResult: (callback) => ipcRenderer.on('ping-result', (event, data) => callback(data)),

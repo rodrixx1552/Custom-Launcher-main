@@ -1145,6 +1145,18 @@ document.addEventListener('mousedown', (e) => {
         }
     });
 
+    window.electronAPI.onGameStarted(() => {
+        const status = document.getElementById('launch-status');
+        const bar = document.getElementById('launch-bar-inner-new');
+        if (status) status.innerText = '¡JUEGO INICIADO! DISFRUTA PAPU';
+        if (bar) bar.style.width = '100%';
+        
+        console.log('UI: Game started. Preparing to close launcher...');
+        setTimeout(() => {
+            window.electronAPI.closeWindow(); // This calls win.close() in main.js
+        }, 3500); 
+    });
+
     window.electronAPI.onLaunchFinished(() => {
         toggleLaunchUI(false);
         const btn = document.getElementById('play-btn');
