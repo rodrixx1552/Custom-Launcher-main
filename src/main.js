@@ -604,13 +604,19 @@ ipcMain.on('upload-skin', async (event, { accessToken, base64Image }) => {
 
 async function downloadFile(url, dest) {
     if (!fs.existsSync(path.dirname(dest))) fs.mkdirSync(path.dirname(dest), { recursive: true });
-    const writer = fs.createWriteStream(dest);
-    const response = await axios({ url, method: 'GET', responseType: 'stream' });
-    response.data.pipe(writer);
-    return new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-    });
+    try {
+        const writer = fs.createWriteStream(dest);
+        const response = await axios({ url, method: 'GET', responseType: 'stream' });
+        response.data.pipe(writer);
+        return await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+            response.data.on('error', reject);
+        });
+    } catch (err) {
+        if (fs.existsSync(dest)) fs.unlinkSync(dest);
+        throw err;
+    }
 }
 
 
