@@ -1027,8 +1027,75 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
     document.getElementById('frameBtn_minimize')?.addEventListener('click', () => window.electronAPI.minimizeWindow());
 
     // STARTUP
-    setLang(currentLang); // Initialize sidebar and HUD
+    setLang(currentLang); 
     window.applyBackground();
+    
+    // --- IPC LISTENERS & GLOBAL EVENTS (MUST BE BEFORE renderPlayTab) ---
+    
+    // News Feed Renderer
+    window.electronAPI.onNewsLoaded((data) => {
+        const feed = document.getElementById('news-feed');
+        if (!feed || !data || !data.posts) return;
+        
+        const tagColors = { 'UPDATE': '#ff8c4a', 'EVENT': '#ffb7c5', 'WELCOME': '#4cd137', 'WARN': '#e84118', 'INFO': '#7289da' };
+        
+        if (data.posts.length === 0) {
+            feed.innerHTML = '<div style="text-align: center; opacity: 0.3; padding-top: 40px; font-size: 10px;">NO NEWS AVAILABLE</div>';
+            return;
+        }
+
+        feed.innerHTML = data.posts.map((post, idx) => {
+            const color = tagColors[post.tag?.toUpperCase()] || '#ffb7c5';
+            return `
+                <div class="news-item-premium" style="margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); animation: slideRightFade 0.4s ease forwards; animation-delay: ${idx * 0.1}s; opacity: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 7px; font-weight: 950; letter-spacing: 2px; background: ${color}; color: #000; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">${post.tag || 'NEWS'}</span>
+                        <span style="font-size: 9px; opacity: 0.4; font-weight: 900; font-family: 'monospace';">${post.date || ''}</span>
+                    </div>
+                    <p style="font-size: 11px; line-height: 1.6; opacity: 0.85; margin: 0; font-weight: 500; letter-spacing: 0.3px;">${post.text}</p>
+                </div>`;
+        }).join('');
+    });
+
+    window.electronAPI.onAccountsList((accounts) => {
+        const list = document.getElementById('accounts-list');
+        if (!list) return;
+        if (accounts.length === 0) {
+            list.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">NO BIOMETRIC DATA DETECTED.</p>';
+            return;
+        }
+        const activeAcc = JSON.parse(localStorage.getItem('activeAccount') || '{}');
+        if (accounts.length === 1 && (!activeAcc || !activeAcc.uuid) && !document.getElementById('custom-modal-overlay')) {
+            localStorage.setItem('activeAccount', JSON.stringify(accounts[0]));
+            location.reload();
+            return;
+        }
+        list.innerHTML = accounts.map(acc => `
+            <div class="account-card-premium ${activeAcc.uuid === acc.uuid ? 'active' : ''}" style="display: flex; align-items: center; gap: 15px; padding: 25px; border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid ${activeAcc.uuid === acc.uuid ? '#ffb7c5' : 'rgba(255,255,255,0.05)'};">
+                <img src="https://mc-heads.net/avatar/${acc.name}/50" style="border-radius: 10px; border: 1px solid rgba(255,183,197,0.2);">
+                <div style="flex: 1;">
+                    <div style="font-weight: 900; color: #fff; letter-spacing: 1px;">${acc.name.toUpperCase()}</div>
+                    <div style="font-size: 10px; opacity: 0.6; font-weight: 900;">${acc.type.toUpperCase()} PROTOCOL</div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    ${activeAcc.uuid !== acc.uuid ? `<button onclick="setActive('${acc.uuid}')" class="btn-play-custom btn-outline" style="padding: 10px 20px; font-size: 10px;">${t('deploy').toUpperCase()}</button>` : '<span style="color: #4cd137; font-weight: 900; font-size: 12px; letter-spacing: 2px;">ACTIVE</span>'}
+                    <button onclick="window.electronAPI.removeAccount('${acc.uuid}')" style="background: rgba(232,65,24,0.1); border: 1px solid rgba(232,65,24,0.3); color: #e84118; width: 40px; height: 40px; border-radius: 12px; cursor: pointer;"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `).join('');
+    });
+
+    window.electronAPI.onLoginSuccess((acc) => {
+        localStorage.setItem('activeAccount', JSON.stringify(acc));
+        location.reload();
+    });
+
+    window.electronAPI.onLoginError((msg) => {
+        alert('LOGIN ERROR: ' + msg);
+        const btn = document.getElementById('microsoftLogin');
+        if (btn) { btn.innerHTML = t('microsoft_login'); btn.disabled = false; }
+    });
+
     renderPlayTab();
 
     // Helper for manual testing via DevTools console
@@ -1272,81 +1339,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         alert('LAUNCH ERROR: ' + err);
     });
 
-    // IPC LISTENERS (Moved inside to ensure electronAPI is ready)
-    // FEATURE 3: News Feed Renderer
-    window.electronAPI.onNewsLoaded((data) => {
-        const feed = document.getElementById('news-feed');
-        if (!feed || !data || !data.posts) return;
-        
-        const tagColors = { 'UPDATE': '#ff8c4a', 'EVENT': '#ffb7c5', 'WELCOME': '#4cd137', 'WARN': '#e84118', 'INFO': '#7289da' };
-        
-        if (data.posts.length === 0) {
-            feed.innerHTML = '<div style="text-align: center; opacity: 0.3; padding-top: 40px; font-size: 10px;">NO NEWS AVAILABLE</div>';
-            return;
-        }
-
-        feed.innerHTML = data.posts.map((post, idx) => {
-            const color = tagColors[post.tag?.toUpperCase()] || '#ffb7c5';
-            return `
-                <div class="news-item-premium" style="margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); animation: slideRightFade 0.4s ease forwards; animation-delay: ${idx * 0.1}s; opacity: 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 7px; font-weight: 950; letter-spacing: 2px; background: ${color}; color: #000; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">${post.tag || 'NEWS'}</span>
-                        <span style="font-size: 9px; opacity: 0.4; font-weight: 900; font-family: 'monospace';">${post.date || ''}</span>
-                    </div>
-                    <p style="font-size: 11px; line-height: 1.6; opacity: 0.85; margin: 0; font-weight: 500; letter-spacing: 0.3px;">${post.text}</p>
-                </div>`;
-        }).join('');
-    });
-
-    window.electronAPI.onAccountsList((accounts) => {
-
-        const list = document.getElementById('accounts-list');
-        if (!list) return;
-
-        if (accounts.length === 0) {
-            list.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">NO BIOMETRIC DATA DETECTED.</p>';
-            return;
-        }
-
-        const activeAcc = JSON.parse(localStorage.getItem('activeAccount') || '{}');
-        console.log('UI: Accounts List Received:', accounts.length);
-
-        // AUTO-SELECT Logic
-        if (accounts.length === 1 && (!activeAcc || !activeAcc.uuid) && !document.getElementById('custom-modal-overlay')) {
-            console.log('UI: Auto-deploying single profile:', accounts[0].name);
-            localStorage.setItem('activeAccount', JSON.stringify(accounts[0]));
-            location.reload();
-            return;
-        }
-
-        list.innerHTML = accounts.map(acc => `
-            <div class="account-card-premium ${activeAcc.uuid === acc.uuid ? 'active' : ''}" style="display: flex; align-items: center; gap: 15px; padding: 25px; border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid ${activeAcc.uuid === acc.uuid ? '#ffb7c5' : 'rgba(255,255,255,0.05)'};">
-                <img src="https://mc-heads.net/avatar/${acc.name}/50" style="border-radius: 10px; border: 1px solid rgba(255,183,197,0.2);">
-                <div style="flex: 1;">
-                    <div style="font-weight: 900; color: #fff; letter-spacing: 1px;">${acc.name.toUpperCase()}</div>
-                    <div style="font-size: 10px; opacity: 0.6; font-weight: 900;">${acc.type.toUpperCase()} PROTOCOL</div>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    ${activeAcc.uuid !== acc.uuid ? `<button onclick="setActive('${acc.uuid}')" class="btn-play-custom btn-outline" style="padding: 10px 20px; font-size: 10px;">${t('deploy').toUpperCase()}</button>` : '<span style="color: #4cd137; font-weight: 900; font-size: 12px; letter-spacing: 2px;">ACTIVE</span>'}
-                    <button onclick="window.electronAPI.removeAccount('${acc.uuid}')" style="background: rgba(232,65,24,0.1); border: 1px solid rgba(232,65,24,0.3); color: #e84118; width: 40px; height: 40px; border-radius: 12px; cursor: pointer;"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>
-        `).join('');
-    });
-
-    window.electronAPI.onLoginSuccess((acc) => {
-        localStorage.setItem('activeAccount', JSON.stringify(acc));
-        location.reload();
-    });
-
-    window.electronAPI.onLoginError((msg) => {
-        alert('LOGIN ERROR: ' + msg);
-        const btn = document.getElementById('microsoftLogin');
-        if (btn) {
-            btn.innerHTML = t('microsoft_login');
-            btn.disabled = false;
-        }
-    });
+    // ... (News and Login listeners moved up)
 
     // CUSTOM MODAL SYSTEM - PREMIUM REDESIGN 💎
     window.showModal = (title, content, callback, isAlert = false) => {
