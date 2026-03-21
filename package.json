@@ -7,7 +7,7 @@
     "start": "electron .",
     "dev:start": "sass src/scss/main.scss src/css/main.css && electron .",
     "build": "sass src/scss/main.scss src/css/main.css && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
-    "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/main.ico --overwrite --asar"
+    "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/logo_square.png --overwrite --asar"
   },
   "repository": {
     "type": "git",
@@ -61,7 +61,7 @@
     "productName": "LosPapus Launcher",
     "win": {
       "target": "nsis",
-      "icon": "src/assets/main.ico"
+      "icon": "src/assets/logo_square.png"
     },
     "nsis": {
       "oneClick": false,
