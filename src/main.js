@@ -393,7 +393,7 @@ ipcMain.on('login-microsoft', async (event) => {
 
         console.log('MSMC: Launching manual browser window (STABILITY MODE)...');
         
-        const xboxManagerResult = await new Promise((resolve, reject) => {
+         const xboxManagerResult = await new Promise((resolve, reject) => {
             const loginWindow = new BrowserWindow({
                 width: 500,
                 height: 650,
@@ -414,9 +414,10 @@ ipcMain.on('login-microsoft', async (event) => {
             // Generate link
             let loginUrl;
             try {
-                loginUrl = (typeof authManager.createLink === 'function') ? authManager.createLink() : authManager.getAuthUrl();
+                loginUrl = (typeof authManager?.createLink === 'function') ? authManager.createLink() : 
+                           (typeof authManager?.getAuthUrl === 'function' ? authManager.getAuthUrl() : "https://login.live.com/oauth20_authorize.srf");
             } catch(e) {
-                loginUrl = "https://login.live.com/oauth20_authorize.srf"; // last resort
+                loginUrl = "https://login.live.com/oauth20_authorize.srf"; 
             }
 
             loginWindow.loadURL(loginUrl, { userAgent });
@@ -429,7 +430,7 @@ ipcMain.on('login-microsoft', async (event) => {
                 
                 try {
                     let code;
-                    if (typeof authManager.getCode === 'function') {
+                    if (typeof authManager?.getCode === 'function') {
                         code = authManager.getCode(url);
                     } else {
                         const params = new URL(url).searchParams;
@@ -443,34 +444,43 @@ ipcMain.on('login-microsoft', async (event) => {
                     loginWindow.close();
                     resolve(result);
                 } catch (e) {
-                    console.error('MSMC Login Error inside handler:', e);
-                    processed = false; // Allow retry
+                    console.error('MSMC Login Error handler:', e);
+                    processed = false; 
                     reject(e);
                 }
             };
 
-            loginWindow.on('closed', () => {
-                if (!processed) reject(new Error("error.gui.closed"));
-            });
-
+            loginWindow.on('closed', () => { if (!processed) reject(new Error("error.gui.closed")); });
             loginWindow.webContents.on('will-redirect', (event, url) => handleRedirect(url));
             loginWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => handleRedirect(newUrl));
             loginWindow.webContents.on('will-navigate', (event, url) => handleRedirect(url));
         });
 
         console.log('MSMC: Auth successful, fetching Minecraft profile...');
-        const mcToken = await xboxManagerResult.getMinecraft();
+        let mcToken;
+        try {
+            if (typeof xboxManagerResult.getMinecraft === 'function') {
+                mcToken = await xboxManagerResult.getMinecraft();
+            } else if (xboxManagerResult.mcToken) {
+                mcToken = xboxManagerResult.mcToken;
+            } else {
+                mcToken = xboxManagerResult;
+            }
+        } catch(mcErr) {
+            console.error('MSMC getMinecraft Error:', mcErr);
+            throw new Error("No se pudo obtener el token de Minecraft. Revisa tu cuenta.");
+        }
         
-        if (!mcToken || !mcToken.profile) {
-            throw new Error("No se encontró un perfil de Minecraft en esta cuenta. Asegúrate de tener un nombre de usuario elegido en Minecraft.net.");
+        if (!mcToken || (!mcToken.profile && !mcToken.name)) {
+            throw new Error("No se encontró un perfil de Minecraft en esta cuenta.");
         }
 
         const account = {
-            name: mcToken.profile.name,
-            uuid: mcToken.profile.id,
+            name: mcToken.profile?.name || mcToken.name,
+            uuid: mcToken.profile?.id || mcToken.uuid,
             access_token: mcToken.access_token,
             type: 'microsoft',
-            meta: mcToken.profile
+            meta: mcToken.profile || mcToken
         };
 
         let accounts = getAccounts();
