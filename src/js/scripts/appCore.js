@@ -63,7 +63,8 @@ window.setActive = (uuid) => {
 console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
 
     var initCore = () => {
-        console.log('UI: Core Initializing...');
+        try {
+            console.log('UI: Core Initializing...');
         
         if (!window.electronAPI) {
             console.error('CRITICAL: electronAPI not found!');
