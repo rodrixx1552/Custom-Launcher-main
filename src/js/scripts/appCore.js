@@ -53,38 +53,221 @@ document.addEventListener('mousedown', (e) => {
             return;
         }
 
-        // LOAD DATA REGARDLESS OF RELOAD STATUS
+        // 1. CORE DATA INITIALIZATION
         let settings, translations;
         try {
             settings = window.electronAPI.getSettings();
             translations = window.electronAPI.getTranslations();
-            const currentLang = localStorage.getItem('lang') || 'es';
-            window.t = (key) => {
-                if (!translations || !translations[currentLang]) return key;
-                return translations[currentLang][key] || key;
-            };
             console.log('UI: Core data loaded');
         } catch (e) {
             console.error('UI: Failed to load core data:', e);
         }
 
+        const mainContent = document.getElementById('main-content');
+        let currentLang = localStorage.getItem('lang') || 'es';
+
+        window.t = (key) => {
+            if (!translations || !translations[currentLang]) return key;
+            return translations[currentLang][key] || key;
+        };
+
+        // 2. GLOBAL UI SYNC UTILITIES
+        window.updateGlobalUI = () => {
+            const userText = document.getElementById('user-name-text');
+            const userAvatar = document.getElementById('user-avatar');
+            const verText = document.getElementById('selected-version-text');
+            const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
+            const defaultVer = (settings && settings.client) ? settings.client.default_version : '1.20.1';
+            const ver = localStorage.getItem('selectedVersion') || defaultVer;
+
+            if (userText) userText.innerText = acc ? acc.name.toUpperCase() : t('pilot_offline');
+            if (userAvatar) {
+                userAvatar.src = acc ? `https://mc-heads.net/avatar/${acc.name}/35` : '../assets/user.png';
+                userAvatar.onerror = () => userAvatar.src = '../assets/user.png';
+            }
+            if (verText) verText.innerText = `Minecraft ${ver}`;
+            window.applyBackground();
+        };
+
+        // 3. IPC LISTENERS (CRITICAL: REGISTER BEFORE RENDERING TABS)
+        
+        // News Feed Renderer
+        window.electronAPI.onNewsLoaded((data) => {
+            console.log('UI: News Data Received');
+            const feed = document.getElementById('news-feed');
+            if (!feed || !data || !data.posts) return;
+            const tagColors = { 'UPDATE': '#ff8c4a', 'EVENT': '#ffb7c5', 'WELCOME': '#4cd137', 'WARN': '#e84118', 'INFO': '#7289da' };
+            feed.innerHTML = data.posts.map(post => {
+                const color = tagColors[post.tag?.toUpperCase()] || '#ffb7c5';
+                return `
+                    <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,183,197,0.07);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 8px; font-weight: 900; letter-spacing: 2px; background: ${color}22; color: ${color}; padding: 2px 8px; border-radius: 6px;">${post.tag || 'NEWS'}</span>
+                            <span style="font-size: 9px; opacity: 0.35; font-weight: 900;">${post.date || ''}</span>
+                        </div>
+                        <p style="font-size: 11px; line-height: 1.7; opacity: 0.8; margin: 0;">${post.text}</p>
+                    </div>`;
+            }).join('');
+        });
+
+        // Accounts & Login
+        window.electronAPI.onAccountsList((accounts) => {
+            const list = document.getElementById('accounts-list');
+            if (!list) return;
+            if (accounts.length === 0) {
+                list.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">NO BIOMETRIC DATA DETECTED.</p>';
+                return;
+            }
+            const activeAcc = JSON.parse(localStorage.getItem('activeAccount') || '{}');
+            if (accounts.length === 1 && (!activeAcc || !activeAcc.uuid) && !document.getElementById('custom-modal-overlay')) {
+                localStorage.setItem('activeAccount', JSON.stringify(accounts[0]));
+                location.reload();
+                return;
+            }
+            list.innerHTML = accounts.map(acc => `
+                <div class="account-card-premium ${activeAcc.uuid === acc.uuid ? 'active' : ''}" style="display: flex; align-items: center; gap: 15px; padding: 25px; border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid ${activeAcc.uuid === acc.uuid ? '#ffb7c5' : 'rgba(255,255,255,0.05)'};">
+                    <img src="https://mc-heads.net/avatar/${acc.name}/50" style="border-radius: 10px; border: 1px solid rgba(255,183,197,0.2);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 900; color: #fff; letter-spacing: 1px;">${acc.name.toUpperCase()}</div>
+                        <div style="font-size: 10px; opacity: 0.6; font-weight: 900;">${acc.type.toUpperCase()} PROTOCOL</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        ${activeAcc.uuid !== acc.uuid ? `<button onclick="setActive('${acc.uuid}')" class="btn-play-custom btn-outline" style="padding: 10px 20px; font-size: 10px;">${t('deploy').toUpperCase()}</button>` : '<span style="color: #4cd137; font-weight: 900; font-size: 12px; letter-spacing: 2px;">ACTIVE</span>'}
+                        <button onclick="window.electronAPI.removeAccount('${acc.uuid}')" style="background: rgba(232,65,24,0.1); border: 1px solid rgba(232,65,24,0.3); color: #e84118; width: 40px; height: 40px; border-radius: 12px; cursor: pointer;"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        window.electronAPI.onLoginSuccess((acc) => {
+            localStorage.setItem('activeAccount', JSON.stringify(acc));
+            location.reload();
+        });
+
+        window.electronAPI.onLoginError((msg) => {
+            alert('LOGIN ERROR: ' + msg);
+            const btn = document.getElementById('microsoftLogin');
+            if (btn) { btn.innerHTML = t('microsoft_login'); btn.disabled = false; }
+        });
+
+        // Ping & Sync
+        window.electronAPI.onPingResult((data) => {
+            window.lastPingData = data;
+            const pingText = document.getElementById('server-ping-text');
+            const dot = document.getElementById('server-dot');
+            if (pingText && dot) {
+                if (data.online) {
+                    pingText.innerText = `ONLINE | ${data.players.online}/${data.players.max}`;
+                    dot.style.background = '#4cd137'; dot.style.boxShadow = '0 0 15px #4cd137';
+                } else {
+                    pingText.innerText = 'OFFLINE';
+                    dot.style.background = '#e84118'; dot.style.boxShadow = '0 0 15px #e84118';
+                }
+            }
+        });
+
+        window.electronAPI.onSyncProgress((data) => {
+            const bar = document.getElementById('inline-sync-bar');
+            const status = document.getElementById('sync-mod-status');
+            if (bar) bar.style.width = `${data.progress}%`;
+            if (status) status.innerText = data.step.toUpperCase();
+        });
+
+        window.electronAPI.onSyncFinished(() => {
+            const status = document.getElementById('sync-mod-status');
+            const prog = document.getElementById('inline-sync-progress');
+            const btn = document.getElementById('sync-mods-btn');
+            const playBtn = document.getElementById('play-btn');
+            if (status) status.innerText = 'UPDATED & READY';
+            if (prog) setTimeout(() => prog.style.display = 'none', 1500);
+            if (btn) { btn.disabled = false; btn.classList.remove('pulse-green-border'); }
+            if (playBtn) playBtn.disabled = false;
+        });
+
+        window.electronAPI.onSyncError((err) => {
+            const status = document.getElementById('sync-mod-status');
+            const prog = document.getElementById('inline-sync-progress');
+            const btn = document.getElementById('sync-mods-btn');
+            const playBtn = document.getElementById('play-btn');
+            if (status) status.innerText = 'SYNC FAILED';
+            if (prog) prog.style.display = 'none';
+            if (btn) btn.disabled = false;
+            if (playBtn) playBtn.disabled = false;
+            alert('UPDATE ERROR: ' + err);
+        });
+
+        // Launch logic
+        window.electronAPI.onLaunchProgress((data) => {
+            toggleLaunchUI(true);
+            const status = document.getElementById('launch-status');
+            const bar = document.getElementById('launch-bar-inner-new');
+            if (status) {
+                let msg = data.step || data.type || 'CARGANDO...';
+                if (msg.includes('forge')) msg = 'PREPARANDO FORGE';
+                if (data.task) msg = `${data.task} ${data.total ? Math.floor((data.downloaded / data.total) * 100) + '%' : ''}`;
+                status.innerText = msg.toUpperCase();
+            }
+            if (bar) {
+                let pct = 10;
+                if (data.downloaded && data.total) pct = Math.min(95, Math.floor((data.downloaded / data.total) * 100));
+                else if (data.step && data.step.includes('FORGE')) pct = 60;
+                else if (data.step && data.step.includes('PREPARING')) pct = 30;
+                bar.style.width = pct + '%';
+            }
+        });
+
+        window.electronAPI.onGameStarted(() => {
+            const status = document.getElementById('launch-status');
+            const bar = document.getElementById('launch-bar-inner-new');
+            if (status) status.innerText = '¡JUEGO INICIADO! DISFRUTA PAPU';
+            if (bar) bar.style.width = '100%';
+            setTimeout(() => { window.electronAPI.closeWindow(); }, 3500); 
+        });
+
+        window.electronAPI.onLaunchFinished(() => {
+            toggleLaunchUI(false);
+            const btn = document.getElementById('play-btn');
+            if (btn) { btn.innerText = t('play'); btn.disabled = false; btn.style.opacity = '1'; }
+        });
+
+        window.electronAPI.onLaunchError((err) => {
+            toggleLaunchUI(false);
+            const btn = document.getElementById('play-btn');
+            if (btn) { btn.innerText = t('play'); btn.disabled = false; btn.style.opacity = '1'; }
+            alert('LAUNCH ERROR: ' + err);
+        });
+
+        // Update Banner Listener
+        window.electronAPI.onUpdateAvailable((data) => {
+            const root = document.getElementById('root');
+            if (!root || document.getElementById('ota-update-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'ota-update-banner';
+            banner.className = 'glass';
+            banner.style.cssText = `position: absolute; top: 40px; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 15px 30px; display: flex; align-items: center; gap: 20px; border-radius: 15px; border: 1px solid #ffb7c5; box-shadow: 0 0 30px rgba(255,183,197,0.3); animation: slideDown 0.5s ease-out;`;
+            banner.innerHTML = `<div id="ota-status-wrap"><div style="font-size: 11px; font-weight: 900; letter-spacing: 2px;"><span style="color: #ffb7c5;">ACTUALIZACIÓN DETECTADA:</span> v${data.version}</div><div style="font-size: 9px; opacity: 0.6; margin-top: 3px;">INSTALADA: ${data.current || 'v0.2.0'}</div></div><button class="btn-play-custom" id="ota-start-update" style="padding: 8px 20px; font-size: 10px; border-radius: 8px;">ACTUALIZAR AHORA</button><i class="fas fa-times" id="ota-close-banner" style="cursor: pointer; opacity: 0.5; font-size: 12px;"></i>`;
+            root.appendChild(banner);
+            const updateBtn = document.getElementById('ota-start-update');
+            const updateStatusWrap = document.getElementById('ota-status-wrap');
+            updateBtn.onclick = () => { if (updateBtn.disabled) return; updateBtn.disabled = true; updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PREPARANDO...'; window.electronAPI.startAutoUpdate(data.url); };
+            window.electronAPI.onAutoUpdateProgress((info) => { updateBtn.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${info.progress}%`; updateStatusWrap.innerHTML = `<div style="font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #ffb7c5;">${info.step.toUpperCase()}</div>`; });
+            window.electronAPI.onAutoUpdateError((err) => { updateBtn.disabled = false; updateBtn.style.background = '#ff4444'; updateBtn.innerHTML = 'REINTENTAR'; updateStatusWrap.innerHTML = `<div style="font-size: 10px; color: #ff4444;">ERROR: ${err}</div>`; });
+            document.getElementById('ota-close-banner').onclick = () => { banner.style.animation = 'slideUp 0.5s ease-in forwards'; setTimeout(() => banner.remove(), 500); };
+        });
+
+        // 4. GUI INITIALIZATION (SPLASH / HOT RELOAD)
         if (!window.CORE_INITIALIZED) {
             window.CORE_INITIALIZED = true;
-            
-            // ONE-TIME INITIALIZATION (SPLASH, HUD, ETC)
             const preloader = document.getElementById('preloader');
             const root = document.getElementById('root');
             const userHub = document.getElementById('user-hub');
             const bgAnim = document.getElementById('bg-anim');
-            
             if (root) root.style.opacity = '0';
             if (userHub) userHub.style.opacity = '0';
             if (bgAnim) bgAnim.style.opacity = '0';
-
             if (preloader) {
                 setTimeout(() => {
-                    preloader.style.opacity = '0';
-                    preloader.style.transform = 'scale(1.05)';
+                    preloader.style.opacity = '0'; preloader.style.transform = 'scale(1.05)';
                     if (root) { root.style.transition = 'opacity 1.2s ease'; root.style.opacity = '1'; }
                     if (bgAnim) { bgAnim.style.transition = 'opacity 1.2s ease'; bgAnim.style.opacity = '1'; }
                     if (userHub) { userHub.style.transition = 'opacity 1.2s ease'; userHub.style.opacity = '1'; }
@@ -93,27 +276,11 @@ document.addEventListener('mousedown', (e) => {
             }
         } else {
             console.log('UI: HOT UPDATE DETECTED - Re-linking core logic...');
-            // In case of hot update, we might want to refresh the current view
-            setTimeout(() => {
-                const activeTab = document.querySelector('.sidebar-nav .nav-item.active');
-                if (activeTab) {
-                    const spanLabel = activeTab.querySelector('span')?.innerText.toLowerCase();
-                    const dataTab = activeTab.getAttribute('data-tab');
-                    const tab = dataTab || spanLabel;
-                    if (tab === 'play' || tab === 'jugar') window.renderPlayTab();
-                    else if (tab === 'accounts' || tab === 'cuentas') window.renderAccountsTab();
-                    else if (tab === 'skins') window.renderSkinsTab();
-                    else if (tab === 'settings' || tab === 'configuración') window.renderSettingsTab();
-                    else if (tab === 'mods') window.renderModsTab();
-                    else if (tab === 'community') window.renderCommunityTab();
-                } else {
-                    window.renderPlayTab();
-                }
-            }, 100);
+            window.updateGlobalUI();
         }
 
-        const mainContent = document.getElementById('main-content');
-        let currentLang = localStorage.getItem('lang') || 'es';
+        // 5. START DEFAULT VIEW
+        renderPlayTab();
 
     // INITIALIZATION
     const savedVersion = '1.20.1';
@@ -1177,200 +1344,6 @@ document.addEventListener('mousedown', (e) => {
         console.log('UI: Game Launched.');
     });
 
-    // UPDATE NOTIFICATIONS (Banner)
-    window.electronAPI.onUpdateAvailable((data) => {
-        console.log('UI: Update Available Received:', data);
-        const root = document.getElementById('root');
-        if (!root) return;
-
-        if (document.getElementById('ota-update-banner')) return;
-
-        const banner = document.createElement('div');
-        banner.id = 'ota-update-banner';
-        banner.className = 'glass';
-        banner.style.cssText = `
-            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
-            z-index: 9999; padding: 15px 30px; display: flex; align-items: center;
-            gap: 20px; border-radius: 15px; border: 1px solid #ffb7c5;
-            box-shadow: 0 0 30px rgba(255,183,197,0.3); animation: slideDown 0.5s ease-out;
-        `;
-
-        banner.innerHTML = `
-            <div id="ota-status-wrap">
-                <div style="font-size: 11px; font-weight: 900; letter-spacing: 2px;">
-                    <span style="color: #ffb7c5;">ACTUALIZACIÓN DETECTADA:</span> v${data.version}
-                </div>
-                <div style="font-size: 9px; opacity: 0.6; margin-top: 3px;">INSTALADA: ${data.current || 'v0.2.0'}</div>
-            </div>
-            <button class="btn-play-custom" id="ota-start-update" style="padding: 8px 20px; font-size: 10px; border-radius: 8px;">ACTUALIZAR AHORA</button>
-            <i class="fas fa-times" id="ota-close-banner" style="cursor: pointer; opacity: 0.5; font-size: 12px;"></i>
-        `;
-
-        root.appendChild(banner);
-
-        const btn = document.getElementById('ota-start-update');
-        const statusWrap = document.getElementById('ota-status-wrap');
-
-        btn.onclick = () => {
-             if (btn.disabled) return;
-             btn.disabled = true;
-             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PREPARANDO...';
-             window.electronAPI.startAutoUpdate(data.url);
-        };
-
-        window.electronAPI.onAutoUpdateProgress((info) => {
-            btn.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${info.progress}%`;
-            statusWrap.innerHTML = `<div style="font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #ffb7c5;">${info.step.toUpperCase()}</div>`;
-        });
-
-        window.electronAPI.onAutoUpdateError((err) => {
-            btn.disabled = false;
-            btn.style.background = '#ff4444';
-            btn.innerHTML = 'REINTENTAR';
-            statusWrap.innerHTML = `<div style="font-size: 10px; color: #ff4444;">ERROR: ${err}</div>`;
-        });
-
-        document.getElementById('ota-close-banner').onclick = () => {
-             banner.style.animation = 'slideUp 0.5s ease-in forwards';
-             setTimeout(() => banner.remove(), 500);
-        };
-    });
-
-    window.electronAPI.onLaunchError((err) => {
-        toggleLaunchUI(false);
-        const btn = document.getElementById('play-btn');
-        if (btn) {
-            btn.innerText = t('play');
-            btn.disabled = false;
-            btn.style.opacity = '1';
-        }
-        alert('LAUNCH ERROR: ' + err);
-    });
-
-    // IPC LISTENERS (Moved inside to ensure electronAPI is ready)
-    // FEATURE 3: News Feed Renderer
-    window.electronAPI.onNewsLoaded((data) => {
-        const feed = document.getElementById('news-feed');
-        if (!feed || !data || !data.posts) return;
-        const tagColors = { 'UPDATE': '#ff8c4a', 'EVENT': '#ffb7c5', 'WELCOME': '#4cd137', 'WARN': '#e84118', 'INFO': '#7289da' };
-        feed.innerHTML = data.posts.map(post => {
-            const color = tagColors[post.tag?.toUpperCase()] || '#ffb7c5';
-            return `
-                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,183,197,0.07);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 8px; font-weight: 900; letter-spacing: 2px; background: ${color}22; color: ${color}; padding: 2px 8px; border-radius: 6px;">${post.tag || 'NEWS'}</span>
-                        <span style="font-size: 9px; opacity: 0.35; font-weight: 900;">${post.date || ''}</span>
-                    </div>
-                    <p style="font-size: 11px; line-height: 1.7; opacity: 0.8; margin: 0;">${post.text}</p>
-                </div>`;
-        }).join('');
-    });
-
-    window.electronAPI.onAccountsList((accounts) => {
-
-        const list = document.getElementById('accounts-list');
-        if (!list) return;
-
-        if (accounts.length === 0) {
-            list.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">NO BIOMETRIC DATA DETECTED.</p>';
-            return;
-        }
-
-        const activeAcc = JSON.parse(localStorage.getItem('activeAccount') || '{}');
-        console.log('UI: Accounts List Received:', accounts.length);
-
-        // AUTO-SELECT Logic
-        if (accounts.length === 1 && (!activeAcc || !activeAcc.uuid) && !document.getElementById('custom-modal-overlay')) {
-            console.log('UI: Auto-deploying single profile:', accounts[0].name);
-            localStorage.setItem('activeAccount', JSON.stringify(accounts[0]));
-            location.reload();
-            return;
-        }
-
-        list.innerHTML = accounts.map(acc => `
-            <div class="account-card-premium ${activeAcc.uuid === acc.uuid ? 'active' : ''}" style="display: flex; align-items: center; gap: 15px; padding: 25px; border-radius: 20px; background: rgba(0,0,0,0.3); border: 1px solid ${activeAcc.uuid === acc.uuid ? '#ffb7c5' : 'rgba(255,255,255,0.05)'};">
-                <img src="https://mc-heads.net/avatar/${acc.name}/50" style="border-radius: 10px; border: 1px solid rgba(255,183,197,0.2);">
-                <div style="flex: 1;">
-                    <div style="font-weight: 900; color: #fff; letter-spacing: 1px;">${acc.name.toUpperCase()}</div>
-                    <div style="font-size: 10px; opacity: 0.6; font-weight: 900;">${acc.type.toUpperCase()} PROTOCOL</div>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    ${activeAcc.uuid !== acc.uuid ? `<button onclick="setActive('${acc.uuid}')" class="btn-play-custom btn-outline" style="padding: 10px 20px; font-size: 10px;">${t('deploy').toUpperCase()}</button>` : '<span style="color: #4cd137; font-weight: 900; font-size: 12px; letter-spacing: 2px;">ACTIVE</span>'}
-                    <button onclick="window.electronAPI.removeAccount('${acc.uuid}')" style="background: rgba(232,65,24,0.1); border: 1px solid rgba(232,65,24,0.3); color: #e84118; width: 40px; height: 40px; border-radius: 12px; cursor: pointer;"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>
-        `).join('');
-    });
-
-    window.electronAPI.onLoginSuccess((acc) => {
-        localStorage.setItem('activeAccount', JSON.stringify(acc));
-        location.reload();
-    });
-
-    window.electronAPI.onLoginError((msg) => {
-        alert('LOGIN ERROR: ' + msg);
-        const btn = document.getElementById('microsoftLogin');
-        if (btn) {
-            btn.innerHTML = t('microsoft_login');
-            btn.disabled = false;
-        }
-    });
-
-    // CUSTOM MODAL SYSTEM - PREMIUM REDESIGN 💎
-    window.showModal = (title, content, callback, isAlert = false) => {
-        // Remove existing modals before opening a new one
-        const existing = document.getElementById('custom-modal-overlay');
-        if (existing) existing.remove();
-
-        const overlay = document.createElement('div');
-        overlay.className = 'glass-overlay';
-        overlay.id = 'custom-modal-overlay';
-        overlay.style.cssText = `
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 10000; animation: fadeIn 0.4s ease;
-        `;
-        
-        const contentHtml = isAlert 
-            ? `<div style="font-size: 14px; opacity: 0.9; margin-bottom: 35px; line-height: 1.6; color: #fff; font-weight: 700;">${content}</div>` 
-            : `<input type="text" id="modalInput" placeholder="${content}" class="v-opt" style="width: 100%; padding: 18px; margin-bottom: 35px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,183,197,0.3); color: #fff; font-weight: 950; letter-spacing: 2px; border-radius: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">`;
-
-        const buttonsHtml = isAlert 
-            ? `<button id="modalConfirm" class="btn-play-custom" style="width: 100%; padding: 15px; font-size: 12px; letter-spacing: 4px; box-shadow: 0 10px 20px rgba(255,183,197,0.2);">ENTENDIDO</button>`
-            : `<div style="display: flex; gap: 20px; width: 100%;">
-                 <button id="modalConfirm" class="btn-play-custom" style="flex: 1; padding: 13px; font-size: 11px; letter-spacing: 3px;">CONFIRMAR</button>
-                 <button id="modalCancel" class="btn-play-custom btn-secondary" style="flex: 1; padding: 13px; font-size: 11px; letter-spacing: 3px;">CANCELAR</button>
-               </div>`;
-
-        overlay.innerHTML = `
-            <div class="glass" style="padding: 45px; border-radius: 35px; width: 420px; text-align: center; border: 1px solid rgba(255,183,197,0.4); background: linear-gradient(135deg, rgba(30,30,30,0.95) 0%, rgba(10,10,10,0.98) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.6); animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                <div style="width: 50px; height: 4px; background: #ffb7c5; border-radius: 10px; margin: 0 auto 25px; box-shadow: 0 0 15px #ffb7c5;"></div>
-                <h2 style="font-weight: 950; letter-spacing: 6px; color: #ffb7c5; margin-bottom: 30px; font-size: 20px; text-shadow: 0 0 15px rgba(255,183,197,0.4); text-transform: uppercase;">${title}</h2>
-                ${contentHtml}
-                ${buttonsHtml}
-            </div>
-        `;
-        document.body.appendChild(overlay);
-        
-        const input = document.getElementById('modalInput');
-        if (input) input.focus();
-
-        document.getElementById('modalConfirm').onclick = () => {
-            const val = input ? input.value : null;
-            overlay.remove();
-            if (callback) callback(val);
-        };
-        
-        const cancelBtn = document.getElementById('modalCancel');
-        if (cancelBtn) {
-            cancelBtn.onclick = () => overlay.remove();
-        }
-        
-        if (input) {
-            input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); };
-        }
-    };
 }; // End of initCore
 
 // AUTO-INIT CHECK: Ensures UI loads even if DOMContentLoaded already fired (needed for Hot Update)
