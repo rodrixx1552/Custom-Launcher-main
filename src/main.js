@@ -347,13 +347,19 @@ ipcMain.on('select-file', (event) => {
 
 const mcping = require('mcping-js');
 const msmc = require('msmc');
-const Auth = msmc.Auth || msmc.default?.Auth || msmc.default;
-
-const authManager = (typeof Auth === 'function') ? new Auth("select_account") : null;
-if (!authManager) {
-    console.error('CRITICAL: Failed to initialize msmc Auth.');
-} else {
-    console.log('MSMC Auth Manager initialized successfully.');
+let authManager = null;
+try {
+    const Auth = msmc.Auth || msmc.default?.Auth || msmc.default;
+    if (typeof Auth === 'function') {
+        authManager = new Auth("select_account");
+        console.log('MSMC Auth Manager initialized successfully (Auth Class).');
+    } else if (msmc.fastLaunch) {
+        // Fallback for different msmc versions
+        authManager = msmc;
+        console.log('MSMC detected as fastLaunch-capable object.');
+    }
+} catch (e) {
+    console.error('CRITICAL: Failed to initialize msmc Auth:', e.message);
 }
 
 // Path for accounts file
@@ -397,14 +403,23 @@ ipcMain.on('login-microsoft', async (event) => {
                 webPreferences: {
                     nodeIntegration: false,
                     contextIsolation: true,
-                    partition: 'session_' + Date.now() // FRESH SESSION EACH TIME
+                    partition: 'session_msmc_' + Date.now()
                 }
             });
 
             const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
             
             loginWindow.setMenu(null);
-            loginWindow.loadURL(authManager.createLink(), { userAgent });
+            
+            // Generate link
+            let loginUrl;
+            try {
+                loginUrl = (typeof authManager.createLink === 'function') ? authManager.createLink() : authManager.getAuthUrl();
+            } catch(e) {
+                loginUrl = "https://login.live.com/oauth20_authorize.srf"; // last resort
+            }
+
+            loginWindow.loadURL(loginUrl, { userAgent });
 
             let processed = false;
             const handleRedirect = async (url) => {
@@ -413,19 +428,23 @@ ipcMain.on('login-microsoft', async (event) => {
                 console.log('MSMC: Code captured. Processing login...');
                 
                 try {
-                    const params = new URL(url).searchParams;
-                    const code = params.get('code');
+                    let code;
+                    if (typeof authManager.getCode === 'function') {
+                        code = authManager.getCode(url);
+                    } else {
+                        const params = new URL(url).searchParams;
+                        code = params.get('code');
+                    }
                     
                     if (!code) throw new Error("No se pudo extraer el código de Microsoft.");
-
-                    console.log('MSMC: Code extracted. Validating with Microsoft...');
                     
-                    const result = await authManager.login(code);
+                    const result = await (authManager.login ? authManager.login(code) : authManager.authenticate(code));
                     loginWindow.removeAllListeners('closed');
                     loginWindow.close();
                     resolve(result);
                 } catch (e) {
-                    processed = false; // Allow retry on failure
+                    console.error('MSMC Login Error inside handler:', e);
+                    processed = false; // Allow retry
                     reject(e);
                 }
             };
@@ -434,13 +453,9 @@ ipcMain.on('login-microsoft', async (event) => {
                 if (!processed) reject(new Error("error.gui.closed"));
             });
 
-            loginWindow.webContents.on('will-redirect', (event, url) => {
-                handleRedirect(url);
-            });
-
-            loginWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
-                handleRedirect(newUrl);
-            });
+            loginWindow.webContents.on('will-redirect', (event, url) => handleRedirect(url));
+            loginWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => handleRedirect(newUrl));
+            loginWindow.webContents.on('will-navigate', (event, url) => handleRedirect(url));
         });
 
         console.log('MSMC: Auth successful, fetching Minecraft profile...');
@@ -488,16 +503,22 @@ ipcMain.on('login-microsoft', async (event) => {
 
 ipcMain.on('add-offline-account', (event, name) => {
     console.log('IPC: add-offline-account triggered for', name);
+    const crypto = require('crypto');
+    // Generate a deterministic UUID V3/V4-like for offline accounts
+    const hash = crypto.createHash('md5').update('OfflinePlayer:' + name).digest('hex');
+    const pseudoUuid = `${hash.substring(0,8)}-${hash.substring(8,12)}-${hash.substring(12,16)}-${hash.substring(16,20)}-${hash.substring(20,32)}`;
+    
     const account = {
         name: name,
-        uuid: name, 
+        uuid: pseudoUuid, 
         type: 'offline'
     };
     let accounts = getAccounts();
-    accounts = accounts.filter(a => a.name !== name);
+    // Filter by name for offline to avoid duplicates
+    accounts = accounts.filter(a => a.name.toLowerCase() !== name.toLowerCase());
     accounts.push(account);
     saveAccounts(accounts);
-    console.log('Offline Account Saved:', name);
+    console.log('Offline Account Saved:', name, 'UUID:', pseudoUuid);
     event.sender.send('login-success', account);
 });
 
@@ -971,14 +992,18 @@ ipcMain.on('fetch-news', async (event) => {
     // Try remote news first
     try {
         console.log('OTA News: Fetching from:', REMOTE_NEWS_URL);
-        const response = await axios.get(REMOTE_NEWS_URL, { timeout: 8000 });
+        const response = await axios.get(REMOTE_NEWS_URL, { 
+            timeout: 8000,
+            headers: { 'Cache-Control': 'no-cache' } 
+        });
+        
         if (response.data && response.data.posts) {
-            console.log('OTA News: Remote news loaded.');
+            console.log(`OTA News: Remote news loaded (${response.data.posts.length} items).`);
             event.sender.send('news-loaded', response.data);
             return;
         }
     } catch (e) {
-        console.warn('OTA News: Remote fetch failed, using local fallback.');
+        console.warn('OTA News: Remote fetch failed or invalid format:', e.message);
     }
 
     // Try local file next
@@ -986,18 +1011,31 @@ ipcMain.on('fetch-news', async (event) => {
         const localNewsPath = path.join(__dirname, 'launcher-news.json');
         if (fs.existsSync(localNewsPath)) {
             const data = JSON.parse(fs.readFileSync(localNewsPath, 'utf8'));
-            event.sender.send('news-loaded', data);
-            return;
+            if (data && data.posts) {
+                console.log('OTA News: Local fallback news loaded.');
+                event.sender.send('news-loaded', data);
+                return;
+            }
         }
     } catch (e) {
         console.warn('Local news file read failed:', e.message);
     }
 
-    // Fallback welcome message
+    // Comprehensive Fallback
+    console.log('OTA News: Using hardcoded emergency fallback.');
     event.sender.send('news-loaded', {
-        title: 'LosPapus Launcher',
+        title: 'LosPapus News Center',
         posts: [
-            { date: '18/03/2026', tag: 'WELCOME', text: '¡Bienvenidos al launcher! Todo listo para jugar con tus amigos.' }
+            { 
+                date: new Date().toLocaleDateString(), 
+                tag: 'WELCOME', 
+                text: '¡Bienvenidos al launcher LosPapus! Si no puedes ver las noticias, revisa tu conexión a internet.' 
+            },
+            {
+                date: 'v2.0 PROTOTYPE',
+                tag: 'INFO',
+                text: 'El sistema de Microsoft y Offline ha sido optimizado. ¡Buen juego!'
+            }
         ]
     });
 });
