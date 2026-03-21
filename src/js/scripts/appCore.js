@@ -328,9 +328,15 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         `;
         initPlayListeners();
         window.updateGlobalUI();
-        window.electronAPI.getServerIp().then((ip) => {
-            window.electronAPI.pingServer(ip);
-        });
+        if (typeof window.electronAPI.getServerIp === 'function') {
+            window.electronAPI.getServerIp().then((ip) => {
+                window.electronAPI.pingServer(ip);
+            }).catch(() => {
+                window.electronAPI.pingServer('sprat.aternos.host:44481');
+            });
+        } else {
+            window.electronAPI.pingServer('sprat.aternos.host:44481');
+        }
         // Fetch news for the panel
         window.electronAPI.fetchNews();
         
