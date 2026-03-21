@@ -8,34 +8,15 @@
     <!-- HOT UPDATE LOADER: Fetches latest UI logic from GitHub for instant updates -->
     <script>
         (async () => {
-            const REMOTE_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/js/scripts/appCore.js?t=' + Date.now();
             const LOCAL_JS = '../js/scripts/appCore.js';
-            const logOTA = (msg) => console.log('%c[OTA] ' + msg, 'color: #ffb7c5; font-weight: bold;');
+            const logOTA = (msg) => console.log('%c[HOTFIX] ' + msg, 'color: #4cd137; font-weight: bold;');
             
-            try {
-                logOTA('Checking for Remote Core (Hot Update)...');
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-                
-                const response = await fetch(REMOTE_URL, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) throw new Error('Remote fetch returned ' + response.status);
-                const code = await response.text();
-                
-                if (code.length < 500) throw new Error('Remote code suspiciously small');
-                
-                const script = document.createElement('script');
-                script.text = code;
-                document.head.appendChild(script);
-                logOTA('HOT UPDATE APPLIED! Core logic is now LIVE 🚀');
-            } catch (e) {
-                console.warn('[OTA] Remote fetch failed or timed out. Using fallback local core.', e.message);
-                const script = document.createElement('script');
-                script.id = 'app-core-script';
-                script.src = LOCAL_JS;
-                document.head.appendChild(script);
-            }
+            // For developers/testers, we use LOCAL core logic to see immediate changes
+            logOTA('Ensuring Local Core logic is ACTIVE...');
+            const script = document.createElement('script');
+            script.id = 'app-core-script';
+            script.src = LOCAL_JS;
+            document.head.appendChild(script);
         })();
     </script>
     <script src="../../node_modules/skinview3d/bundles/skinview3d.bundle.js"></script>
