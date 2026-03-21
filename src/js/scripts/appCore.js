@@ -115,11 +115,6 @@ document.addEventListener('mousedown', (e) => {
         const mainContent = document.getElementById('main-content');
         let currentLang = localStorage.getItem('lang') || 'es';
 
-    window.t = (key) => {
-        if (!translations || !translations[currentLang]) return key;
-        return translations[currentLang][key] || key;
-    };
-
     // INITIALIZATION
     const savedVersion = '1.20.1';
     const activeAcc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
