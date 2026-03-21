@@ -68,70 +68,52 @@ document.addEventListener('mousedown', (e) => {
             console.error('UI: Failed to load core data:', e);
         }
 
-        if (window.CORE_INITIALIZED) {
+        if (!window.CORE_INITIALIZED) {
+            window.CORE_INITIALIZED = true;
+            
+            // ONE-TIME INITIALIZATION (SPLASH, HUD, ETC)
+            const preloader = document.getElementById('preloader');
+            const root = document.getElementById('root');
+            const userHub = document.getElementById('user-hub');
+            const bgAnim = document.getElementById('bg-anim');
+            
+            if (root) root.style.opacity = '0';
+            if (userHub) userHub.style.opacity = '0';
+            if (bgAnim) bgAnim.style.opacity = '0';
+
+            if (preloader) {
+                setTimeout(() => {
+                    preloader.style.opacity = '0';
+                    preloader.style.transform = 'scale(1.05)';
+                    if (root) { root.style.transition = 'opacity 1.2s ease'; root.style.opacity = '1'; }
+                    if (bgAnim) { bgAnim.style.transition = 'opacity 1.2s ease'; bgAnim.style.opacity = '1'; }
+                    if (userHub) { userHub.style.transition = 'opacity 1.2s ease'; userHub.style.opacity = '1'; }
+                    setTimeout(() => { preloader.style.visibility = 'hidden'; preloader.remove(); }, 1200);
+                }, 3500); 
+            }
+        } else {
             console.log('UI: HOT UPDATE DETECTED - Re-linking core logic...');
-            window.updateGlobalUI();
-            
-            // Re-render current tab if possible
-            const activeTab = document.querySelector('.sidebar-nav .nav-item.active');
-            if (activeTab) {
-                const spanLabel = activeTab.querySelector('span')?.innerText.toLowerCase();
-                const dataTab = activeTab.getAttribute('data-tab');
-                const tab = dataTab || spanLabel;
-                
-                if (tab === 'play' || tab === 'jugar') window.renderPlayTab();
-                else if (tab === 'accounts' || tab === 'cuentas') window.renderAccountsTab();
-                else if (tab === 'skins') window.renderSkinsTab();
-                else if (tab === 'settings' || tab === 'configuración') window.renderSettingsTab();
-                else if (tab === 'mods') window.renderModsTab();
-                else if (tab === 'community') window.renderCommunityTab();
-            } else {
-                window.renderPlayTab();
-            }
-            return;
-        }
-        
-        window.CORE_INITIALIZED = true;
-        
-        // PRELOADER FADE-OUT
-    const preloader = document.getElementById('preloader');
-    const root = document.getElementById('root');
-    const userHub = document.getElementById('user-hub');
-    const bgAnim = document.getElementById('bg-anim');
-    
-    // Hide UI initially
-    if (root) root.style.opacity = '0';
-    if (userHub) userHub.style.opacity = '0';
-    if (bgAnim) bgAnim.style.opacity = '0';
-
-    if (preloader) {
-        setTimeout(() => {
-            preloader.style.opacity = '0';
-            preloader.style.transform = 'scale(1.05)';
-            
-            // Show UI exactly when splash begins to fade
-            if (root) {
-                root.style.transition = 'opacity 1.2s ease';
-                root.style.opacity = '1';
-            }
-            if (bgAnim) {
-                bgAnim.style.transition = 'opacity 1.2s ease';
-                bgAnim.style.opacity = '1';
-            }
-            if (userHub) {
-                userHub.style.transition = 'opacity 1.2s ease';
-                userHub.style.opacity = '1';
-            }
-
+            // In case of hot update, we might want to refresh the current view
             setTimeout(() => {
-                preloader.style.visibility = 'hidden';
-                preloader.remove(); // Clean up DOM
-            }, 1200);
-        }, 3500); // 3.5s splash visibility
-    }
+                const activeTab = document.querySelector('.sidebar-nav .nav-item.active');
+                if (activeTab) {
+                    const spanLabel = activeTab.querySelector('span')?.innerText.toLowerCase();
+                    const dataTab = activeTab.getAttribute('data-tab');
+                    const tab = dataTab || spanLabel;
+                    if (tab === 'play' || tab === 'jugar') window.renderPlayTab();
+                    else if (tab === 'accounts' || tab === 'cuentas') window.renderAccountsTab();
+                    else if (tab === 'skins') window.renderSkinsTab();
+                    else if (tab === 'settings' || tab === 'configuración') window.renderSettingsTab();
+                    else if (tab === 'mods') window.renderModsTab();
+                    else if (tab === 'community') window.renderCommunityTab();
+                } else {
+                    window.renderPlayTab();
+                }
+            }, 100);
+        }
 
-    const mainContent = document.getElementById('main-content');
-    let currentLang = localStorage.getItem('lang') || 'es';
+        const mainContent = document.getElementById('main-content');
+        let currentLang = localStorage.getItem('lang') || 'es';
 
     window.t = (key) => {
         if (!translations || !translations[currentLang]) return key;
