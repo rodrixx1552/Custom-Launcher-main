@@ -25,8 +25,9 @@ window.alert = (msg) => {
 };
 
 // AUDIO SYSTEM: Universal Mechanical Click 🔊
-const CLICK_SOUND_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/click.mp3';
-const clickAudio = new Audio(CLICK_SOUND_URL);
+var CLICK_SOUND_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/click.mp3';
+var clickAudio = new Audio(CLICK_SOUND_URL);
+window.clickAudio = clickAudio; // Ensure global visibility for oninput handlers
 clickAudio.preload = 'auto'; // Force browser to cache it ASAP
 window.playClick = () => {
     console.log('[AUDIO] 🔊 System signal issued.');
@@ -42,7 +43,7 @@ document.addEventListener('mousedown', (e) => {
     if (el) window.playClick();
 }, true); // Use capture phase for maximum reliability
 
-    const initCore = () => {
+    var initCore = () => {
         if (window.CORE_INITIALIZED) return;
         window.CORE_INITIALIZED = true;
         console.log('UI: Core Initializing...');
