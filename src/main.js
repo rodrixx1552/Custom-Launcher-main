@@ -47,7 +47,7 @@ const createWindow = () => {
         title: ui.title,
         resizable: false,
         frame: false,
-        icon: path.join(__dirname, 'assets', 'los_papus', 'logo.png'),
+        icon: path.join(__dirname, 'assets', 'desktop_new_icon.png'),
         webPreferences:{
             preload: path.join(__dirname, '/js/preload.js'),
             nodeIntegration: false,
