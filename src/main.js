@@ -115,27 +115,29 @@ const { Client, Authenticator } = require("minecraft-launcher-core");
 const launcher = new Client();
 
 const DiscordRPC = require('discord-rpc');
-const clientId = '1085295551322050601'; // Default ID or a new one for LosPapus Lover
+const clientId = '1484949908518600824'; // LosPapusLover App ID
 const rpc = new DiscordRPC.Client({ transport: 'ipc' });
 
 let rpcConnected = false;
+let rpcStartTimestamp = new Date();
 
 async function setActivity(details, state) {
     if (!rpcConnected) return;
     rpc.setActivity({
-        details: details || 'En el Menú Principal',
-        state: state || 'Listo para jugar',
-        startTimestamp: new Date(),
+        details: details || '🏠 En el Menú Principal',
+        state: state || 'LosPapusLover Launcher',
+        startTimestamp: rpcStartTimestamp,
         largeImageKey: 'logo',
-        largeImageText: 'LosPapus Lover Launcher',
+        largeImageText: 'LosPapusLover Launcher',
         instance: false,
     }).catch(err => console.error('Discord RPC Activity Error:', err));
 }
 
 rpc.on('ready', () => {
-    console.log('Discord RPC Ready');
+    console.log('Discord RPC Ready - LosPapusLover');
     rpcConnected = true;
-    setActivity();
+    rpcStartTimestamp = new Date();
+    setActivity('🏠 En el Menú Principal', 'LosPapusLover Launcher');
 });
 
 rpc.on('disconnected', () => {
@@ -144,7 +146,7 @@ rpc.on('disconnected', () => {
 });
 
 rpc.login({ clientId }).catch(err => {
-    console.log('Discord not detected or connection failed.');
+    console.log('Discord not detected or connection failed:', err.message);
     rpcConnected = false;
 });
 
@@ -154,7 +156,7 @@ ipcMain.on('launch-game', async (event, options) => {
     const { nick, version, account } = options;
     const accountUuid = account?.uuid || options.accountUuid;
     
-    setActivity(`Jugando Minecraft ${version}`, `Como ${nick}`);
+    setActivity(`🎮 Jugando Minecraft ${version}`, `👤 Piloto: ${nick}`);
     
     try {
         let auth;
