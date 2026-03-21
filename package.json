@@ -1,13 +1,13 @@
 {
   "name": "custom-launcher",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Launcher de Minecraft personalizable basado en ElectronJS",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "dev:start": "sass src/scss/main.scss src/css/main.css && electron .",
     "build": "sass src/scss/main.scss src/css/main.css && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
-    "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/main.ico --overwrite"
+    "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/main.ico --overwrite --asar"
   },
   "repository": {
     "type": "git",
@@ -21,13 +21,13 @@
     "custom-launcher"
   ],
   "author": "LosPapus Lover Team",
-  "launcher_version": "0.2.5",
-  "latest_launcher_version": "0.2.5",
+  "launcher_version": "0.2.6",
+  "latest_launcher_version": "0.2.6",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/rodrixx1552/Custom-Launcher-main/issues"
   },
-  "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.2.5/LosPapus-v0.2.5.zip",
+  "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.2.6/LosPapus-v0.2.6.zip",
   "devDependencies": {
     "electron": "^19.0.9",
     "electron-builder": "^26.8.1",
