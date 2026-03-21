@@ -699,7 +699,10 @@ ipcMain.handle('get-server-ip', async () => {
 async function getRemoteConfig() {
     try {
         console.log('OTA: Fetching remote config from:', REMOTE_CONFIG_URL);
-        const response = await axios.get(REMOTE_CONFIG_URL, { timeout: 10000 });
+        const response = await axios.get(`${REMOTE_CONFIG_URL}?t=${Date.now()}`, { 
+            timeout: 10000,
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        });
         if (response.data && response.data.latest_launcher_version) {
             console.log('OTA: Remote config fetched successfully.');
             return response.data;
