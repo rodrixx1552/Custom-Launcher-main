@@ -61,13 +61,13 @@ const createWindow = () => {
           responseHeaders: {
             ...details.responseHeaders,
             'Content-Security-Policy': [
-                "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; " +
-                "script-src 'self' 'unsafe-inline' https://unpkg.com https://www.youtube.com https://s.ytimg.com 'unsafe-eval'; " +
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://raw.githubusercontent.com https://mc-heads.net; " +
+                "script-src 'self' 'unsafe-inline' https://unpkg.com https://www.youtube.com https://s.ytimg.com https://raw.githubusercontent.com 'unsafe-eval'; " +
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; " +
                 "media-src 'self' data: https:; " +
-                "img-src 'self' data: https: https://mc-heads.net https://mineskin.org https://i.ytimg.com; " +
+                "img-src 'self' data: https: https://mc-heads.net https://mineskin.org https://i.ytimg.com https://raw.githubusercontent.com; " +
                 "frame-src https://www.youtube.com; " +
-                "connect-src 'self' https:;"
+                "connect-src 'self' https://raw.githubusercontent.com https://api.mcsrvstat.us https://api.mcstatus.io https://api.minecraftservices.com https://api.adoptium.net;"
             ]
           }
         })
