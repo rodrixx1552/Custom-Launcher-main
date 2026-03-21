@@ -30,8 +30,9 @@ const clickAudio = new Audio(CLICK_SOUND_URL);
 clickAudio.preload = 'auto'; // Force browser to cache it ASAP
 window.playClick = () => {
     console.log('[AUDIO] 🔊 System signal issued.');
+    const sysVol = parseFloat(localStorage.getItem('sysVolume') || '0.8');
     clickAudio.currentTime = 0;
-    clickAudio.volume = 0.8;
+    clickAudio.volume = sysVol;
     clickAudio.play().catch(e => console.warn('[AUDIO] 🚫 Blocked:', e.message));
 };
 
@@ -612,6 +613,7 @@ document.addEventListener('mousedown', (e) => {
 
     window.renderSettingsTab = () => {
         const ram = localStorage.getItem('maxRam') || '3';
+        const vol = localStorage.getItem('sysVolume') || '0.8';
         const lang = localStorage.getItem('lang') || 'es';
         const bgFX = localStorage.getItem('bgFX') || 'matrix';
         const selectedVersion = localStorage.getItem('selectedVersion') || '1.20.1';
@@ -639,6 +641,14 @@ document.addEventListener('mousedown', (e) => {
                         <label style="font-weight: 900; color: #ffb7c5; font-size: 28px; margin-bottom: 12px; display: block;"><span id="ramVal">${ram} GB</span></label>
                         <input type="range" id="ramRange" min="1" max="16" value="${ram}" style="width: 100%; accent-color: #ffb7c5;" oninput="document.getElementById('ramVal').innerText = this.value + ' GB'">
                         <div style="display:flex; justify-content:space-between; font-size:10px; opacity:0.4; margin-top:5px;"><span>1 GB</span><span>16 GB</span></div>
+                    </div>
+
+                    <!-- VOLUME SETTINGS -->
+                    <div class="glass" style="padding: 25px; border-radius: 20px;">
+                        <h3 style="font-size: 11px; font-weight: 900; opacity: 0.5; margin-bottom: 20px; letter-spacing: 2px;"><i class="fas fa-volume-up" style="margin-right:8px; color:#ffb7c5;"></i>${t('lang')==='es'?'VOLUMEN SISTEMA':'SYSTEM VOLUME'}</h3>
+                        <label style="font-weight: 900; color: #ffb7c5; font-size: 28px; margin-bottom: 12px; display: block;"><span id="volVal">${Math.round(vol * 100)}%</span></label>
+                        <input type="range" id="volRange" min="0" max="100" value="${Math.round(vol * 100)}" style="width: 100%; accent-color: #ffb7c5; cursor: pointer;" oninput="document.getElementById('volVal').innerText = this.value + '%'; clickAudio.volume = this.value/100; clickAudio.currentTime=0; clickAudio.play().catch(()=>{})">
+                        <div style="display:flex; justify-content:space-between; font-size:10px; opacity:0.4; margin-top:5px;"><span>0%</span><span>100%</span></div>
                     </div>
 
                     <!-- LANGUAGE -->   
@@ -700,8 +710,10 @@ document.addEventListener('mousedown', (e) => {
 
         document.getElementById('saveGlobal')?.addEventListener('click', () => {
             const ramVal = document.getElementById('ramRange').value;
+            const volVal = document.getElementById('volRange').value / 100;
             const javaVal = document.getElementById('javaPath').value;
             localStorage.setItem('maxRam', ramVal);
+            localStorage.setItem('sysVolume', volVal);
             if (javaVal.trim()) localStorage.setItem('javaPath', javaVal.trim());
             else localStorage.removeItem('javaPath');
             alert('Settings saved! Launcher will apply changes on next play.');
