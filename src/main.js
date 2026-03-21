@@ -990,14 +990,18 @@ echo ======================================================
 echo ACTUALIZADOR FINAL - PREPARANDO NUEVA VERSION
 echo ======================================================
 echo.
-echo [1/3] Limpiando procesos bloqueantes...
+echo [1/4] Limpiando procesos bloqueantes...
 taskkill /F /PID ${process.pid} /T > nul 2>&1
 taskkill /F /IM "${exeName}" /T > nul 2>&1
 taskkill /F /IM "LosPapus*" /T > nul 2>&1
 taskkill /F /IM "electron*" /T > nul 2>&1
 timeout /t 5 /nobreak > nul
 echo.
-echo [2/3] Sobrescribiendo archivos base...
+echo [2/4] Eliminando app.asar viejo (evita conflicto de versiones)...
+if exist "${appPath}\\resources\\app.asar" del /F /Q "${appPath}\\resources\\app.asar" > nul 2>&1
+if exist "${appPath}\\resources\\app.asar.unpacked" rd /S /Q "${appPath}\\resources\\app.asar.unpacked" > nul 2>&1
+echo.
+echo [3/4] Sobrescribiendo archivos base...
 robocopy "${sourcePath}" "${appPath}" /E /MOVE /IS /IT /MT /R:5 /W:2 /LOG:"%TEMP%\\DEBUG_ACTUALIZACION_ROBO.txt" /TEE
 if %ERRORLEVEL% GEQ 8 (
     color 4f
@@ -1005,7 +1009,7 @@ if %ERRORLEVEL% GEQ 8 (
     pause
 )
 echo.
-echo [3/3] Reiniciando launcher en la nueva version...
+echo [4/4] Reiniciando launcher en la nueva version...
 start "" "${process.execPath}"
 echo.
 echo ======================================================
