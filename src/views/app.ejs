@@ -15,7 +15,7 @@
             try {
                 logOTA('Checking for Remote Core (Hot Update)...');
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout for stability
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
                 
                 const response = await fetch(REMOTE_URL, { signal: controller.signal });
                 clearTimeout(timeoutId);
@@ -30,7 +30,7 @@
                 document.head.appendChild(script);
                 logOTA('HOT UPDATE APPLIED! Core logic is now LIVE 🚀');
             } catch (e) {
-                console.warn('[OTA] Remote fetch failed. Using local core.', e.message);
+                console.warn('[OTA] Remote fetch failed or timed out. Using fallback local core.', e.message);
                 const script = document.createElement('script');
                 script.id = 'app-core-script';
                 script.src = LOCAL_JS;
