@@ -255,7 +255,7 @@ document.addEventListener('mousedown', (e) => {
             document.getElementById('ota-close-banner').onclick = () => { banner.style.animation = 'slideUp 0.5s ease-in forwards'; setTimeout(() => banner.remove(), 500); };
         });
 
-        // 4. GUI INITIALIZATION (SPLASH / HOT RELOAD)
+        // 4. GUI INITIALIZATION (SPLASH)
         if (!window.CORE_INITIALIZED) {
             window.CORE_INITIALIZED = true;
             const preloader = document.getElementById('preloader');
@@ -276,11 +276,7 @@ document.addEventListener('mousedown', (e) => {
             }
         } else {
             console.log('UI: HOT UPDATE DETECTED - Re-linking core logic...');
-            window.updateGlobalUI();
         }
-
-        // 5. START DEFAULT VIEW
-        renderPlayTab();
 
     // INITIALIZATION
     const savedVersion = '1.20.1';
@@ -1343,6 +1339,10 @@ document.addEventListener('mousedown', (e) => {
         }
         console.log('UI: Game Launched.');
     });
+
+    // 5. FINAL STARTUP CALLS
+    window.updateGlobalUI();
+    window.renderPlayTab();
 
 }; // End of initCore
 
