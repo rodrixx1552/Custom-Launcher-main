@@ -64,6 +64,8 @@ window.playClick = () => {
     try {
         const audio = document.getElementById('clickAudio');
         if (audio) {
+            const savedVol = localStorage.getItem('sysVolume') || '0.8';
+            audio.volume = parseFloat(savedVol);
             audio.currentTime = 0;
             audio.play().catch(e => {});
         }
@@ -94,6 +96,12 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                 return translations[currentLang][key] || key;
             };
             console.log('UI: Core data loaded');
+            // Apply Global Sound Settings
+            const audio = document.getElementById('clickAudio');
+            if (audio) {
+                const savedVol = localStorage.getItem('sysVolume') || '0.8';
+                audio.volume = parseFloat(savedVol);
+            }
         } catch (e) {
             console.error('UI: Failed to load core data:', e);
         }
