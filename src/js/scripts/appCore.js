@@ -46,19 +46,45 @@ document.addEventListener('mousedown', (e) => {
     var initCore = () => {
         console.log('UI: Core Initializing...');
         
+        if (!window.electronAPI) {
+            console.error('CRITICAL: electronAPI not found!');
+            if (window.showModal) window.showModal('SYSTEM ERROR', 'window.electronAPI is undefined. Preload script failed.', null, true);
+            else alert('SYSTEM ERROR: window.electronAPI is undefined. Preload script failed.');
+            return;
+        }
+
+        // LOAD DATA REGARDLESS OF RELOAD STATUS
+        let settings, translations;
+        try {
+            settings = window.electronAPI.getSettings();
+            translations = window.electronAPI.getTranslations();
+            const currentLang = localStorage.getItem('lang') || 'es';
+            window.t = (key) => {
+                if (!translations || !translations[currentLang]) return key;
+                return translations[currentLang][key] || key;
+            };
+            console.log('UI: Core data loaded');
+        } catch (e) {
+            console.error('UI: Failed to load core data:', e);
+        }
+
         if (window.CORE_INITIALIZED) {
             console.log('UI: HOT UPDATE DETECTED - Re-linking core logic...');
             window.updateGlobalUI();
+            
             // Re-render current tab if possible
             const activeTab = document.querySelector('.sidebar-nav .nav-item.active');
             if (activeTab) {
-                const tabName = activeTab.getAttribute('data-tab') || activeTab.querySelector('span')?.innerText.toLowerCase();
-                if (tabName === 'play') window.renderPlayTab();
-                else if (tabName === 'accounts') window.renderAccountsTab();
-                else if (tabName === 'skins') window.renderSkinsTab();
-                else if (tabName === 'settings') window.renderSettingsTab();
-                else if (tabName === 'mods' || tabName === 'modpack') window.renderModsTab();
-                else if (tabName === 'community') window.renderCommunityTab();
+                const spanLabel = activeTab.querySelector('span')?.innerText.toLowerCase();
+                const dataTab = activeTab.getAttribute('data-tab');
+                const tab = dataTab || spanLabel;
+                
+                if (tab === 'play' || tab === 'jugar') window.renderPlayTab();
+                else if (tab === 'accounts' || tab === 'cuentas') window.renderAccountsTab();
+                else if (tab === 'skins') window.renderSkinsTab();
+                else if (tab === 'settings' || tab === 'configuración') window.renderSettingsTab();
+                else if (tab === 'mods') window.renderModsTab();
+                else if (tab === 'community') window.renderCommunityTab();
             } else {
                 window.renderPlayTab();
             }
@@ -102,20 +128,6 @@ document.addEventListener('mousedown', (e) => {
                 preloader.remove(); // Clean up DOM
             }, 1200);
         }, 3500); // 3.5s splash visibility
-    }
-    if (!window.electronAPI) {
-        console.error('CRITICAL: electronAPI not found!');
-        alert('SYSTEM ERROR: window.electronAPI is undefined. Preload script failed.');
-        return;
-    }
-
-    let settings, translations;
-    try {
-        settings = window.electronAPI.getSettings();
-        translations = window.electronAPI.getTranslations();
-        console.log('UI: Core data loaded');
-    } catch (e) {
-        console.error('UI: Failed to load basic settings/translations:', e);
     }
 
     const mainContent = document.getElementById('main-content');
