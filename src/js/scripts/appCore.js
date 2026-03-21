@@ -44,9 +44,28 @@ document.addEventListener('mousedown', (e) => {
 }, true); // Use capture phase for maximum reliability
 
     var initCore = () => {
-        if (window.CORE_INITIALIZED) return;
-        window.CORE_INITIALIZED = true;
         console.log('UI: Core Initializing...');
+        
+        if (window.CORE_INITIALIZED) {
+            console.log('UI: HOT UPDATE DETECTED - Re-linking core logic...');
+            window.updateGlobalUI();
+            // Re-render current tab if possible
+            const activeTab = document.querySelector('.sidebar-nav .nav-item.active');
+            if (activeTab) {
+                const tabName = activeTab.getAttribute('data-tab') || activeTab.querySelector('span')?.innerText.toLowerCase();
+                if (tabName === 'play') window.renderPlayTab();
+                else if (tabName === 'accounts') window.renderAccountsTab();
+                else if (tabName === 'skins') window.renderSkinsTab();
+                else if (tabName === 'settings') window.renderSettingsTab();
+                else if (tabName === 'mods' || tabName === 'modpack') window.renderModsTab();
+                else if (tabName === 'community') window.renderCommunityTab();
+            } else {
+                window.renderPlayTab();
+            }
+            return;
+        }
+        
+        window.CORE_INITIALIZED = true;
         
         // PRELOADER FADE-OUT
     const preloader = document.getElementById('preloader');

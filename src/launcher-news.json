@@ -2,9 +2,14 @@
     "title": "Staff Broadcast",
     "posts": [
         {
+            "date": "20/03/2026",
+            "tag": "UPDATE",
+            "text": "Versión 0.2.2 estable ya está disponible. Incluye importantes correcciones en el renderizado de la UI y el sistema de hot-update."
+        },
+        {
             "date": "18/03/2026",
             "tag": "UPDATE",
-            "text": "Versión 0.1.9 liberada. Sistema de actualización inteligente de mods activado. ¡Más rápido que nunca!"
+            "text": "Versión 0.2.1 liberada. Sistema de actualización inteligente de mods activado. ¡Más rápido que nunca!"
         },
         {
             "date": "17/03/2026",

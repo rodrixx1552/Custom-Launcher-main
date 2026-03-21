@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MilleniumMods/Custom-Launcher.git"
+    "url": "git+https://github.com/rodrixx1552/Custom-Launcher-main.git"
   },
   "keywords": [
     "electron",
@@ -21,13 +21,13 @@
     "custom-launcher"
   ],
   "author": "LosPapus Lover Team",
-  "launcher_version": "0.2.1",
-  "latest_launcher_version": "0.2.1",
+  "launcher_version": "0.2.2",
+  "latest_launcher_version": "0.2.2",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/MilleniumMods/Custom-Launcher/issues"
+    "url": "https://github.com/rodrixx1552/Custom-Launcher-main/issues"
   },
-  "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.2.1/LosPapus-v0.2.1.zip",
+  "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.2.2/LosPapus-v0.2.2.zip",
   "devDependencies": {
     "electron": "^19.0.9",
     "electron-builder": "^26.8.1",
