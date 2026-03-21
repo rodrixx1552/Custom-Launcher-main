@@ -294,17 +294,23 @@ var initCore = () => {
     });
 
     // F. FINAL STARTUP
-    if (!window.CORE_INITIALIZED) {
-        window.CORE_INITIALIZED = true;
-        const preloader = document.getElementById('preloader');
-        if (preloader) {
-            setTimeout(() => {
-                preloader.style.opacity = '0';
-                setTimeout(() => preloader.remove(), 1000);
-            }, 3000);
+    try {
+        if (!window.CORE_INITIALIZED) {
+            window.CORE_INITIALIZED = true;
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                setTimeout(() => {
+                    preloader.style.opacity = '0';
+                    setTimeout(() => preloader.remove(), 800);
+                }, 500);
+            }
         }
+        renderPlayTab();
+    } catch (e) {
+        console.error('CRITICAL STARTUP ERROR:', e);
+        if (window.showModal) window.showModal('STARTUP ERROR', e.message, null, true);
+        else alert('STARTUP ERROR: ' + e.message);
     }
-    renderPlayTab();
 };
 
 // 3. BOOTSTRAP
