@@ -1257,16 +1257,23 @@ document.addEventListener('mousedown', (e) => {
     window.electronAPI.onNewsLoaded((data) => {
         const feed = document.getElementById('news-feed');
         if (!feed || !data || !data.posts) return;
+        
         const tagColors = { 'UPDATE': '#ff8c4a', 'EVENT': '#ffb7c5', 'WELCOME': '#4cd137', 'WARN': '#e84118', 'INFO': '#7289da' };
-        feed.innerHTML = data.posts.map(post => {
+        
+        if (data.posts.length === 0) {
+            feed.innerHTML = '<div style="text-align: center; opacity: 0.3; padding-top: 40px; font-size: 10px;">NO NEWS AVAILABLE</div>';
+            return;
+        }
+
+        feed.innerHTML = data.posts.map((post, idx) => {
             const color = tagColors[post.tag?.toUpperCase()] || '#ffb7c5';
             return `
-                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,183,197,0.07);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 8px; font-weight: 900; letter-spacing: 2px; background: ${color}22; color: ${color}; padding: 2px 8px; border-radius: 6px;">${post.tag || 'NEWS'}</span>
-                        <span style="font-size: 9px; opacity: 0.35; font-weight: 900;">${post.date || ''}</span>
+                <div class="news-item-premium" style="margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); animation: slideRightFade 0.4s ease forwards; animation-delay: ${idx * 0.1}s; opacity: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 7px; font-weight: 950; letter-spacing: 2px; background: ${color}; color: #000; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">${post.tag || 'NEWS'}</span>
+                        <span style="font-size: 9px; opacity: 0.4; font-weight: 900; font-family: 'monospace';">${post.date || ''}</span>
                     </div>
-                    <p style="font-size: 11px; line-height: 1.7; opacity: 0.8; margin: 0;">${post.text}</p>
+                    <p style="font-size: 11px; line-height: 1.6; opacity: 0.85; margin: 0; font-weight: 500; letter-spacing: 0.3px;">${post.text}</p>
                 </div>`;
         }).join('');
     });
