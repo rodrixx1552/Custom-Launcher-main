@@ -17,31 +17,50 @@ window.onunhandledrejection = function(event) {
     }
 };
 
+// DEFINE GLOBAL HANDLERS EARLY TO PREVENT "UNDEFINED" ERRORS
+window.startMicrosoftLogin = () => {
+    console.log('UI: Starting MS Login');
+    const btn = document.getElementById('microsoftLogin');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> AUTHENTICATING...';
+        btn.disabled = true;
+    }
+    if (window.electronAPI && window.electronAPI.loginMicrosoft) {
+        window.electronAPI.loginMicrosoft();
+    } else {
+        alert('CRITICAL: loginMicrosoft not available in electronAPI');
+    }
+};
+
+window.startOfflineLogin = () => {
+    console.log('UI: Starting Offline Login');
+    if (typeof window.showModal === 'function') {
+        window.showModal(window.t ? window.t('offline_login') : 'OFFLINE LOGIN', 'ENTER PILOT NAME', (name) => {
+            if (name && name.trim().length > 0) {
+                window.electronAPI.addOfflineAccount(name.trim());
+            }
+        });
+    } else {
+        const name = prompt('ENTER PILOT NAME:');
+         if (name && name.trim().length > 0) {
+            window.electronAPI.addOfflineAccount(name.trim());
+        }
+    }
+};
+
+window.setActive = (uuid) => {
+    if (!window.electronAPI) return;
+    window.electronAPI.onAccountsListOnce((accounts) => {
+        const acc = accounts.find(a => a.uuid === uuid);
+        if (acc) {
+            localStorage.setItem('activeAccount', JSON.stringify(acc));
+            location.reload();
+        }
+    });
+    window.electronAPI.getAccounts();
+};
+
 console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
-
-window.alert = (msg) => {
-    if (window.showModal) window.showModal('SYSTEM MESSAGE', msg, null, true);
-    else console.warn('ALERT:', msg);
-};
-
-// AUDIO SYSTEM: Universal Mechanical Click 🔊
-var CLICK_SOUND_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/click.mp3';
-var clickAudio = new Audio(CLICK_SOUND_URL);
-window.clickAudio = clickAudio; // Ensure global visibility for oninput handlers
-clickAudio.preload = 'auto'; // Force browser to cache it ASAP
-window.playClick = () => {
-    console.log('[AUDIO] 🔊 System signal issued.');
-    const sysVol = parseFloat(localStorage.getItem('sysVolume') || '0.8');
-    clickAudio.currentTime = 0;
-    clickAudio.volume = sysVol;
-    clickAudio.play().catch(e => console.warn('[AUDIO] 🚫 Blocked:', e.message));
-};
-
-// GLOBAL LISTENER - AT THE VERY TOP
-document.addEventListener('mousedown', (e) => {
-    const el = e.target.closest('button, .nav-item, .v-opt, .premium-card');
-    if (el) window.playClick();
-}, true); // Use capture phase for maximum reliability
 
     var initCore = () => {
         console.log('UI: Core Initializing...');
@@ -1383,43 +1402,15 @@ document.addEventListener('mousedown', (e) => {
             input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); };
         }
     };
-}; // End of initCore
-
-// AUTO-INIT CHECK: Ensures UI loads even if DOMContentLoaded already fired (needed for Hot Update)
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initCore);
-    } else {
-        initCore();
+    } catch (e) {
+        console.error('CRITICAL UI INIT ERROR:', e);
+        if (window.electronAPI) window.electronAPI.logError('UI INIT CRASH: ' + e.message);
     }
-
-// ACCOUNT LOGIC
-
-window.startMicrosoftLogin = () => {
-    console.log('UI: Starting MS Login');
-    const btn = document.getElementById('microsoftLogin');
-    if (btn) {
-        btn.innerHTML = '<i class="fas fa-sync fa-spin"></i> AUTHENTICATING...';
-        btn.disabled = true;
-    }
-    window.electronAPI.loginMicrosoft();
 };
 
-window.startOfflineLogin = () => {
-    console.log('UI: Starting Offline Login');
-    window.showModal(t('offline_login'), 'ENTER PILOT NAME', (name) => {
-        if (name && name.trim().length > 0) {
-            window.electronAPI.addOfflineAccount(name.trim());
-        }
-    });
-};
-
-window.setActive = (uuid) => {
-    window.electronAPI.onAccountsListOnce((accounts) => {
-        const acc = accounts.find(a => a.uuid === uuid);
-        if (acc) {
-            localStorage.setItem('activeAccount', JSON.stringify(acc));
-            location.reload();
-        }
-    });
-    window.electronAPI.getAccounts();
-};
+// AUTO-INIT CHECK
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCore);
+} else {
+    initCore();
+}
