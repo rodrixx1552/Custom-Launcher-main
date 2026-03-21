@@ -489,6 +489,16 @@
     transform: scale(1);
   }
 }
+@keyframes slideRightFade {
+  from {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 @keyframes glowRotate {
   0% {
     transform: translate(-50%, -50%) rotate(0deg);
