@@ -328,7 +328,9 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         `;
         initPlayListeners();
         window.updateGlobalUI();
-        window.electronAPI.pingServer('sprat.aternos.host:44481');
+        window.electronAPI.getServerIp().then((ip) => {
+            window.electronAPI.pingServer(ip);
+        });
         // Fetch news for the panel
         window.electronAPI.fetchNews();
         

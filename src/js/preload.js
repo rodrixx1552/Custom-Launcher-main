@@ -43,7 +43,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     startAutoUpdate: (url) => ipcRenderer.send('start-auto-update', { url }),
     onAutoUpdateProgress: (callback) => { ipcRenderer.removeAllListeners('auto-update-progress'); ipcRenderer.on('auto-update-progress', (event, data) => callback(data)) },
     onAutoUpdateError: (callback) => { ipcRenderer.removeAllListeners('auto-update-error'); ipcRenderer.on('auto-update-error', (event, error) => callback(error)) },
-    checkModsStatus: () => ipcRenderer.invoke('check-mods-status')
+    checkModsStatus: () => ipcRenderer.invoke('check-mods-status'),
+    getServerIp: () => ipcRenderer.invoke('get-server-ip')
 });
 
 window.addEventListener("DOMContentLoaded", () => {

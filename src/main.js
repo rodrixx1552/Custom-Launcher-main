@@ -676,6 +676,25 @@ const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-
 const REMOTE_NEWS_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/launcher-news.json';
 const MODS_MANIFEST_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/mods.json';
 const MODS_BASE_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/mods/';
+const CONFIG_PATH = path.join(__dirname, 'launcher-config.json');
+
+ipcMain.handle('get-server-ip', async () => {
+    try {
+        const config = await getRemoteConfig();
+        if (config && config.server_ip) return config.server_ip;
+    } catch (e) {
+        console.warn('Failed to fetch remote server_ip', e);
+    }
+    try {
+        if (fs.existsSync(CONFIG_PATH)) {
+            const localConfig = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+            if (localConfig && localConfig.server_ip) return localConfig.server_ip;
+        }
+    } catch (e) {
+        console.warn('Failed to fetch local server_ip', e);
+    }
+    return 'sprat.aternos.host:44481';
+});
 
 async function getRemoteConfig() {
     try {
