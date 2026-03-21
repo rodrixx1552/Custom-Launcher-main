@@ -1040,21 +1040,102 @@ document.addEventListener('mousedown', (e) => {
         if (playBtn) playBtn.disabled = false;
         alert('UPDATE ERROR: ' + err);
     });
+    // GAME LAUNCH EVENTS: CINEMATIC SEQUENCE
+    const injectLaunchStyles = () => {
+        if (document.getElementById('launch-sequence-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'launch-sequence-styles';
+        style.innerText = `
+            #launch-overlay {
+                position: fixed; inset: 0; z-index: 100000;
+                background: radial-gradient(circle at center, #1a0b16 0%, #000 100%);
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                opacity: 0; visibility: hidden; transition: all 1s ease;
+            }
+            #launch-overlay.active { opacity: 1; visibility: visible; }
+            .launch-logo-box { position: relative; margin-bottom: 50px; }
+            .launch-logo-img {
+                width: 480px; max-width: 80vw;
+                filter: drop-shadow(0 0 30px rgba(255, 183, 197, 0.3));
+                animation: launchLogoFloat 4s infinite ease-in-out;
+            }
+            .launch-sequence-active .launch-logo-img {
+                animation: launchLogoPulse 1.5s infinite alternate ease-in-out, launchLogoShake 0.1s infinite alternate;
+                filter: drop-shadow(0 0 60px rgba(255, 183, 197, 0.6));
+            }
+            @keyframes launchLogoPulse {
+                from { transform: scale(1); filter: drop-shadow(0 0 30px rgba(255, 183, 197, 0.4)); }
+                to { transform: scale(1.05); filter: drop-shadow(0 0 100px rgba(255, 183, 197, 0.8)); }
+            }
+            @keyframes launchLogoShake {
+                0% { transform: translate(1px, 1px) scale(1.05); }
+                50% { transform: translate(-1px, -1px) scale(1.05); }
+                100% { transform: translate(1px, -1px) scale(1.05); }
+            }
+            .launch-status-text {
+                font-family: 'Outfit', sans-serif; font-weight: 900; letter-spacing: 5px;
+                color: #ffb7c5; margin-top: 20px; text-transform: uppercase;
+                text-shadow: 0 0 15px rgba(255, 183, 197, 0.5); font-size: 14px;
+            }
+            .launch-progress-wrap-new {
+                width: 400px; height: 4px; background: rgba(255,255,255,0.05);
+                border-radius: 10px; margin-top: 25px; overflow: hidden;
+            }
+            .launch-progress-bar-new {
+                width: 0%; height: 100%; background: linear-gradient(90deg, #ffb7c5, #ff8c4a);
+                box-shadow: 0 0 15px #ffb7c5; transition: width 0.4s ease;
+            }
+            .ui-fade-out { opacity: 0 !important; pointer-events: none !important; transition: opacity 1s ease !important; }
+        `;
+        document.head.appendChild(style);
+    };
 
-    // GAME LAUNCH EVENTS
-    window.electronAPI.onLaunchProgress((data) => {
-        const btn = document.getElementById('play-btn');
-        const bar = document.getElementById('launch-progress-bar');
-        const label = document.getElementById('launch-progress-label');
-        const wrap = document.getElementById('launch-progress-wrap');
-        if (wrap) wrap.style.display = 'block';
-        if (btn) {
-            let msg = data.step || data.type || 'LOADING...';
-            if (msg.includes('forge')) msg = 'FORGE WORKSPACE';
-            if (data.task) msg = `${data.task} ${data.total ? Math.floor((data.downloaded / data.total) * 100) + '%' : ''}`;
-            btn.innerText = msg.toUpperCase();
+    const toggleLaunchUI = (active) => {
+        injectLaunchStyles();
+        let overlay = document.getElementById('launch-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'launch-overlay';
+            overlay.innerHTML = `
+                <div class="launch-logo-box">
+                    <img src="../assets/los_papus/logo.png" class="launch-logo-img">
+                </div>
+                <div class="launch-status-text" id="launch-status">INICIALIZANDO...</div>
+                <div class="launch-progress-wrap-new">
+                    <div class="launch-progress-bar-new" id="launch-bar-inner-new"></div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
         }
-        // Update progress bar
+
+        const root = document.getElementById('root');
+        const userHub = document.getElementById('user-hub');
+        
+        if (active) {
+            overlay.classList.add('active');
+            document.body.classList.add('launch-sequence-active');
+            if (root) root.classList.add('ui-fade-out');
+            if (userHub) userHub.classList.add('ui-fade-out');
+        } else {
+            overlay.classList.remove('active');
+            document.body.classList.remove('launch-sequence-active');
+            if (root) root.classList.remove('ui-fade-out');
+            if (userHub) userHub.classList.remove('ui-fade-out');
+        }
+    };
+
+    window.electronAPI.onLaunchProgress((data) => {
+        toggleLaunchUI(true);
+        const status = document.getElementById('launch-status');
+        const bar = document.getElementById('launch-bar-inner-new');
+        
+        if (status) {
+            let msg = data.step || data.type || 'CARGANDO...';
+            if (msg.includes('forge')) msg = 'PREPARANDO FORGE';
+            if (data.task) msg = `${data.task} ${data.total ? Math.floor((data.downloaded / data.total) * 100) + '%' : ''}`;
+            status.innerText = msg.toUpperCase();
+        }
+
         if (bar) {
             let pct = 10;
             if (data.downloaded && data.total) pct = Math.min(95, Math.floor((data.downloaded / data.total) * 100));
@@ -1062,15 +1143,11 @@ document.addEventListener('mousedown', (e) => {
             else if (data.step && data.step.includes('PREPARING')) pct = 30;
             bar.style.width = pct + '%';
         }
-        if (label && btn) label.innerText = btn.innerText;
     });
 
     window.electronAPI.onLaunchFinished(() => {
+        toggleLaunchUI(false);
         const btn = document.getElementById('play-btn');
-        const bar = document.getElementById('launch-progress-bar');
-        const wrap = document.getElementById('launch-progress-wrap');
-        if (bar) bar.style.width = '100%';
-        setTimeout(() => { if (wrap) wrap.style.display = 'none'; if (bar) bar.style.width = '0%'; }, 1200);
         if (btn) {
             btn.innerText = t('play');
             btn.disabled = false;
@@ -1139,9 +1216,8 @@ document.addEventListener('mousedown', (e) => {
     });
 
     window.electronAPI.onLaunchError((err) => {
+        toggleLaunchUI(false);
         const btn = document.getElementById('play-btn');
-        const wrap = document.getElementById('launch-progress-wrap');
-        if (wrap) wrap.style.display = 'none';
         if (btn) {
             btn.innerText = t('play');
             btn.disabled = false;
