@@ -60,6 +60,16 @@ window.setActive = (uuid) => {
     window.electronAPI.getAccounts();
 };
 
+window.playClick = () => {
+    try {
+        const audio = document.getElementById('clickAudio');
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(e => {});
+        }
+    } catch(e) {}
+};
+
 console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
 
     var initCore = () => {
@@ -977,26 +987,33 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         `;
     };
 
-    // SIDEBAR NAVIGATION
-    const navItems = document.querySelectorAll('.sidebar .nav-item');
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            navItems.forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
-            window.playClick();
-            
-            const spanText = item.querySelector('span')?.innerText.toLowerCase();
-            const dataTab = item.getAttribute('data-tab');
-            const tab = dataTab || spanText;
+    // SIDEBAR NAVIGATION & WINDOW CONTROLS (Run once)
+    if (!window.NAV_INITIALIZED) {
+        window.NAV_INITIALIZED = true;
+        const navItems = document.querySelectorAll('.sidebar .nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                if (typeof window.playClick === 'function') window.playClick();
+                
+                const spanText = item.querySelector('span')?.innerText.toLowerCase();
+                const dataTab = item.getAttribute('data-tab');
+                const tab = dataTab || spanText;
 
-            if (tab === 'play' || tab === t('play').toLowerCase()) renderPlayTab();
-            else if (tab === 'accounts' || tab === t('accounts').toLowerCase()) renderAccountsTab();
-            else if (tab === 'skins' || tab === t('skins').toLowerCase()) renderSkinsTab();
-            else if (tab === 'settings' || tab === t('settings').toLowerCase()) renderSettingsTab();
-            else if (tab === 'installations' || tab === 'mods' || tab === 'modpack') renderModsTab();
-            else if (tab === 'community' || tab === t('community').toLowerCase()) renderCommunityTab();
+                if (tab === 'play' || tab === t('play').toLowerCase()) renderPlayTab();
+                else if (tab === 'accounts' || tab === t('accounts').toLowerCase()) renderAccountsTab();
+                else if (tab === 'skins' || tab === t('skins').toLowerCase()) renderSkinsTab();
+                else if (tab === 'settings' || tab === t('settings').toLowerCase()) renderSettingsTab();
+                else if (tab === 'installations' || tab === 'mods' || tab === 'modpack') renderModsTab();
+                else if (tab === 'community' || tab === t('community').toLowerCase()) renderCommunityTab();
+            });
         });
-    });
+
+        // WINDOW CONTROLS
+        document.getElementById('frameBtn_close')?.addEventListener('click', () => window.electronAPI.closeWindow());
+        document.getElementById('frameBtn_minimize')?.addEventListener('click', () => window.electronAPI.minimizeWindow());
+    }
 
     // PING HANDLER
     window.electronAPI.onPingResult((data) => {
@@ -1006,7 +1023,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         const pill = document.querySelector('.server-status-pill');
         
         if (pill) {
-            // Pill is inside the card, we don't need a separate title here as the whole card handles it
+            // Pill is inside the card
         }
 
         if (pingText && dot) {
@@ -1021,10 +1038,6 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             }
         }
     });
-
-    // WINDOW CONTROLS
-    document.getElementById('frameBtn_close')?.addEventListener('click', () => window.electronAPI.closeWindow());
-    document.getElementById('frameBtn_minimize')?.addEventListener('click', () => window.electronAPI.minimizeWindow());
 
     // STARTUP
     setLang(currentLang); 
