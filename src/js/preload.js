@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onFileSelected: (callback) => { ipcRenderer.removeAllListeners('file-selected'); ipcRenderer.on('file-selected', (event, data) => callback(data)) },
     getSettings: () => settings,
     getTranslations: () => require('./json/lang.json'),
+    getModTranslations: () => ipcRenderer.invoke('get-mod-translations'),
     uploadSkin: (data) => ipcRenderer.send('upload-skin', data),
     onSkinUploadSuccess: (callback) => { ipcRenderer.removeAllListeners('skin-upload-success'); ipcRenderer.on('skin-upload-success', (event) => callback()) },
     onSkinUploadError: (callback) => { ipcRenderer.removeAllListeners('skin-upload-error'); ipcRenderer.on('skin-upload-error', (event, data) => callback(data)) },

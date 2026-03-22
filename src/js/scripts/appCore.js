@@ -17,6 +17,196 @@ window.onunhandledrejection = function(event) {
     }
 };
 
+// --- MÓDULO NEURAL SOUNDSCAPE 🌌🔊 ---
+class NeuralSoundscape {
+    constructor() {
+        this.ctx = null;
+        this.ambientOsc = null;
+        this.ambientGain = null;
+        this.lfo = null;
+        this.introAudio = null; // Para música real
+    }
+
+    init() {
+        if (this.ctx) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    playIntro(url = '../assets/intro.mp3') {
+        try {
+            this.introAudio = new Audio(url);
+            this.introAudio.volume = 0;
+            this.introAudio.loop = true;
+            const volume = parseFloat(localStorage.getItem('sysVolume') || '0.8') * 0.4;
+            this.introAudio.play().catch(e => console.warn('Audio Intro blocked or missing:', e));
+            
+            // Fade in gradual
+            let v = 0;
+            const fadeIn = setInterval(() => {
+                v += 0.05;
+                if (v >= volume) { v = volume; clearInterval(fadeIn); }
+                this.introAudio.volume = v;
+            }, 100);
+        } catch(e) {}
+    }
+
+    stopIntro() {
+        if (!this.introAudio) return;
+        // Fade out suave
+        let v = this.introAudio.volume;
+        const fadeOut = setInterval(() => {
+            v -= 0.05;
+            if (v <= 0) {
+                v = 0;
+                clearInterval(fadeOut);
+                this.introAudio.pause();
+                this.introAudio = null;
+            } else {
+                this.introAudio.volume = v;
+            }
+        }, 100);
+    }
+
+    startAmbient() {
+        this.init();
+        if (this.ambientOsc) return;
+
+        const volume = parseFloat(localStorage.getItem('sysVolume') || '0.8') * 0.15; // Muy sutil
+        this.ambientGain = this.ctx.createGain();
+        this.ambientGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        this.ambientGain.gain.linearRampToValueAtTime(volume, this.ctx.currentTime + 4);
+        this.ambientGain.connect(this.ctx.destination);
+
+        // Filtro paso bajo para el viento espacial
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(150, this.ctx.currentTime);
+        filter.Q.setValueAtTime(5, this.ctx.currentTime);
+        filter.connect(this.ambientGain);
+
+        // Oscilador base (Drone)
+        this.ambientOsc = this.ctx.createOscillator();
+        this.ambientOsc.type = 'sawtooth';
+        this.ambientOsc.frequency.setValueAtTime(40, this.ctx.currentTime); // Frecuencia muy baja
+        this.ambientOsc.connect(filter);
+        this.ambientOsc.start();
+
+        // LFO para el efecto de "respiración" del viento
+        this.lfo = this.ctx.createOscillator();
+        this.lfo.type = 'sine';
+        this.lfo.frequency.setValueAtTime(0.1, this.ctx.currentTime);
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.setValueAtTime(80, this.ctx.currentTime);
+        this.lfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency);
+        this.lfo.start();
+    }
+
+    stopAmbient() {
+        if (!this.ambientGain) return;
+        this.ambientGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 2);
+        setTimeout(() => {
+            if (this.ambientOsc) { this.ambientOsc.stop(); this.ambientOsc = null; }
+            if (this.lfo) { this.lfo.stop(); this.lfo = null; }
+        }, 2000);
+    }
+
+    playLaunchSequence() {
+        this.init();
+        const volume = parseFloat(localStorage.getItem('sysVolume') || '0.8') * 0.5;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0, this.ctx.currentTime);
+        g.gain.linearRampToValueAtTime(volume, this.ctx.currentTime + 0.5);
+        g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 6);
+        g.connect(this.ctx.destination);
+
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 4);
+        osc.connect(g);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 6);
+        
+        // Efecto de ruido blanco (Steam/Engine)
+        const bufferSize = 2 * this.ctx.sampleRate;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(1000, this.ctx.currentTime);
+        noiseFilter.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 4);
+        
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        noiseGain.gain.linearRampToValueAtTime(volume * 0.3, this.ctx.currentTime + 1);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 5);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.ctx.destination);
+        noise.start();
+    }
+}
+
+window.Soundscape = new NeuralSoundscape();
+
+// --- PROTOCOLO PAPU-JARVIS (SISTEMA DE VOZ) ---
+window.speak = (text) => {
+    return new Promise((resolve) => {
+        try {
+            const volume = parseFloat(localStorage.getItem('sysVolume') || '0.8');
+            console.log('🤖 JARVIS (INICIANDO):', text);
+
+            const playNeuralVoice = (txt) => {
+                return new Promise((res, rej) => {
+                    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(txt)}&tl=es&client=tw-ob`;
+                    const audio = new Audio(url);
+                    audio.volume = volume;
+                    audio.onended = res;
+                    audio.onerror = rej;
+                    audio.play().catch(rej);
+                    // Seguridad: si tarda más de 6 segundos, resolver
+                    setTimeout(res, 6000);
+                });
+            };
+
+            const playSystemVoice = (txt) => {
+                return new Promise((res) => {
+                    if (!window.speechSynthesis) return res();
+                    window.speechSynthesis.cancel();
+                    const msg = new SpeechSynthesisUtterance(txt);
+                    const voices = window.speechSynthesis.getVoices();
+                    const preferredVoice = voices.find(v => v.lang.includes('es') && v.name.includes('Natural')) || voices.find(v => v.lang.includes('es') && v.name.includes('Google')) || voices.find(v => v.lang.includes('es'));
+                    
+                    if (preferredVoice) msg.voice = preferredVoice;
+                    msg.pitch = 0.9;
+                    msg.rate = 1.05;
+                    msg.volume = volume;
+                    msg.onend = res;
+                    window.speechSynthesis.speak(msg);
+                    // Seguridad: resolver si no dispara onend
+                    setTimeout(res, 5000);
+                });
+            };
+
+            playNeuralVoice(text)
+                .then(resolve)
+                .catch(() => {
+                    playSystemVoice(text).then(resolve);
+                });
+
+        } catch (e) { 
+            console.error('JARVIS ERROR:', e); 
+            resolve();
+        }
+    });
+};
+
 // DEFINE GLOBAL HANDLERS EARLY TO PREVENT "UNDEFINED" ERRORS
 window.startMicrosoftLogin = () => {
     console.log('UI: Starting MS Login');
@@ -54,7 +244,9 @@ window.setActive = (uuid) => {
         const acc = accounts.find(a => a.uuid === uuid);
         if (acc) {
             localStorage.setItem('activeAccount', JSON.stringify(acc));
-            location.reload();
+            window.speak(`Cambiando perfil a ${acc.name}. Preparando cabina.`).then(() => {
+                location.reload();
+            });
         }
     });
     window.electronAPI.getAccounts();
@@ -116,6 +308,9 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         if (!window.CORE_INITIALIZED) {
             window.CORE_INITIALIZED = true;
             
+            // INICIAR SONIDO CINEMÁTICO DE INTRO (Efecto Riser/Swell)
+            window.Soundscape.playIntro('https://cdn.pixabay.com/audio/2021/08/09/audio_823190f84a.mp3'); // Cinematic Logo Impact
+
             // ONE-TIME INITIALIZATION (SPLASH, HUD, ETC)
             const preloader = document.getElementById('preloader');
             const root = document.getElementById('root');
@@ -133,7 +328,36 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                     if (root) { root.style.transition = 'opacity 1.2s ease'; root.style.opacity = '1'; }
                     if (bgAnim) { bgAnim.style.transition = 'opacity 1.2s ease'; bgAnim.style.opacity = '1'; }
                     if (userHub) { userHub.style.transition = 'opacity 1.2s ease'; userHub.style.opacity = '1'; }
-                    setTimeout(() => { preloader.style.visibility = 'hidden'; preloader.remove(); }, 1200);
+                    setTimeout(() => { 
+                        preloader.style.visibility = 'hidden'; 
+                        preloader.remove(); 
+                        
+                        // PARAR INTRO Y COMENZAR JARVIS
+                        window.Soundscape.stopIntro();
+                        
+                        setTimeout(() => {
+                            // INICIAR PROTOCOLO JARVIS
+                            const greeted = sessionStorage.getItem('jarvis_greeted');
+                            if (!greeted) {
+                                const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
+                                const name = acc ? acc.name : 'Piloto';
+                                
+                                // Detección de primera vez y horario (Global)
+                                const firstTime = !localStorage.getItem('jarvis_has_entered');
+                                const hour = new Date().getHours();
+                                let timeGreeting = 'Buenos días';
+                                if (hour >= 12 && hour < 19) timeGreeting = 'Buenas tardes';
+                                else if (hour >= 19 || hour < 5) timeGreeting = 'Buenas noches';
+
+                                let msg = firstTime ? `Bienvenido, ${name}` : `${timeGreeting}, ${name}. Bienvenido de vuelta.`;
+                                
+                                window.speak(msg);
+                                
+                                sessionStorage.setItem('jarvis_greeted', 'true');
+                                localStorage.setItem('jarvis_has_entered', 'true');
+                            }
+                        }, 800); 
+                    }, 1200);
                 }, 3500); 
             }
         } else {
@@ -783,8 +1007,10 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             localStorage.setItem('sysVolume', volVal);
             if (javaVal.trim()) localStorage.setItem('javaPath', javaVal.trim());
             else localStorage.removeItem('javaPath');
-            alert('Settings saved! Launcher will apply changes on next play.');
-            location.reload();
+            
+            window.speak("Protocolo de configuración actualizado. Reiniciando sistemas.").then(() => {
+                location.reload();
+            });
         });
     };
 
@@ -844,7 +1070,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                 btn.style.opacity = '0.5';
             }
 
-                window.electronAPI.launchGame({
+            window.electronAPI.launchGame({
                     nick: acc.name,
                     version: selectedVersion,
                     maxRam: ram,
@@ -1191,7 +1417,8 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
 
     window.electronAPI.onLoginSuccess((acc) => {
         localStorage.setItem('activeAccount', JSON.stringify(acc));
-        location.reload();
+        window.speak(`Enlace neuronal establecido con ${acc.name}. Reiniciando interfaz.`);
+        setTimeout(() => location.reload(), 2000);
     });
 
     window.electronAPI.onLoginError((msg) => {
@@ -1330,6 +1557,13 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
     };
 
     window.electronAPI.onLaunchProgress((data) => {
+        // TRIGGER JARVIS ON START
+        if (!window.JARVIS_LAUNCHING) {
+             window.speak("Iniciando secuencia de lanzamiento. Buen viaje, Piloto.");
+             // window.Soundscape.playLaunchSequence(); // Desactivado por ahora a petición
+             window.Soundscape.stopAmbient(); // DETENER AMBIENTE
+             window.JARVIS_LAUNCHING = true;
+        }
         toggleLaunchUI(true);
         const status = document.getElementById('launch-status');
         const bar = document.getElementById('launch-bar-inner-new');
@@ -1445,6 +1679,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
 
     // ... (News and Login listeners moved up)
 
+
     // CUSTOM MODAL SYSTEM - PREMIUM REDESIGN 💎
     window.showModal = (title, content, callback, isAlert = false) => {
         // Remove existing modals before opening a new one
@@ -1500,6 +1735,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalConfirm').click(); };
         }
     };
+
     } catch (e) {
         console.error('CRITICAL UI INIT ERROR:', e);
         if (window.electronAPI) window.electronAPI.logError('UI INIT CRASH: ' + e.message);
