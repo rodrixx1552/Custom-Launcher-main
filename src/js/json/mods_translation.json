@@ -1,0 +1,17 @@
+{
+    "Better Animations Collection": {
+        "description": "Una colección de nuevas y mejores animaciones para los modelos del juego, haciendo que las criaturas se muevan de forma más realista."
+    },
+    "AppleSkin": {
+        "description": "Muestra información útil sobre el hambre y la saturación en la interfaz, incluyendo cuánto restaurará cada comida."
+    },
+    "Iris Shaders": {
+        "description": "Un mod de shaders moderno y de alto rendimiento compatible con Oculus, que permite usar paquetes de shaders con una velocidad increíble."
+    },
+    "Sodium": {
+        "description": "Un motor de renderizado de reemplazo para Minecraft que mejora enormemente las tasas de fotogramas (FPS) y reduce el tartamudeo."
+    },
+    "JourneyMap": {
+        "description": "Un mapa en tiempo real que registra tu mundo a medida que exploras. Puedes verlo en el juego como un minimapa o a pantalla completa."
+    }
+}

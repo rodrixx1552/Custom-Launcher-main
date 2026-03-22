@@ -899,17 +899,47 @@ ipcMain.on('get-mods-list', (event) => {
 
         const files = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
         const mods = files.map(filename => {
-            const stat = fs.statSync(path.join(modsPath, filename));
+            const fullPath = path.join(modsPath, filename);
+            const stat = fs.statSync(fullPath);
             const enabled = filename.endsWith('.jar');
             const baseName = filename.replace('.jar.disable', '').replace('.jar', '');
+            
+            // CLEAN NAME FALLBACK
             let name = baseName.replace(/[\-_]/g, ' ').replace(/\d+\.\d+(\.\d+)?/g, '').trim();
             name = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             
+            let metadata = {
+                version: 'Unknown',
+                author: 'Unknown',
+                description: 'No documentation provided for this module.'
+            };
+
+            // TRY EXTRACTING METADATA FROM JAR (Forge mods.toml)
+            try {
+                const zip = new AdmZip(fullPath);
+                const modsToml = zip.getEntry('META-INF/mods.toml');
+                if (modsToml) {
+                    const content = modsToml.getData().toString('utf8');
+                    
+                    // Simple Regex TOML Parser for name, version, authors, description
+                    const nameMatch = content.match(/displayName\s*=\s*["']([^"']+)["']/i);
+                    const versionMatch = content.match(/version\s*=\s*["']([^"']+)["']/i);
+                    const authorMatch = content.match(/authors\s*=\s*["']([^"']+)["']/i);
+                    const descMatch = content.match(/description\s*=\s*['"]{1,3}([\s\S]*?)['"]{1,3}/i);
+
+                    if (nameMatch) name = nameMatch[1];
+                    if (versionMatch) metadata.version = versionMatch[1];
+                    if (authorMatch) metadata.author = authorMatch[1];
+                    if (descMatch) metadata.description = descMatch[1].trim();
+                }
+            } catch(e) { /* silent metadata fail */ }
+
             return {
                 filename: filename,
                 name: name || baseName,
                 size: (stat.size / (1024 * 1024)).toFixed(2) + ' MB',
-                enabled: enabled
+                enabled: enabled,
+                ...metadata
             };
         });
         
@@ -1054,6 +1084,14 @@ timeout /t 2 /nobreak > nul`;
     }
 });
 
+
+ipcMain.handle('get-mod-translations', () => {
+    try {
+        const p = path.join(__dirname, 'js', 'json', 'mods_translation.json');
+        if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
+    } catch (e) { console.error('Error loading mod translations:', e); }
+    return {};
+});
 
 ipcMain.on('fetch-news', async (event) => {
     // Try remote news first

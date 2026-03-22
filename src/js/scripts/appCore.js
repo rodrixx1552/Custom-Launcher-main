@@ -86,7 +86,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         }
 
         // LOAD DATA REGARDLESS OF RELOAD STATUS
-        let settings, translations;
+        let settings, translations, modTranslations;
         try {
             settings = window.electronAPI.getSettings();
             translations = window.electronAPI.getTranslations();
@@ -95,6 +95,13 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                 if (!translations || !translations[currentLang]) return key;
                 return translations[currentLang][key] || key;
             };
+
+            // Fetch mod translations asynchronously
+            window.electronAPI.getModTranslations().then(res => {
+                window.modTranslations = res;
+                console.log('UI: Mod translations loaded');
+            });
+
             console.log('UI: Core data loaded');
             // Apply Global Sound Settings
             const audio = document.getElementById('clickAudio');
@@ -964,12 +971,24 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         `).join('');
 
         mods.forEach(m => {
+            const card = document.getElementById(`mod-card-${CSS.escape(m.filename)}`);
             const chk = document.getElementById(`toggle-${CSS.escape(m.filename)}`);
-            if (!chk) return;
-            chk.addEventListener('change', () => {
-                chk.disabled = true;
-                window.electronAPI.toggleMod(m.filename);
-            });
+            
+            if (card) {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', (e) => {
+                    // Don't trigger if click was on the toggle switch itself
+                    if (e.target.closest('label')) return;
+                    window.showModDetailModal(m);
+                });
+            }
+
+            if (chk) {
+                chk.addEventListener('change', () => {
+                    chk.disabled = true;
+                    window.electronAPI.toggleMod(m.filename);
+                });
+            }
         });
     });
 
@@ -980,6 +999,62 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             alert('MOD ERROR: ' + data.error);
         }
     });
+
+    window.showModDetailModal = (mod) => {
+        const lang = localStorage.getItem('lang') || 'es';
+        let displayDesc = mod.description;
+
+        // Apply Spanish Translation if active and available
+        if (lang === 'es' && window.modTranslations && window.modTranslations[mod.name]) {
+            displayDesc = window.modTranslations[mod.name].description || displayDesc;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'glass-overlay';
+        overlay.style.cssText = `
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 11000; animation: fadeIn 0.4s ease;
+        `;
+        
+        overlay.innerHTML = `
+            <div class="glass" style="padding: 0; border-radius: 35px; width: 500px; border: 1px solid rgba(255,183,197,0.3); background: rgba(15,15,15,0.95); overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.8); animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1);">
+                <!-- Header with Icon & Name -->
+                <div style="padding: 40px; background: linear-gradient(180deg, rgba(255,183,197,0.1) 0%, transparent 100%); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative;">
+                    <button id="closeDetail" style="position: absolute; top: 20px; right: 25px; background: none; border: none; color: #ffb7c5; cursor: pointer; font-size: 18px; opacity: 0.6;"><i class="fas fa-times"></i></button>
+                    
+                    <div style="width: 80px; height: 80px; background: rgba(255,183,197,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,183,197,0.2); margin-bottom: 20px;">
+                        <i class="fas fa-puzzle-piece" style="font-size: 35px; color: #ffb7c5;"></i>
+                    </div>
+                    
+                    <h2 style="font-weight: 950; letter-spacing: 2px; color: #fff; margin-bottom: 10px; font-size: 24px; text-transform: uppercase;">${mod.name}</h2>
+                    <div style="display: flex; gap: 15px; font-size: 10px; font-weight: 900; letter-spacing: 1px;">
+                        <span style="color: #ff8c4a; background: rgba(255,140,74,0.1); padding: 4px 12px; border-radius: 50px;">VERSION: ${mod.version}</span>
+                        <span style="color: #ffb7c5; background: rgba(255,183,197,0.1); padding: 4px 12px; border-radius: 50px;">AUTHOR: ${mod.author}</span>
+                    </div>
+                </div>
+
+                <!-- Description Area -->
+                <div style="padding: 0 40px 40px;">
+                    <div style="font-size: 10px; font-weight: 900; color: #ffb7c5; opacity: 0.5; letter-spacing: 3px; margin-bottom: 15px;">${lang === 'es' ? 'DOCUMENTACIÓN' : 'DOCUMENTATION'}</div>
+                    <div class="premium-scroll" style="max-height: 200px; overflow-y: auto; text-align: left; line-height: 1.8; font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 400; padding-right: 15px;">
+                        ${displayDesc.replace(/\n/g, '<br>')}
+                    </div>
+                    
+                    <div style="margin-top: 35px; display: flex; justify-content: space-between; align-items: center; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size: 9px; font-weight: 900; opacity: 0.4; letter-spacing: 1px;">${mod.filename} | ${mod.size}</div>
+                        <button id="closeDetailBottom" class="btn-play-custom" style="padding: 12px 30px; font-size: 10px; border-radius: 12px;">${lang === 'es' ? 'ENTENDIDO' : 'GOT IT'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        document.getElementById('closeDetail').onclick = () => overlay.remove();
+        document.getElementById('closeDetailBottom').onclick = () => overlay.remove();
+        overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+    };
 
     window.renderCommunityTab = () => {
         mainContent.innerHTML = `
