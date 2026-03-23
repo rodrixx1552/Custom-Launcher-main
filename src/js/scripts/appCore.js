@@ -517,6 +517,13 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                                     <div class="pulse-dot" id="server-dot" style="width: 10px; height: 10px; background: #ff8c4a; border-radius: 50%; box-shadow: 0 0 15px #ff8c4a;"></div>
                                     <span id="server-ping-text" style="font-size: 13px; font-weight: 900; color: #ddd;">${t('scanning_core')}</span>
                                 </div>
+
+                                <!-- NEW: START SERVER BUTTON (Aternos) -->
+                                <div id="start-server-wrap" style="display: none; margin-top: 15px; animation: slideUpFade 0.4s ease;">
+                                    <button id="start-server-btn" class="btn-play-custom btn-secondary" style="padding: 10px 20px; font-size: 10px; border-radius: 12px; letter-spacing: 2px;">
+                                        <i class="fas fa-rocket" style="margin-right: 8px;"></i>${localStorage.getItem('lang') === 'es' ? 'INICIAR SERVIDOR' : 'START SERVER'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -1282,6 +1289,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
     };
 
+
     window.renderCommunityTab = () => {
         mainContent.innerHTML = `
             <div style="padding: 40px; animation: slideUpFade 0.6s ease; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
@@ -1348,10 +1356,20 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                 pingText.innerText = `ONLINE | ${data.players.online}/${data.players.max}`;
                 dot.style.background = '#4cd137';
                 dot.style.boxShadow = '0 0 15px #4cd137';
+                
+                const startWrap = document.getElementById('start-server-wrap');
+                if (startWrap) startWrap.style.display = 'none';
             } else {
                 pingText.innerText = 'OFFLINE';
                 dot.style.background = '#e84118';
                 dot.style.boxShadow = '0 0 15px #e84118';
+
+                const startWrap = document.getElementById('start-server-wrap');
+                const startBtn = document.getElementById('start-server-btn');
+                if (startWrap) startWrap.style.display = 'block';
+                if (startBtn) {
+                    startBtn.onclick = () => window.electronAPI.openExternal('https://aternos.org/server/');
+                }
             }
         }
     });
@@ -1428,6 +1446,127 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
     });
 
     renderPlayTab();
+
+    // --- FEATURE: DRAG & DROP MOD INSTALLATION ---
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        document.body.style.boxShadow = "inset 0 0 50px rgba(76, 209, 51, 0.5)";
+    });
+    
+    document.addEventListener('dragleave', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        document.body.style.boxShadow = "none";
+    });
+
+    document.addEventListener('drop', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        document.body.style.boxShadow = "none";
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            let processed = false;
+            for (const file of e.dataTransfer.files) {
+                if (file.name.endsWith('.jar')) {
+                    if (window.electronAPI && window.electronAPI.installMod) {
+                        window.electronAPI.installMod(file.path);
+                        processed = true;
+                    }
+                }
+            }
+            if (processed) {
+                const audio = document.getElementById('clickAudio');
+                if (audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+            }
+        }
+    });
+
+    if (window.electronAPI) {
+        window.electronAPI.onModInstalledSuccess((fileName) => {
+            if (typeof window.showModal === 'function') {
+                window.showModal('MOD INSTALADO', `El mod <strong style="color:#ffb7c5">${fileName}</strong> fue instalado correctamente. \n¡Recuerda activar Forjar/Fabric para usarlo!`, null, true);
+            } else {
+                alert('MOD INSTALADO EXITOSAMENTE: ' + fileName);
+            }
+            if (document.getElementById('mods-grid')) {
+                window.electronAPI.getModsList();
+            }
+        });
+        window.electronAPI.onModInstalledError((err) => {
+            alert('ERROR AL INSTALAR EL MOD: ' + err);
+        });
+    }
+
+    // --- FEATURE: QUICK ACCOUNT SWITCHER ---
+    const userHub = document.getElementById('user-hub');
+    if (userHub) {
+        userHub.style.cursor = 'pointer';
+        userHub.title = 'Clic para cambiar de cuenta rápidamente';
+        userHub.addEventListener('mouseenter', () => userHub.style.transform = 'scale(1.02)');
+        userHub.addEventListener('mouseleave', () => userHub.style.transform = 'scale(1)');
+        
+        userHub.addEventListener('click', () => {
+            // Animación de carga rápida
+            const originalIcon = userHub.querySelector('img').outerHTML;
+            userHub.querySelector('img').style.opacity = '0.3';
+            
+            window.electronAPI.getAccounts();
+            window.electronAPI.onAccountsListOnce((accountsList) => {
+                userHub.querySelector('img').style.opacity = '1';
+
+                if (!accountsList || accountsList.length === 0) {
+                    if (typeof window.showModal === 'function') {
+                        window.showModal('SIN CUENTAS', 'No hay cuentas guardadas en el disco. Ve a la pestaña de Accounts para loguearte.', null, true);
+                    } else {
+                        alert('No hay cuentas guardadas. Ve a la pestaña Accounts para añadir una.');
+                    }
+                    return;
+                }
+                
+                let html = '<div class="account-switcher-list" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto; padding-right:5px;">';
+                accountsList.forEach(acc => {
+                    const isCurrent = JSON.parse(localStorage.getItem('activeAccount') || '{}').uuid === acc.uuid;
+                    html += `
+                        <div class="acc-switch-item" style="display:flex; align-items:center; gap:15px; padding:15px; background:${isCurrent ? 'rgba(255,183,197,0.2)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isCurrent ? '#ffb7c5' : 'transparent'}; border-radius:15px; cursor:pointer; transition:all 0.3s;" 
+                             onmouseover="this.style.background='rgba(255,183,197,0.15)'; this.style.transform='translateX(5px)'" 
+                             onmouseout="this.style.background='${isCurrent ? 'rgba(255,183,197,0.2)' : 'rgba(255,255,255,0.03)'}'; this.style.transform='translateX(0)'"
+                             onclick="window.switchAccount('${acc.uuid}')">
+                            <img src="https://mc-heads.net/avatar/${acc.name}/40" style="border-radius:8px; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="display:flex; flex-direction:column; text-align:left;">
+                                <span style="font-family:'Outfit',sans-serif; font-weight:700; color:#fff; font-size:13px;">${acc.name}</span>
+                                <span style="font-size:9px; opacity:0.5; text-transform:uppercase; letter-spacing:1px;">${acc.type || 'OFFLINE'}</span>
+                            </div>
+                            ${acc.type === 'microsoft' ? '<i class="fab fa-microsoft ms-icon" style="margin-left:auto; color:#4cd137; font-size:12px;"></i>' : '<i class="fas fa-user-secret" style="margin-left:auto; color:#ffb7c5; opacity:0.5; font-size:12px;"></i>'}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                if (typeof window.showModal === 'function') {
+                    window.showModal('CAMBIAR CUENTA', html, null, true);
+                }
+            });
+        });
+    }
+
+    window.switchAccount = (uuid) => {
+        window.electronAPI.getAccounts();
+        window.electronAPI.onAccountsListOnce((accountsList) => {
+            const acc = accountsList.find(a => a.uuid === uuid);
+            if (acc) {
+            localStorage.setItem('activeAccount', JSON.stringify(acc));
+            if (window.updateGlobalUI) window.updateGlobalUI();
+            
+            // Close modal if exists
+            const modal = document.querySelector('.custom-modal-overlay');
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => modal.remove(), 300);
+            }
+            
+            const audio = document.getElementById('clickAudio');
+            if (audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+        }
+    });
+};
 
     // Helper for manual testing via DevTools console
     window.testUpdateBanner = () => {
@@ -1536,6 +1675,13 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                 <div class="launch-progress-wrap-new">
                     <div class="launch-progress-bar-new" id="launch-bar-inner-new"></div>
                 </div>
+                <div id="toggle-log-btn" style="margin-top:20px; color:rgba(255,183,197,0.7); font-size:11px; cursor:pointer; font-family:'Outfit'; font-weight:700; padding:5px 15px; border:1px solid rgba(255,183,197,0.3); border-radius:15px; transition:0.3s;" 
+                     onmouseover="this.style.background='rgba(255,183,197,0.1)'; this.style.color='#fff';" 
+                     onmouseout="this.style.background='transparent'; this.style.color='rgba(255,183,197,0.7)';"
+                     onclick="const b=document.getElementById('launch-log-box'); b.style.display=b.style.display==='none'?'block':'none'">
+                    MOSTRAR CONSOLA LOGS
+                </div>
+                <div id="launch-log-box" style="display:none; width:80%; max-width:800px; height:180px; margin-top:15px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,183,197,0.2); border-radius:10px; color:#cfcfcf; font-family:Consolas, monospace; font-size:10px; padding:10px; overflow-y:auto; overflow-x:hidden; text-align:left; scroll-behavior:smooth;"></div>
             `;
             document.body.appendChild(overlay);
         }
@@ -1583,6 +1729,21 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             bar.style.width = pct + '%';
         }
     });
+
+    if (window.electronAPI.onLaunchLog) {
+        window.electronAPI.onLaunchLog((logStr) => {
+            const logBox = document.getElementById('launch-log-box');
+            if (logBox) {
+                const span = document.createElement('div');
+                span.innerText = `[INFO] ${logStr}`;
+                span.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                span.style.padding = '2px 0';
+                logBox.appendChild(span);
+                if (logBox.children.length > 150) logBox.removeChild(logBox.firstChild);
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        });
+    }
 
     window.electronAPI.onGameStarted(() => {
         const status = document.getElementById('launch-status');
@@ -1740,6 +1901,50 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         console.error('CRITICAL UI INIT ERROR:', e);
         if (window.electronAPI) window.electronAPI.logError('UI INIT CRASH: ' + e.message);
     }
+
+    // DRAG AND DROP MOD INSTALLATION
+    window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            for (const file of files) {
+                if (file.name.toLowerCase().endsWith('.jar')) {
+                    console.log('UI: Requesting mod installation for:', file.path);
+                    window.electronAPI.installMod(file.path);
+                }
+            }
+        }
+    });
+
+    window.electronAPI.onModInstalledSuccess((fileName) => {
+        if (typeof window.showModal === 'function') {
+            window.showModal('MOD INSTALADO', `El mod <b>${fileName}</b> se ha instalado correctamente. Reinicia el juego para aplicarlo.`, null, true);
+        } else {
+            alert(`MOD INSTALADO: ${fileName}`);
+        }
+        // Force refresh mods list if we are in the mods tab
+        if (window.electronAPI.getModsList) window.electronAPI.getModsList();
+    });
+
+    window.electronAPI.onTriggerModsRefresh(() => {
+        console.log('UI: Refreshing mods list due to backend trigger...');
+        if (window.electronAPI.getModsList) window.electronAPI.getModsList();
+    });
+
+    window.electronAPI.onModInstalledError((err) => {
+        if (typeof window.showModal === 'function') {
+            window.showModal('ERROR DE MOD', `No se pudo instalar el mod: ${err}`, null, true);
+        } else {
+            alert('ERROR: ' + err);
+        }
+    });
 };
 
 // AUTO-INIT CHECK
