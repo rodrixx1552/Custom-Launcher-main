@@ -750,3 +750,20 @@ body {
 }
 
 /*# sourceMappingURL=main.css.map */
+
+
+/* NEWS ANIMATIONS v0.3.6 */
+@keyframes slideRightFade {
+    0% { opacity: 0; transform: translateX(-15px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.news-item-premium {
+    transition: all 0.3s ease;
+}
+
+.news-item-premium:hover {
+    background: rgba(255,183,197,0.08) !important;
+    border: 1px solid rgba(255,183,197,0.2) !important;
+    transform: translateX(5px);
+}
