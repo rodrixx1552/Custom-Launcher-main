@@ -2,6 +2,16 @@
     "title": "Staff Broadcast",
     "posts": [
         {
+            "date": "23/03/2026",
+            "tag": "UPDATE",
+            "text": "Hotfix v0.3.6: Selector de cuentas sincronizado con el disco. ¡Cambia de perfil al instante!"
+        },
+        {
+            "date": "23/03/2026",
+            "tag": "UPDATE",
+            "text": "Versión 0.3.5: Llega el Drag & Drop de mods y el nuevo motor de extracción nativa ultrarrápido."
+        },
+        {
             "date": "20/03/2026",
             "tag": "UPDATE",
             "text": "Versión 0.2.2 estable ya está disponible. Incluye importantes correcciones en el renderizado de la UI y el sistema de hot-update."
