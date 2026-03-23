@@ -954,9 +954,34 @@ ipcMain.on('get-mods-list', (event) => {
     }
 });
 
+ipcMain.on('install-mod', (event, filePath) => {
+    try {
+        const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
+        if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
+
+        const fileName = path.basename(filePath);
+        if (!fileName.toLowerCase().endsWith('.jar')) {
+            event.sender.send('mod-installed-error', 'Solo se permiten archivos .jar (Mods de Minecraft).');
+            return;
+        }
+
+        const destPath = path.join(modsPath, fileName);
+        fs.copyFileSync(filePath, destPath);
+        
+        console.log('Mod instalado via Drag & Drop:', fileName);
+        event.sender.send('mod-installed-success', fileName);
+        
+        // Refresh list
+        event.sender.send('trigger-mods-refresh');
+    } catch (e) {
+        console.error('Failed to install mod:', e);
+        event.sender.send('mod-installed-error', e.message);
+    }
+});
+
 ipcMain.on('toggle-mod', (event, filename) => {
     try {
-        const modsPath = path.join(app.getPath('userData'), 'minecraft', 'mods');
+        const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
         const filePath = path.join(modsPath, filename);
         
         if (filename.endsWith('.jar.disable')) {
