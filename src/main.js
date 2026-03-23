@@ -261,7 +261,7 @@ ipcMain.on('launch-game', async (event, options) => {
         const launchOptions = {
             clientPackage: null,
             authorization: auth,
-            root: path.join(app.getPath('userData'), 'minecraft'),
+            root: path.join(app.getPath('appData'), '.lospapus-minecraft'),
             version: {
                 number: version,
                 type: "release"
@@ -293,7 +293,7 @@ ipcMain.on('launch-game', async (event, options) => {
             console.log('Forge is requested. Preparing Forge auto-downloader...');
             event.sender.send('launch-progress', { step: 'PREPARING FORGE...' });
             
-            const forgeDir = path.join(app.getPath('userData'), 'minecraft', 'forge-installers');
+            const forgeDir = path.join(app.getPath('appData'), '.lospapus-minecraft', 'forge-installers');
             const forgeFile = path.join(forgeDir, `forge-${version}-${options.forgeVersion}-installer.jar`);
             const forgeUrl = `https://maven.minecraftforge.net/net/minecraftforge/forge/${version}-${options.forgeVersion}/forge-${version}-${options.forgeVersion}-installer.jar`;
 
@@ -314,9 +314,13 @@ ipcMain.on('launch-game', async (event, options) => {
         launcher.launch(launchOptions);
 
         let gameLaunched = false;
-        launcher.on('debug', (e) => console.log('Launcher Debug:', e));
+        launcher.on('debug', (e) => {
+            console.log('Launcher Debug:', e);
+            event.sender.send('launch-log', String(e));
+        });
         launcher.on('data', (e) => {
             console.log('Launcher Data:', e);
+            event.sender.send('launch-log', String(e));
             if (!gameLaunched) {
                 gameLaunched = true;
                 event.sender.send('game-started');
@@ -800,7 +804,7 @@ async function checkForUpdates(win) {
 
 ipcMain.on('sync-modpacks', async (event) => {
     let manifestSuccess = false;
-    const modsPath = path.join(app.getPath('userData'), 'minecraft', 'mods');
+    const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
     const tempZip = path.join(app.getPath('temp'), 'modpack.zip');
 
     try {
@@ -852,7 +856,7 @@ ipcMain.on('sync-modpacks', async (event) => {
             const directUrl = await getMediafireDirectLink(mediafireUrl);
             await downloadFile(directUrl, tempZip);
             const zip = new AdmZip(tempZip);
-            const rootPath = path.join(app.getPath('userData'), 'minecraft');
+            const rootPath = path.join(app.getPath('appData'), '.lospapus-minecraft');
             zip.extractAllTo(rootPath, true);
             if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
             event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
@@ -867,7 +871,7 @@ ipcMain.on('sync-modpacks', async (event) => {
 
 ipcMain.handle('check-mods-status', async () => {
     try {
-        const modsPath = path.join(app.getPath('userData'), 'minecraft', 'mods');
+        const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
         if (!fs.existsSync(modsPath)) return true;
 
         const response = await axios.get(MODS_MANIFEST_URL, { timeout: 5000 });
@@ -891,7 +895,7 @@ ipcMain.handle('check-mods-status', async () => {
 // =====================================================================
 ipcMain.on('get-mods-list', (event) => {
     try {
-        const modsPath = path.join(app.getPath('userData'), 'minecraft', 'mods');
+        const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
         if (!fs.existsSync(modsPath)) {
             event.sender.send('mods-list', []);
             return;
@@ -974,6 +978,24 @@ ipcMain.on('toggle-mod', (event, filename) => {
     }
 });
 
+// FEATURE: Drag & Drop Mod Installation
+ipcMain.on('install-mod', (event, filePath) => {
+    try {
+        if (!filePath.endsWith('.jar')) throw new Error('Solo se admiten archivos .jar o mods.');
+        const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
+        if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
+        
+        const fileName = path.basename(filePath);
+        const dest = path.join(modsPath, fileName);
+        fs.copyFileSync(filePath, dest);
+        console.log('Mod installed via Drag and Drop:', fileName);
+        event.sender.send('mod-installed-success', fileName);
+    } catch (e) {
+        console.error('Drag & Drop Error:', e);
+        event.sender.send('mod-installed-error', e.message);
+    }
+});
+
 
 ipcMain.on('start-auto-update', async (event, { url }) => {
     console.log('AUTO-UPDATE: Initialization started for:', url);
@@ -1013,18 +1035,19 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
             writer.on('error', reject);
         });
 
-        event.sender.send('auto-update-progress', { step: 'Extrayendo archivos...', progress: 80 });
+        event.sender.send('auto-update-progress', { step: 'Descomprimiendo parche...', progress: 80 });
         if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true, force: true });
+        fs.mkdirSync(extractPath, { recursive: true });
         
-        const zip = new AdmZip(tempZip);
-        zip.getEntries().forEach(entry => {
-            try {
-                // Manually extract and ignore chmod errors
-                zip.extractEntryTo(entry, extractPath, true, true);
-            } catch (e) {
-                console.warn('Silent update warning (chmod):', e.message);
-            }
-        });
+        try {
+            const { execSync } = require('child_process');
+            // Usar 'tar' nativo de Windows 10+ para extracción, porque AdmZip consume demasiada RAM con archivos de +100MB
+            execSync(`tar -xf "${tempZip}" -C "${extractPath}"`, { windowsHide: true, stdio: 'ignore' });
+        } catch (e) {
+            console.error('TAR extract error:', e);
+            event.sender.send('auto-update-error', 'Falló la descompresión nativa del parche OTA.');
+            return;
+        }
 
         const appPath = path.dirname(process.execPath);
         const batchPath = path.join(app.getPath('temp'), 'launcher-updater.bat');
@@ -1035,7 +1058,20 @@ ipcMain.on('start-auto-update', async (event, { url }) => {
             sourcePath = path.join(extractPath, entries[0]);
         }
 
+        // --- FAIL-SAFE DE SEGURIDAD ---
+        // Verificar que el ZIP descargado es una build real compilada (win-unpacked)
+        // y no el código fuente suelto o un ZIP erróneo.
         const exeName = path.basename(process.execPath);
+        const hasAppAsar = fs.existsSync(path.join(sourcePath, 'resources', 'app.asar'));
+        const hasExe = fs.existsSync(path.join(sourcePath, exeName));
+
+        if (!hasAppAsar || !hasExe) {
+            console.error('AUTO-UPDATE ABORTADO: El ZIP no contiene resources/app.asar o el ejecutable principal.');
+            event.sender.send('auto-update-error', `El servidor envió un parche incompleto o corrupto (Falta asar: ${!hasAppAsar}, Falta exe: ${!hasExe}). Actualización abortada para proteger tu launcher.`);
+            return;
+        }
+        // ------------------------------
+
         const batchScript = `@echo off
 title LosPapus Update Center - VERSION UPDATE
 color 0e
