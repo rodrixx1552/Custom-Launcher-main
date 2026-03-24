@@ -519,7 +519,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                                 </div>
 
                                 <!-- NEW: START SERVER BUTTON (Aternos) -->
-                                <div id="start-server-wrap" style="display: none; margin-top: 15px; animation: slideUpFade 0.4s ease;">
+                                <div id="start-server-wrap" style="display: block; margin-top: 15px; animation: slideUpFade 0.4s ease;">
                                     <button id="start-server-btn" class="btn-play-custom btn-secondary" style="padding: 10px 20px; font-size: 10px; border-radius: 12px; letter-spacing: 2px;">
                                         <i class="fas fa-rocket" style="margin-right: 8px;"></i>${localStorage.getItem('lang') === 'es' ? 'INICIAR SERVIDOR' : 'START SERVER'}
                                     </button>
@@ -1303,7 +1303,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                         <i class="fab fa-twitter" style="font-size: 40px; color: #1da1f2; margin-bottom: 15px;"></i>
                         <div style="font-weight: 900; font-size: 12px;">TWITTER</div>
                     </div>
-                    <div class="glass version-card" onclick="window.electronAPI.openExternal('https://github.com/rodrixx1552/Custom-Launcher-main')" style="padding: 30px; text-align: center; cursor: pointer; border-radius: 20px;">
+                    <div class="glass version-card" onclick="window.electronAPI.openExternal('https://rodrixx1552.github.io/Custom-Launcher-main')" style="padding: 30px; text-align: center; cursor: pointer; border-radius: 20px;">
                         <i class="fas fa-globe" style="font-size: 40px; color: #ffb7c5; margin-bottom: 15px;"></i>
                         <div style="font-weight: 900; font-size: 12px;">WEB</div>
                     </div>
@@ -1336,8 +1336,12 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         });
 
         // WINDOW CONTROLS
+        document.getElementById('frameBar')?.addEventListener('dblclick', (e) => {
+            if (!e.target.closest('.frame-actions')) window.electronAPI.maximizeWindow();
+        });
         document.getElementById('frameBtn_close')?.addEventListener('click', () => window.electronAPI.closeWindow());
         document.getElementById('frameBtn_minimize')?.addEventListener('click', () => window.electronAPI.minimizeWindow());
+        document.getElementById('frameBtn_maximize')?.addEventListener('click', () => window.electronAPI.maximizeWindow());
     }
 
     // PING HANDLER
@@ -1352,24 +1356,22 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         }
 
         if (pingText && dot) {
+            const startWrap = document.getElementById('start-server-wrap');
+            const startBtn = document.getElementById('start-server-btn');
+            
+            if (startWrap) startWrap.style.display = 'block';
+            if (startBtn) {
+                startBtn.onclick = () => window.electronAPI.autoStartServer();
+            }
+
             if (data.online) {
                 pingText.innerText = `ONLINE | ${data.players.online}/${data.players.max}`;
                 dot.style.background = '#4cd137';
                 dot.style.boxShadow = '0 0 15px #4cd137';
-                
-                const startWrap = document.getElementById('start-server-wrap');
-                if (startWrap) startWrap.style.display = 'none';
             } else {
                 pingText.innerText = 'OFFLINE';
                 dot.style.background = '#e84118';
                 dot.style.boxShadow = '0 0 15px #e84118';
-
-                const startWrap = document.getElementById('start-server-wrap');
-                const startBtn = document.getElementById('start-server-btn');
-                if (startWrap) startWrap.style.display = 'block';
-                if (startBtn) {
-                    startBtn.onclick = () => window.electronAPI.openExternal('https://aternos.org/server/');
-                }
             }
         }
     });
@@ -1395,7 +1397,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         feed.innerHTML = data.posts.map((post, idx) => {
             const color = tagColors[post.tag?.toUpperCase()] || '#ffb7c5';
             return `
-                <div class="news-item-premium" style="margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); animation: slideRightFade 0.4s ease forwards; animation-delay: ${idx * 0.1}s; opacity: 0;">
+                <div class="news-item-premium" style="margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); animation: slideUpFade 0.4s ease forwards; animation-delay: ${idx * 0.1}s; opacity: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 7px; font-weight: 950; letter-spacing: 2px; background: ${color}; color: #000; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">${post.tag || 'NEWS'}</span>
                         <span style="font-size: 9px; opacity: 0.4; font-weight: 900; font-family: 'monospace';">${post.date || ''}</span>
