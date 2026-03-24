@@ -191,15 +191,17 @@ class PapuEconomy {
     }
 
     updateHUD() {
+        const userHub = document.getElementById('user-hub');
+        if (!userHub) return;
+
         let hud = document.getElementById('papu-hud');
         if (!hud) {
             hud = document.createElement('div');
             hud.id = 'papu-hud';
-            hud.className = 'glass';
-            hud.style.cssText = 'position:fixed; top:20px; right:150px; padding:10px 20px; z-index:1001; display:flex; align-items:center; gap:10px; border-radius:50px; font-weight:900; color:var(--primary); box-shadow:0 10px 30px rgba(0,0,0,0.5); border:1px solid var(--primary-glow); transition:0.3s;';
-            document.body.appendChild(hud);
+            hud.style.cssText = 'margin-top: 5px; font-size: 11px; font-weight: 950; color: var(--primary); display: flex; align-items: center; gap: 6px; letter-spacing: 1px; transition: 0.3s;';
+            userHub.querySelector('.user-info').appendChild(hud);
         }
-        hud.innerHTML = `<i class="fas fa-gem"></i> ${this.coins} Papu-Coins`;
+        hud.innerHTML = `<i class="fas fa-gem" style="font-size: 8px; filter: drop-shadow(0 0 5px var(--primary));"></i> ${this.coins.toLocaleString()} <span style="opacity: 0.5; font-size: 8px; font-weight: 700;">CP</span>`;
     }
 
     applyTheme(id) {
@@ -564,32 +566,72 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         const mainContent = document.getElementById('main-content');
         if (!mainContent) return;
         
+        // Themes Split (Featured + Other)
+        const themeKeys = Object.keys(store.themes);
+        const featured = themeKeys.slice(6, 10); // Nether, End, Godly, Cyberpunk
+        const others = themeKeys.filter(k => !featured.includes(k));
+
         mainContent.innerHTML = `
-            <div class="store-container" style="padding: 40px; animation: fadeIn 0.5s ease; height: 100%; overflow-y: auto;" class="premium-scroll">
-                <h1 style="font-weight: 900; letter-spacing: 5px; color: var(--primary); margin-bottom: 30px; text-shadow: 0 0 20px var(--primary-glow);">PAPU-STORE</h1>
-                <div class="store-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px;">
-                    ${Object.keys(store.themes).map(id => {
-                        const theme = store.themes[id];
-                        const isOwned = store.ownedThemes.includes(id);
-                        const isActive = store.activeTheme === id;
-                        const canAfford = store.coins >= theme.price;
-                        
-                        return `
-                            <div class="theme-card glass ${isActive ? 'active-theme' : ''}" style="padding: 25px; border-radius: 25px; border: 1px solid ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; background: ${isActive ? 'rgba(255,183,197,0.1)' : 'rgba(0,0,0,0.3)'}; transition: 0.3s; position: relative;">
-                                ${isActive ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--primary); color: #000; font-size: 8px; font-weight: 900; padding: 3px 8px; border-radius: 5px; box-shadow: 0 0 10px var(--primary-glow);">ACTIVE</div>' : ''}
-                                <div style="width: 100%; height: 120px; border-radius: 15px; background: linear-gradient(135deg, ${theme.colors['--primary']}, ${theme.colors['--secondary']}); margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1);"></div>
-                                <h3 style="font-size: 16px; font-weight: 900; color: #fff; margin-bottom: 8px; letter-spacing: 1px;">${theme.name.toUpperCase()}</h3>
-                                <div style="font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fas ${isOwned ? 'fa-check-circle' : 'fa-gem'}"></i>
-                                    ${isOwned ? 'DESBLOQUEADO' : `${theme.price} CP`}
+            <div class="store-container premium-scroll" style="padding: 40px 60px; height: 100%; overflow-y: auto; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 100%);">
+                <header style="margin-bottom: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 900; color: var(--primary); letter-spacing: 3px; margin-bottom: 10px; opacity: 0.6;">SISTEMA CENTRAL</div>
+                        <h1 style="font-size: 48px; font-weight: 900; letter-spacing: -1px; color: #fff; line-height: 1;">Papu Store</h1>
+                    </div>
+                </header>
+
+                <!-- FEATURED HERO SECTION -->
+                <section style="margin-bottom: 60px;">
+                    <h2 style="font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 25px; letter-spacing: 1px;">Temas Destacados</h2>
+                    <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory;" class="no-scrollbar">
+                        ${featured.map(id => {
+                            const theme = store.themes[id];
+                            const isOwned = store.ownedThemes.includes(id);
+                            const isActive = store.activeTheme === id;
+                            return `
+                                <div class="glass" style="min-width: 450px; height: 260px; border-radius: 35px; flex-shrink: 0; scroll-snap-align: start; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.4s;" onclick="window.handleThemeAction('${id}')">
+                                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, ${theme.colors['--primary']}, ${theme.colors['--secondary']}); opacity: 0.15;"></div>
+                                    <div style="position: absolute; inset: 0; background: radial-gradient(circle at top right, ${theme.colors['--primary']}, transparent 70%); opacity: 0.2;"></div>
+                                    
+                                    <div style="position: absolute; bottom: 30px; left: 35px; right: 35px; display: flex; align-items: center; gap: 20px;">
+                                        <div style="width: 70px; height: 70px; border-radius: 18px; background: linear-gradient(135deg, ${theme.colors['--primary']}, ${theme.colors['--secondary']}); border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
+                                        <div style="flex: 1;">
+                                            <h3 style="font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 4px;">${theme.name.toUpperCase()}</h3>
+                                            <p style="font-size: 11px; opacity: 0.6; font-weight: 700;">Estilo Premium v2.0</p>
+                                        </div>
+                                        <button class="btn-app-store" style="min-width: 90px; padding: 10px 20px; border-radius: 50px; border: none; background: ${isActive ? 'transparent' : 'rgba(255,255,255,0.1)'}; color: var(--primary); font-weight: 900; font-size: 12px; cursor: pointer; border: 1px solid ${isActive ? 'var(--primary)' : 'transparent'};">
+                                            ${isActive ? 'OPEN' : (isOwned ? 'GET' : theme.price + ' CP')}
+                                        </button>
+                                    </div>
                                 </div>
-                                <button onclick="window.handleThemeAction('${id}')" class="btn-play-custom" style="padding: 12px; width: 100%; font-size: 11px; ${!isOwned && !canAfford ? 'opacity: 0.3; filter: grayscale(1); cursor: not-allowed;' : ''}">
-                                    ${isActive ? 'EQUIPADO' : (isOwned ? 'EQUIPAR' : 'COMPRAR')}
-                                </button>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </section>
+
+                <!-- REGULAR GRID -->
+                <section>
+                    <h2 style="font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 25px; letter-spacing: 1px;">Explorar Estilos</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px;">
+                        ${others.map(id => {
+                            const theme = store.themes[id];
+                            const isOwned = store.ownedThemes.includes(id);
+                            const isActive = store.activeTheme === id;
+                            return `
+                                <div style="display: flex; align-items: center; gap: 20px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="width: 60px; height: 60px; border-radius: 15px; background: linear-gradient(135deg, ${theme.colors['--primary']}, ${theme.colors['--secondary']}); border: 1px solid rgba(255,255,255,0.1);"></div>
+                                    <div style="flex: 1;">
+                                        <h3 style="font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 2px;">${theme.name}</h3>
+                                        <p style="font-size: 10px; opacity: 0.4;">${isOwned ? 'Essential Style' : theme.price + ' CP'}</p>
+                                    </div>
+                                    <button onclick="window.handleThemeAction('${id}')" style="min-width: 75px; height: 32px; border-radius: 50px; border: none; background: rgba(255,255,255,0.1); color: var(--primary); font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase;">
+                                        ${isActive ? '✓' : (isOwned ? 'GET' : 'BUY')}
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </section>
             </div>
         `;
     };
