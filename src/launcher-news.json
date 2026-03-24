@@ -2,6 +2,11 @@
     "title": "Staff Broadcast",
     "posts": [
         {
+            "date": "24/03/2026",
+            "tag": "UPDATE",
+            "text": "Actualización v0.3.8: ¡Auto-Login de Aternos activo! Además de mejoras visuales en la aterrizaje y controles de ventana."
+        },
+        {
             "date": "23/03/2026",
             "tag": "UPDATE",
             "text": "Hotfix v0.3.6: Selector de cuentas sincronizado con el disco. ¡Cambia de perfil al instante!"
