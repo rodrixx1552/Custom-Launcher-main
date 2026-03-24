@@ -191,22 +191,22 @@ class PapuEconomy {
     }
 
     updateHUD() {
-        const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) return;
+        const sidebarNav = document.querySelector('.sidebar-nav');
+        if (!sidebarNav) return;
 
         let hud = document.getElementById('papu-hud');
         if (!hud) {
             hud = document.createElement('div');
             hud.id = 'papu-hud';
-            hud.style.cssText = 'margin-top: auto; padding: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; border-top: 1px solid rgba(255,255,255,0.05); width: 100%; transition: 0.3s;';
-            sidebar.appendChild(hud);
+            hud.style.cssText = 'margin-top: auto; padding-top: 25px; display: flex; flex-direction: column; align-items: center; gap: 8px; border-top: 1px solid rgba(255,255,255,0.05); width: 100%; transition: 0.3s; padding-bottom: 20px;';
+            sidebarNav.appendChild(hud);
         }
         hud.innerHTML = `
             <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,183,197,0.1); border: 1px solid var(--primary-glow); display: flex; align-items: center; justify-content: center; margin-bottom: 2px;">
-                <i class="fas fa-gem" style="font-size: 12px; color: var(--primary); filter: drop-shadow(0 0 5px var(--primary));"></i>
+                <i class="fas fa-gem" style="font-size: 11px; color: var(--primary); filter: drop-shadow(0 0 8px var(--primary));"></i>
             </div>
-            <span style="font-size: 10px; font-weight: 950; color: #fff; letter-spacing: 1px;">${this.coins.toLocaleString()}</span>
-            <span style="font-size: 7px; font-weight: 900; opacity: 0.4; letter-spacing: 2px; text-transform: uppercase;">PAPU-COINS</span>
+            <span style="font-size: 11px; font-weight: 950; color: #fff; letter-spacing: 1px;">${this.coins.toLocaleString()}</span>
+            <span style="font-size: 7px; font-weight: 900; opacity: 0.5; letter-spacing: 2px; text-transform: uppercase;">CP BALANCE</span>
         `;
     }
 
