@@ -155,6 +155,80 @@ class NeuralSoundscape {
 
 window.Soundscape = new NeuralSoundscape();
 
+// --- MÓDULO ECONOMÍA Y TEMAS (PAPU-COINS) 💎🎨 ---
+class PapuEconomy {
+    constructor() {
+        this.coins = parseInt(localStorage.getItem('papuCoins') || '0');
+        this.ownedThemes = JSON.parse(localStorage.getItem('ownedThemes') || '["original"]');
+        this.activeTheme = localStorage.getItem('activeTheme') || 'original';
+        this.themes = {
+            original: { name: 'Original Neon', price: 0, colors: { '--primary': '#ffb7c5', '--secondary': '#ff8c4a', '--primary-glow': 'rgba(255, 183, 197, 0.5)' } },
+            toxic: { name: 'Toxic Slime', price: 50, colors: { '--primary': '#a2ff00', '--secondary': '#00ff88', '--primary-glow': 'rgba(162, 255, 0, 0.5)' } },
+            obsidian: { name: 'Obsidian Stealth', price: 100, colors: { '--primary': '#7d5fff', '--secondary': '#3d3d3d', '--primary-glow': 'rgba(125, 95, 255, 0.5)' } },
+            emerald: { name: 'Emerald Flex', price: 120, colors: { '--primary': '#2ecc71', '--secondary': '#f1c40f', '--primary-glow': 'rgba(46, 204, 113, 0.5)' } },
+            glacier: { name: 'Frozen Glacier', price: 150, colors: { '--primary': '#3ae3ff', '--secondary': '#ffffff', '--primary-glow': 'rgba(58, 227, 255, 0.5)' } },
+            solar: { name: 'Solar Flare', price: 150, colors: { '--primary': '#ff4d4d', '--secondary': '#ffcc00', '--primary-glow': 'rgba(255, 77, 77, 0.5)' } },
+            cyberpunk: { name: 'Cyberpunk Night', price: 200, colors: { '--primary': '#ff00ff', '--secondary': '#00ffff', '--primary-glow': 'rgba(255, 0, 255, 0.5)' } },
+            nether: { name: 'Nether Wastes', price: 250, colors: { '--primary': '#9b0000', '--secondary': '#ff6b6b', '--primary-glow': 'rgba(155, 0, 0, 0.5)' } },
+            end: { name: 'End Dimension', price: 300, colors: { '--primary': '#bf00ff', '--secondary': '#000000', '--primary-glow': 'rgba(191, 0, 255, 0.5)' } },
+            godly: { name: 'Golden Apple', price: 500, colors: { '--primary': '#f1c40f', '--secondary': '#ffffff', '--primary-glow': 'rgba(241, 196, 15, 0.5)' } }
+        };
+    }
+
+    init() {
+        this.updateHUD();
+        this.applyTheme(this.activeTheme);
+        
+        setInterval(() => {
+            this.addCoins(10);
+        }, 5 * 60 * 1000);
+    }
+
+    addCoins(amount) {
+        this.coins += amount;
+        localStorage.setItem('papuCoins', this.coins);
+        this.updateHUD();
+    }
+
+    updateHUD() {
+        let hud = document.getElementById('papu-hud');
+        if (!hud) {
+            hud = document.createElement('div');
+            hud.id = 'papu-hud';
+            hud.className = 'glass';
+            hud.style.cssText = 'position:fixed; top:20px; right:150px; padding:10px 20px; z-index:1001; display:flex; align-items:center; gap:10px; border-radius:50px; font-weight:900; color:var(--primary); box-shadow:0 10px 30px rgba(0,0,0,0.5); border:1px solid var(--primary-glow); transition:0.3s;';
+            document.body.appendChild(hud);
+        }
+        hud.innerHTML = `<i class="fas fa-gem"></i> ${this.coins} Papu-Coins`;
+    }
+
+    applyTheme(id) {
+        const theme = this.themes[id];
+        if (!theme) return;
+        this.activeTheme = id;
+        localStorage.setItem('activeTheme', id);
+        Object.keys(theme.colors).forEach(key => document.documentElement.style.setProperty(key, theme.colors[key]));
+        this.updateHUD();
+    }
+
+    buyTheme(id) {
+        const theme = this.themes[id];
+        if (this.ownedThemes.includes(id)) { this.applyTheme(id); return true; }
+        if (this.coins >= theme.price) {
+            this.coins -= theme.price;
+            this.ownedThemes.push(id);
+            localStorage.setItem('papuCoins', this.coins);
+            localStorage.setItem('ownedThemes', JSON.stringify(this.ownedThemes));
+            this.applyTheme(id);
+            return true;
+        }
+        return false;
+    }
+}
+
+window.PapuStore = new PapuEconomy();
+document.addEventListener('DOMContentLoaded', () => window.PapuStore.init());
+
 // --- PROTOCOLO PAPU-JARVIS (SISTEMA DE VOZ) ---
 window.speak = (text) => {
     return new Promise((resolve) => {
@@ -485,6 +559,65 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
     };
 
     // TAB RENDERING FUNCTIONS
+    window.renderStoreTab = () => {
+        const store = window.PapuStore;
+        const mainContent = document.getElementById('main-content');
+        if (!mainContent) return;
+        
+        mainContent.innerHTML = `
+            <div class="store-container" style="padding: 40px; animation: fadeIn 0.5s ease; height: 100%; overflow-y: auto;" class="premium-scroll">
+                <h1 style="font-weight: 900; letter-spacing: 5px; color: var(--primary); margin-bottom: 30px; text-shadow: 0 0 20px var(--primary-glow);">PAPU-STORE</h1>
+                <div class="store-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px;">
+                    ${Object.keys(store.themes).map(id => {
+                        const theme = store.themes[id];
+                        const isOwned = store.ownedThemes.includes(id);
+                        const isActive = store.activeTheme === id;
+                        const canAfford = store.coins >= theme.price;
+                        
+                        return `
+                            <div class="theme-card glass ${isActive ? 'active-theme' : ''}" style="padding: 25px; border-radius: 25px; border: 1px solid ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; background: ${isActive ? 'rgba(255,183,197,0.1)' : 'rgba(0,0,0,0.3)'}; transition: 0.3s; position: relative;">
+                                ${isActive ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--primary); color: #000; font-size: 8px; font-weight: 900; padding: 3px 8px; border-radius: 5px; box-shadow: 0 0 10px var(--primary-glow);">ACTIVE</div>' : ''}
+                                <div style="width: 100%; height: 120px; border-radius: 15px; background: linear-gradient(135deg, ${theme.colors['--primary']}, ${theme.colors['--secondary']}); margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1);"></div>
+                                <h3 style="font-size: 16px; font-weight: 900; color: #fff; margin-bottom: 8px; letter-spacing: 1px;">${theme.name.toUpperCase()}</h3>
+                                <div style="font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fas ${isOwned ? 'fa-check-circle' : 'fa-gem'}"></i>
+                                    ${isOwned ? 'DESBLOQUEADO' : `${theme.price} CP`}
+                                </div>
+                                <button onclick="window.handleThemeAction('${id}')" class="btn-play-custom" style="padding: 12px; width: 100%; font-size: 11px; ${!isOwned && !canAfford ? 'opacity: 0.3; filter: grayscale(1); cursor: not-allowed;' : ''}">
+                                    ${isActive ? 'EQUIPADO' : (isOwned ? 'EQUIPAR' : 'COMPRAR')}
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    };
+
+    window.handleThemeAction = (id) => {
+        const store = window.PapuStore;
+        const theme = store.themes[id];
+        if (store.ownedThemes.includes(id)) {
+            store.applyTheme(id);
+            window.renderStoreTab();
+            const hud = document.getElementById('papu-hud');
+            if (hud) { hud.style.transform = 'scale(1.2)'; setTimeout(() => hud.style.transform = 'scale(1)', 300); }
+        } else if (store.coins >= theme.price) {
+            if (store.buyTheme(id)) {
+                window.speak(`Felicidades, Piloto. Has desbloqueado el tema ${theme.name}.`);
+                window.renderStoreTab();
+            }
+        } else {
+            window.speak("Fondos insuficientes. Siga pilotando para ganar más monedas.");
+            const hud = document.getElementById('papu-hud');
+            if (hud) {
+                hud.style.color = '#ff4444';
+                hud.style.borderColor = '#ff4444';
+                setTimeout(() => { hud.style.color = 'var(--primary)'; hud.style.borderColor = 'var(--primary-glow)'; }, 1000);
+            }
+        }
+    };
+
     window.renderPlayTab = () => {
         let selectedVersion = localStorage.getItem('selectedVersion') || settings.client.default_version;
         if (selectedVersion === '1.19.2' || selectedVersion === '1.19.4') {
@@ -1330,6 +1463,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                 else if (tab === 'accounts' || tab === t('accounts').toLowerCase()) renderAccountsTab();
                 else if (tab === 'skins' || tab === t('skins').toLowerCase()) renderSkinsTab();
                 else if (tab === 'settings' || tab === t('settings').toLowerCase()) renderSettingsTab();
+                else if (tab === 'store' || tab === 'tienda') window.renderStoreTab();
                 else if (tab === 'installations' || tab === 'mods' || tab === 'modpack') renderModsTab();
                 else if (tab === 'community' || tab === t('community').toLowerCase()) renderCommunityTab();
             });
