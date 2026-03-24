@@ -667,7 +667,6 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             </div>
         `;
     };
-    };
 
     window.handleThemeAction = (id) => {
         const store = window.PapuStore;
