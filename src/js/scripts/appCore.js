@@ -572,49 +572,67 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         const mainContent = document.getElementById('main-content');
         if (!mainContent) return;
         
-        // Themes Split (Featured + Other)
         const themeKeys = Object.keys(store.themes);
-        const featured = themeKeys.slice(6, 10); // Nether, End, Godly, Cyberpunk
+        const featured = themeKeys.slice(7, 10); // Solar, End, Golden
         const others = themeKeys.filter(k => !featured.includes(k));
+
+        const getMiniPreview = (themeId) => {
+            const theme = store.themes[themeId];
+            const primary = theme.colors['--primary'];
+            const secondary = theme.colors['--secondary'];
+            const glow = theme.colors['--primary-glow'];
+            
+            return `
+                <div style="width: 100%; height: 100%; background: #000; border-radius: 20px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.6);">
+                    <!-- Mini Sidebar -->
+                    <div style="position: absolute; left: 0; top: 0; width: 15%; height: 100%; background: rgba(15,15,15,0.9); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; padding-top: 6px; gap: 5px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: ${primary}; filter: drop-shadow(0 0 3px ${glow});"></div>
+                        <div style="width: 8px; height: 8px; border-radius: 20%; background: rgba(255,255,255,0.15);"></div>
+                        <div style="width: 8px; height: 8px; border-radius: 20%; background: rgba(255,255,255,0.1);"></div>
+                        <div style="width: 8px; height: 8px; border-radius: 20%; background: rgba(255,255,255,0.1);"></div>
+                    </div>
+                    <!-- Mini Content -->
+                    <div style="position: absolute; left: 15%; top: 0; right: 0; height: 100%; background: radial-gradient(circle at 30% 30%, ${primary}22 0%, #000 100%);">
+                        <!-- Mini Header -->
+                        <div style="position: absolute; top: 12%; left: 10%; width: 40px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px;"></div>
+                        <!-- Mini Logo -->
+                        <div style="position: absolute; top: 25%; left: 50%; transform: translateX(-50%); width: 45px; height: 35px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.03);">
+                            <div style="width: 25px; height: 4px; background: ${primary}; border-radius: 10px; box-shadow: 0 0 12px ${glow};"></div>
+                        </div>
+                        <!-- Mini Button -->
+                        <div style="position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); width: 55px; height: 20px; border-radius: 50px; background: linear-gradient(90deg, ${primary}, ${secondary}); box-shadow: 0 4px 15px ${glow}44;"></div>
+                    </div>
+                </div>
+            `;
+        };
 
         mainContent.innerHTML = `
             <div class="store-container premium-scroll" style="padding: 50px 80px; height: 100%; overflow-y: auto; background: linear-gradient(180deg, rgba(255,183,197,0.03) 0%, transparent 100%); animation: fadeIn 0.6s ease-out;">
                 <header style="margin-bottom: 60px;">
-                    <span style="font-size: 10px; font-weight: 900; color: var(--primary); letter-spacing: 4px; text-transform: uppercase; opacity: 0.8;">Premium Marketplace</span>
-                    <h1 style="font-size: 56px; font-weight: 900; letter-spacing: -2px; color: #fff; margin-top: 5px;">Store</h1>
+                    <span style="font-size: 10px; font-weight: 950; color: var(--primary); letter-spacing: 4px; text-transform: uppercase; opacity: 0.8;">Premium Selection</span>
+                    <h1 style="font-size: 56px; font-weight: 900; letter-spacing: -2.5px; color: #fff; margin-top: 5px;">Papu Store</h1>
                 </header>
 
-                <!-- FEATURED HERO -->
-                <section style="margin-bottom: 70px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                        <h2 style="font-size: 24px; font-weight: 900; color: #fff; letter-spacing: -0.5px;">Destacados de la Semana</h2>
-                        <span style="font-size: 12px; font-weight: 700; color: var(--primary); cursor: pointer; opacity: 0.8;">Ver todo</span>
-                    </div>
-                    
-                    <div style="display: flex; gap: 25px; overflow-x: auto; padding-bottom: 30px; scroll-snap-type: x mandatory;" class="no-scrollbar">
+                <section style="margin-bottom: 80px;">
+                    <h2 style="font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 35px; letter-spacing: -0.5px;">Destacados</h2>
+                    <div style="display: flex; gap: 30px; overflow-x: auto; padding-bottom: 35px; scroll-snap-type: x mandatory;" class="no-scrollbar">
                         ${featured.map(id => {
                             const theme = store.themes[id];
                             const isOwned = store.ownedThemes.includes(id);
                             const isActive = store.activeTheme === id;
                             return `
-                                <div class="glass market-card" style="min-width: 480px; height: 280px; border-radius: 40px; flex-shrink: 0; scroll-snap-align: start; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: 0.5s;" onclick="window.handleThemeAction('${id}')">
-                                    <div style="position: absolute; inset: 0; background: linear-gradient(145deg, ${theme.colors['--primary']}33, ${theme.colors['--secondary']}11);"></div>
-                                    <div style="position: absolute; top: -50px; right: -50px; width: 250px; height: 250px; background: ${theme.colors['--primary']}; opacity: 0.1; filter: blur(80px); border-radius: 50%;"></div>
-                                    
-                                    <div style="position: absolute; bottom: 35px; left: 40px; right: 40px; display: flex; align-items: center; gap: 25px; z-index: 2;">
-                                        <div style="width: 80px; height: 80px; border-radius: 22px; background: linear-gradient(135deg, ${theme.colors['--primary']}, ${theme.colors['--secondary']}); border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 15px 45px rgba(0,0,0,0.6); position: relative;">
-                                             <div style="position: absolute; inset: 0; border-radius: 20px; box-shadow: inset 0 0 15px rgba(255,255,255,0.2);"></div>
-                                        </div>
+                                <div class="glass market-card" style="min-width: 500px; height: 380px; border-radius: 45px; flex-shrink: 0; scroll-snap-align: start; position: relative; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.08); cursor: pointer; transition: 0.6s; padding: 25px;" onclick="window.handleThemeAction('${id}')">
+                                    <div style="width: 100%; height: 230px; margin-bottom: 25px;">
+                                        ${getMiniPreview(id)}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 20px;">
                                         <div style="flex: 1;">
                                             <h3 style="font-size: 24px; font-weight: 950; color: #fff; margin-bottom: 4px; letter-spacing: -0.5px;">${theme.name.toUpperCase()}</h3>
-                                            <p style="font-size: 12px; opacity: 0.5; font-weight: 700;">SISTEMA OPERATIVO PAPU v2.0</p>
+                                            <p style="font-size: 11px; opacity: 0.5; font-weight: 800; letter-spacing: 1px;">PREVISUALIZACIÓN REAL</p>
                                         </div>
-                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                                            <button class="btn-app-store" style="min-width: 100px; padding: 12px 25px; border-radius: 50px; border: none; background: ${isActive ? 'transparent' : 'rgba(255,255,255,0.12)'}; color: ${isActive ? 'var(--primary)' : '#fff'}; font-weight: 900; font-size: 13px; cursor: pointer; border: 1.5px solid ${isActive ? 'var(--primary)' : 'transparent'}; backdrop-filter: blur(10px);">
-                                                ${isActive ? 'OPEN' : (isOwned ? 'GET' : theme.price + ' CP')}
-                                            </button>
-                                            ${!isOwned ? `<span style="font-size: 8px; opacity: 0.3; font-weight: 900; letter-spacing: 1px;">COMPRA ÚNICA</span>` : ''}
-                                        </div>
+                                        <button class="btn-app-store" style="min-width: 110px; padding: 12px 25px; border-radius: 50px; border: none; background: ${isActive ? 'transparent' : 'rgba(255,255,255,0.15)'}; color: ${isActive ? 'var(--primary)' : '#fff'}; font-weight: 900; font-size: 14px; cursor: pointer; border: 2px solid ${isActive ? 'var(--primary)' : 'transparent'}; backdrop-filter: blur(15px);">
+                                            ${isActive ? 'OPEN' : (isOwned ? 'GET' : theme.price + ' CP')}
+                                        </button>
                                     </div>
                                 </div>
                             `;
@@ -622,22 +640,23 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                     </div>
                 </section>
 
-                <!-- GRID SECTION -->
                 <section>
-                    <h2 style="font-size: 24px; font-weight: 900; color: #fff; margin-bottom: 35px; letter-spacing: -0.5px;">Colección Completa</h2>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 40px;">
+                    <h2 style="font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 45px; letter-spacing: -0.5px;">Catálogo Completo</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 50px;">
                         ${others.map(id => {
                             const theme = store.themes[id];
                             const isOwned = store.ownedThemes.includes(id);
                             const isActive = store.activeTheme === id;
                             return `
-                                <div style="display: flex; align-items: center; gap: 20px; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.08); transition: 0.3s; cursor: pointer;" onclick="window.handleThemeAction('${id}')" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
-                                    <div style="width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg, ${theme.colors['--primary']}, ${theme.colors['--secondary']}); border: 1.5px solid rgba(255,255,255,0.1); box-shadow: 0 8px 20px rgba(0,0,0,0.3);"></div>
-                                    <div style="flex: 1;">
-                                        <h3 style="font-size: 17px; font-weight: 950; color: #fff; margin-bottom: 3px;">${theme.name}</h3>
-                                        <p style="font-size: 11px; opacity: 0.4; font-weight: 700;">${isOwned ? 'EDICIÓN ESTÁNDAR' : 'DESBLOQUEAR POR ' + theme.price + ' CP'}</p>
+                                <div style="display: flex; align-items: center; gap: 25px; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); transition: 0.3s; cursor: pointer;" onclick="window.handleThemeAction('${id}')">
+                                    <div style="width: 100px; height: 75px; flex-shrink: 0;">
+                                        ${getMiniPreview(id)}
                                     </div>
-                                    <button class="btn-app-store" style="min-width: 80px; height: 34px; border-radius: 50px; border: none; background: rgba(255,255,255,0.08); color: var(--primary); font-weight: 950; font-size: 11px; cursor: pointer; text-transform: uppercase;">
+                                    <div style="flex: 1;">
+                                        <h3 style="font-size: 19px; font-weight: 950; color: #fff; margin-bottom: 4px;">${theme.name}</h3>
+                                        <p style="font-size: 11px; opacity: 0.4; font-weight: 800;">${isOwned ? 'COLECCIÓN PROPIA' : theme.price + ' CP'}</p>
+                                    </div>
+                                    <button class="btn-app-store" style="min-width: 85px; height: 36px; border-radius: 50px; border: none; background: rgba(255,255,255,0.08); color: var(--primary); font-weight: 950; font-size: 12px;">
                                         ${isActive ? '✓' : (isOwned ? 'GET' : 'BUY')}
                                     </button>
                                 </div>
@@ -647,6 +666,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                 </section>
             </div>
         `;
+    };
     };
 
     window.handleThemeAction = (id) => {
