@@ -437,15 +437,6 @@
   box-shadow: 0 10px 20px rgba(255, 183, 197, 0.1);
 }
 
-.active-theme {
-    animation: themePulse 2s infinite alternate;
-}
-
-@keyframes themePulse {
-    from { box-shadow: 0 0 10px var(--primary-glow); }
-    to { box-shadow: 0 0 30px var(--primary-glow); }
-}
-
 .premium-scroll::-webkit-scrollbar {
   width: 4px;
 }
@@ -754,65 +745,8 @@ body {
   overflow: hidden;
 }
 
-#bg-anim {
-    z-index: -1;
+#main[overlay] {
+  filter: blur(3px) contrast(0.9) brightness(1);
 }
 
-.sidebar {
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.sidebar-nav {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-@keyframes themePulse {
-  from { box-shadow: 0 0 10px var(--primary-glow); }
-  to { box-shadow: 0 0 30px var(--primary-glow); }
-}
-
-#root {
-  position: absolute;
-  width: 100%;
-  height: calc(100% - 45px);
-  overflow: hidden;
-}
-
-.app-layout {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-    display: none !important;
-}
-
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.btn-app-store {
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-app-store:hover {
-    background: var(--primary) !important;
-    color: #000 !important;
-    transform: scale(1.05);
-    box-shadow: 0 0 15px var(--primary-glow);
-}
-
-.btn-app-store:active {
-    transform: scale(0.95);
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+/*# sourceMappingURL=main.css.map */
