@@ -45,7 +45,7 @@ const createWindow = () => {
         width: Math.floor(width * 0.85),
         height: Math.floor(height * 0.9),
         title: ui.title,
-        resizable: false,
+        resizable: true,
         frame: false,
         icon: path.join(__dirname, 'assets', 'desktop_new_icon.png'),
         webPreferences:{
@@ -100,11 +100,70 @@ ipcMain.on('window-control', (event, action) => {
     if (win) {
         if (action === 'close') win.close();
         if (action === 'minimize') win.minimize();
+        if (action === 'maximize') {
+            if (win.isMaximized()) win.unmaximize();
+            else win.maximize();
+        }
     }
 });
 
 ipcMain.on('open-external', (event, targetUrl) => {
     shell.openExternal(targetUrl);
+});
+
+ipcMain.on('auto-start-server', async (event) => {
+    const win = new BrowserWindow({
+        width: 1000,
+        height: 700,
+        show: true,
+        title: "Aternos Auto-Login",
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            partition: 'persist:aternos'
+        }
+    });
+    
+    win.setMenu(null);
+    win.loadURL('https://aternos.org/go/');
+
+    win.webContents.on('did-finish-load', () => {
+        const url = win.webContents.getURL();
+        if (url.includes('aternos.org/go')) {
+            const code = `
+                let autoLoginAttempts = 0;
+                const loginInterval = setInterval(() => {
+                    autoLoginAttempts++;
+                    const userBox = document.querySelector('#user') || document.querySelector('input[name="user"]') || document.querySelector('input[type="text"]') || document.getElementById('user');
+                    const passBox = document.querySelector('#password') || document.querySelector('input[name="password"]') || document.querySelector('input[type="password"]') || document.getElementById('password');
+                    const loginBtn = document.querySelector('#login') || document.querySelector('.login-button') || document.querySelector('button[type="submit"]') || document.getElementById('login');
+
+                    if (userBox && passBox && userBox.offsetParent !== null) {
+                        clearInterval(loginInterval);
+                        
+                        userBox.value = 'LosPapusLoverBot';
+                        userBox.dispatchEvent(new Event('input', { bubbles: true }));
+                        userBox.dispatchEvent(new Event('change', { bubbles: true }));
+
+                        passBox.value = 'LosPapusLover##';
+                        passBox.dispatchEvent(new Event('input', { bubbles: true }));
+                        passBox.dispatchEvent(new Event('change', { bubbles: true }));
+
+                        if (loginBtn) {
+                            setTimeout(() => {
+                                loginBtn.click();
+                            }, 500);
+                        }
+                    }
+
+                    if (autoLoginAttempts > 30) {
+                        clearInterval(loginInterval);
+                    }
+                }, 500);
+            `;
+            win.webContents.executeJavaScript(code).catch(e => console.error("Aternos injection error:", e));
+        }
+    });
 });
 
 ipcMain.on('log-ui-error', (event, err) => {
@@ -566,6 +625,12 @@ ipcMain.on('ping-server', async (event, serverIP) => {
             }
         }
 
+        // ATERNOS PROXY FIX: Si dice online pero es el proxy de letargo
+        const radar1Version = data.version || '';
+        if (data.online && (data.players?.max === 0 || radar1Version.includes("Error") || radar1Version.includes("Offline") || radar1Version.includes("⚠"))) {
+            data.online = false;
+        }
+
         if (data.online) {
             event.sender.send('ping-result', { 
                 online: true, 
@@ -586,8 +651,10 @@ ipcMain.on('ping-server', async (event, serverIP) => {
             
             const server = new mcping.MinecraftServer(host, port);
             server.ping(2000, 47, (err, res) => {
-               if (err) {
-                   console.log("Radar 3 final falló también. Servidor realmente offline.");
+               const proxyVersion = res?.version?.name || "";
+               // ATERNOS PROXY FIX: Si da err, max === 0, o versión indica Error/Offline
+               if (err || (res && res.players && res.players.max === 0) || proxyVersion.includes("Error") || proxyVersion.includes("Offline") || proxyVersion.includes("⚠")) {
+                   console.log("Radar 3 final falló o detectó Proxy Offline. Servidor realmente offline.");
                    event.sender.send('ping-result', { online: false });
                } else {
                    console.log("Radar 3 detectó el servidor ONLINE!");
