@@ -111,6 +111,19 @@ ipcMain.on('open-external', (event, targetUrl) => {
     shell.openExternal(targetUrl);
 });
 
+// JARVIS VOICE COMMANDS: Permission auto-grant for audioCapture
+app.whenReady().then(() => {
+    const { session } = require('electron');
+    session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+        if (permission === 'audioCapture') return true;
+        return false;
+    });
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+        if (permission === 'audioCapture') callback(true);
+        else callback(false);
+    });
+});
+
 ipcMain.on('auto-start-server', async (event) => {
     const win = new BrowserWindow({
         width: 1000,
