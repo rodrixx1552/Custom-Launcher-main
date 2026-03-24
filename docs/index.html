@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LosPapusLover Launcher | La Mejor Experiencia Minecraft</title>
+    <meta name="description" content="Descarga LosPapusLover Launcher, la mejor experiencia para jugar Minecraft con mods, Auto-Login de Aternos, y rendimiento optimizado.">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ffb7c5;
+            --primary-glow: rgba(255, 183, 197, 0.5);
+            --secondary: #ff8c4a;
+            --secondary-glow: rgba(255, 140, 74, 0.4);
+            --bg-dark: #0a0a0c;
+            --glass-bg: rgba(20, 20, 24, 0.65);
+            --glass-border: rgba(255, 183, 197, 0.2);
+            --text-main: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background Particles */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: radial-gradient(circle at top right, #1a0b12 0%, #050505 100%);
+        }
+
+        /* Navigation */
+        nav {
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 12, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo img {
+            width: 45px;
+            height: auto;
+            filter: drop-shadow(0 0 10px var(--primary-glow));
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8rem 5% 4rem;
+            position: relative;
+        }
+
+        .hero-logo {
+            width: 200px;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 20px 30px rgba(255, 183, 197, 0.3));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .badge {
+            background: linear-gradient(90deg, rgba(255, 183, 197, 0.1), rgba(255, 140, 74, 0.1));
+            color: var(--primary);
+            border: 1px solid var(--primary-glow);
+            padding: 0.6rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-bottom: 2rem;
+            display: inline-block;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 40px rgba(255, 183, 197, 0.3);
+            letter-spacing: -2px;
+        }
+
+        p.subtitle {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            margin-bottom: 3.5rem;
+            line-height: 1.6;
+            font-weight: 400;
+            max-width: 700px;
+        }
+
+        /* Download Button */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: linear-gradient(45deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #000;
+            padding: 1.5rem 4rem;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 40px rgba(255, 183, 197, 0.4), 
+                        inset 0 0 0 2px rgba(255,255,255,0.3);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, var(--secondary) 0%, var(--primary) 100%);
+            z-index: -1;
+            transition: opacity 0.5s;
+            opacity: 0;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 30px 50px rgba(255, 140, 74, 0.5), 
+                        inset 0 0 0 2px rgba(255,255,255,0.5);
+        }
+
+        .download-btn:hover::before {
+            opacity: 1;
+        }
+
+        .version-info {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 8rem 5%;
+            background: linear-gradient(180deg, transparent 0%, rgba(20, 20, 24, 0.8) 100%);
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 4rem;
+            color: var(--text-main);
+        }
+
+        .section-title span {
+            color: var(--primary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255,183,197,0.1);
+        }
+
+        .feature-icon {
+            font-size: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 10px 15px var(--primary-glow));
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Showcase Interface */
+        .interface-showcase {
+            padding: 5rem 5%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .launcher-mockup {
+            width: 100%;
+            max-width: 1000px;
+            background: #0a0a0c;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 50px rgba(255,183,197,0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mockup-header {
+            height: 40px;
+            background: #111;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 8px;
+        }
+
+        .mockup-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff5f56;
+        }
+        .mockup-dot:nth-child(2) { background: #ffbd2e; }
+        .mockup-dot:nth-child(3) { background: #27c93f; }
+
+        .mockup-body {
+            height: 500px;
+            background: radial-gradient(circle at top right, rgba(255,183,197,0.1), transparent), #0f0f13;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            font-weight: 900;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Footer */
+        footer {
+            background: #050505;
+            padding: 4rem 5% 2rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .social-links a {
+            color: var(--text-muted);
+            font-size: 2rem;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .social-links a:hover {
+            color: var(--primary);
+            transform: scale(1.2);
+        }
+
+        .footer-text {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-up {
+            animation: fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            .hero-logo { width: 140px; }
+            .download-btn { padding: 1.2rem 2.5rem; font-size: 1.1rem; }
+            .section-title { font-size: 2.2rem; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="particles-js"></div>
+
+    <nav>
+        <a href="#" class="logo">
+            <!-- Asumiendo que el logo está en src/assets/los_papus/logo.png -->
+            <img src="../src/assets/los_papus/logo.png" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/5738/5738102.png'"> 
+            LosPapusLover <span>Launcher</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features">Características</a>
+            <a href="#interface">Interfaz</a>
+            <a href="https://github.com/rodrixx1552/Custom-Launcher-main" target="_blank">Código Fuente</a>
+        </div>
+    </nav>
+
+    <main class="hero">
+        <!-- Logo Grande Flotante -->
+        <img src="../src/assets/los_papus/logo.png" alt="LosPapusLover" class="hero-logo" onerror="this.style.display='none'">
+        
+        <div class="badge">ESTABLE v0.3.8</div>
+        <h1>El Launcher Definitivo<br>para tu Servidor.</h1>
+        <p class="subtitle">Disfruta de la mejor experiencia de Minecraft interactiva. Inicio automático a servidores Aternos, sistema global de skins, descarga de mods automática y optimización extrema basada en Forge Patcher.</p>
+        
+        <a href="https://github.com/rodrixx1552/Custom-Launcher-main/releases/latest" target="_blank" class="download-btn">
+            <i class="fas fa-rocket"></i>
+            Descargar Launcher
+        </a>
+        <div class="version-info">Windows 10/11 • Autoguardado Activo • Microsoft Auth</div>
+    </main>
+
+    <section id="features" class="features-section">
+        <h2 class="section-title">Tecnología de <span>Punta</span></h2>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-server feature-icon"></i>
+                <h3>Integración Aternos</h3>
+                <p>Olvida la página web. Enciende el servidor directamente desde tu cliente con un clic usando nuestra innovadora inyección de sesión persistente.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-cloud-download-alt feature-icon"></i>
+                <h3>Sincronización OTA</h3>
+                <p>Las actualizaciones de mods, versiones del launcher y noticias se entregan por aire silenciosamente. Juega siempre la versión correcta.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-user-astronaut feature-icon"></i>
+                <h3>Bóveda de Skins 3D</h3>
+                <p>Administra, previsualiza en un entorno 3D, y aplica skins personalizados localmente. Integra nativamente las APIs de Minecraft.</p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fas fa-fighter-jet feature-icon"></i>
+                <h3>Forge Acelerado</h3>
+                <p>Motor de perfiles Java y Forge integrado automáticamente para la máxima estabilidad sin tener que configurar nada en tu PC.</p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fas fa-shield-alt feature-icon"></i>
+                <h3>Microsoft Secure Auth</h3>
+                <p>Inicios de sesión de cuenta Microsoft directos, estables y confiables con soporte multicuenta e intercambio instantáneo.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-paint-brush feature-icon"></i>
+                <h3>Estética Premium</h3>
+                <p>Diseño inspirado en ciencia ficción, sonido ambiente envolvente, locución JARVIS integrada, meteorología en tiempo real y UI Glassmorphism.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="interface" class="interface-showcase">
+        <!-- Puedes cambiar esto por un slider o imagen real del launcher más adelante -->
+        <div class="launcher-mockup">
+            <div class="mockup-header">
+                <div class="mockup-dot"></div>
+                <div class="mockup-dot"></div>
+                <div class="mockup-dot"></div>
+            </div>
+            <div class="mockup-body">
+                <span>UI Core Engine Activo</span>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="social-links">
+            <a href="https://github.com/rodrixx1552/Custom-Launcher-main" target="_blank"><i class="fab fa-github"></i></a>
+            <!-- Puedes agregar tu link real de discord si quieres -->
+            <a href="#" target="_blank"><i class="fab fa-discord"></i></a> 
+        </div>
+        <div class="footer-text">
+            &copy; 2026 LosPapusLover Network. Proyecto Open Source bajo MIT License.<br>
+            Minecraft es una marca registrada de Mojang AB. Este launcher no es un producto oficial de Minecraft.
+        </div>
+    </footer>
+
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 100, "density": { "enable": true, "value_area": 900 } },
+                "color": { "value": ["#ffb7c5", "#ff8c4a", "#ffffff"] },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": true, "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false } },
+                "size": { "value": 3, "random": true, "anim": { "enable": true, "speed": 3, "size_min": 0.1, "sync": false } },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ffb7c5", "opacity": 0.15, "width": 1 },
+                "move": { "enable": true, "speed": 1.5, "direction": "none", "random": true, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false } }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": { "repulse": { "distance": 120, "duration": 0.4 }, "push": { "particles_nb": 4 } }
+            },
+            "retina_detect": true
+        });
+    </script>
+</body>
+</html>
