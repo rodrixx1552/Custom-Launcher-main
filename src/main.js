@@ -928,9 +928,23 @@ ipcMain.on('sync-modpacks', async (event) => {
             const mediafireUrl = getModpackUrl();
             const directUrl = await getMediafireDirectLink(mediafireUrl);
             await downloadFile(directUrl, tempZip);
+            event.sender.send('sync-progress', { step: 'EXTRACTING ZIP...', progress: 60 });
             const zip = new AdmZip(tempZip);
             const rootPath = path.join(app.getPath('appData'), '.lospapus-minecraft');
-            zip.extractAllTo(rootPath, true);
+            const entries = zip.getEntries();
+            for (const entry of entries) {
+                if (entry.isDirectory) continue;
+                const destPath = path.join(rootPath, entry.entryName);
+                const destDir = path.dirname(destPath);
+                if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+                try {
+                    // Remove read-only flag if file already exists (Windows EPERM fix)
+                    if (fs.existsSync(destPath)) fs.chmodSync(destPath, 0o666);
+                    fs.writeFileSync(destPath, entry.getData());
+                } catch (entryErr) {
+                    console.warn('ZIP Extract: skipping locked file:', entry.entryName, entryErr.message);
+                }
+            }
             if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
             event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
             event.sender.send('sync-finished');
@@ -938,6 +952,7 @@ ipcMain.on('sync-modpacks', async (event) => {
             console.error('Sync Error Final Fallback:', zipErr);
             event.sender.send('sync-error', 'Matrix error: ' + zipErr.message);
             if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
+
         }
     }
 });
