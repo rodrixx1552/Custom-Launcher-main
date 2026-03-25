@@ -890,7 +890,13 @@ ipcMain.on('sync-modpacks', async (event) => {
             for (const file of localFiles) {
                 if (!modsToList.find(m => m.name === file)) {
                     console.log('OTA Mods: Removing extra mod:', file);
-                    fs.unlinkSync(path.join(modsPath, file));
+                    try {
+                        const filePath = path.join(modsPath, file);
+                        fs.chmodSync(filePath, 0o666); // Remove read-only flag (Windows fix)
+                        fs.unlinkSync(filePath);
+                    } catch (delErr) {
+                        console.warn('OTA Mods: Could not delete mod (skipping):', file, delErr.message);
+                    }
                 }
             }
 
@@ -943,12 +949,17 @@ ipcMain.handle('check-mods-status', async () => {
 
         const response = await axios.get(MODS_MANIFEST_URL, { timeout: 5000 });
         const remoteMods = response.data;
-        if (!Array.isArray(remoteMods)) return typeof remoteMods === 'object' && remoteMods.length > 0; // if it is an object but not array, check its length if it has one
+        if (!Array.isArray(remoteMods)) return typeof remoteMods === 'object' && remoteMods.length > 0;
 
         if (Array.isArray(remoteMods)) {
             const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
+            // Check if any remote mod is missing locally
             for (const mod of remoteMods) {
                 if (!localFiles.includes(mod.name)) return true;
+            }
+            // Check if any local mod is NOT in the remote manifest (needs to be removed)
+            for (const file of localFiles) {
+                if (!remoteMods.find(m => m.name === file)) return true;
             }
         }
         return false;
