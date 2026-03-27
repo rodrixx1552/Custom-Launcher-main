@@ -28,6 +28,10 @@
         "size": "683.63 KB"
     },
     {
+        "name": "GlitchCore-forge-1.20.1-0.0.1.1.jar",
+        "size": "85.5 KB"
+    },
+    {
         "name": "ImmediatelyFast-Forge-1.5.4+1.20.4.jar",
         "size": "526.36 KB"
     },
@@ -60,6 +64,10 @@
         "size": "20.09 MB"
     },
     {
+        "name": "SereneSeasons-forge-1.20.1-9.1.0.2.jar",
+        "size": "157.12 KB"
+    },
+    {
         "name": "TerraBlender-forge-1.20.1-3.0.1.10.jar",
         "size": "105.01 KB"
     },
@@ -72,6 +80,14 @@
         "size": "2.23 MB"
     },
     {
+        "name": "architectury-9.2.14-forge.jar",
+        "size": "566.99 KB"
+    },
+    {
+        "name": "athena-forge-1.20.1-3.1.2.jar",
+        "size": "89.66 KB"
+    },
+    {
         "name": "balm-forge-1.20.1-7.3.38-all.jar",
         "size": "577.54 KB"
     },
@@ -82,6 +98,10 @@
     {
         "name": "cfm-forge-1.20.1-7.0.0-pre36.jar",
         "size": "2.49 MB"
+    },
+    {
+        "name": "chipped-forge-1.20.1-3.0.7.jar",
+        "size": "14.36 MB"
     },
     {
         "name": "coroutil-forge-1.20.1-1.3.7.jar",
@@ -136,6 +156,10 @@
         "size": "1.09 MB"
     },
     {
+        "name": "lexiconfig-forge-1.4.18-1.jar",
+        "size": "52.93 KB"
+    },
+    {
         "name": "lootr-forge-1.20-0.7.35.94.jar",
         "size": "452.62 KB"
     },
@@ -182,6 +206,14 @@
     {
         "name": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
         "size": "177.18 KB"
+    },
+    {
+        "name": "resourcefullib-forge-1.20.1-2.1.29.jar",
+        "size": "422.61 KB"
+    },
+    {
+        "name": "simpleradio-forge-1.20.1-3.4.6.jar",
+        "size": "1.03 MB"
     },
     {
         "name": "skinrestorer-2.6.0+1.20-forge.jar",
@@ -238,6 +270,10 @@
     {
         "name": "waystones-forge-1.20.1-14.1.20.jar",
         "size": "521.23 KB"
+    },
+    {
+        "name": "yuushya-1.20.1-forge-2.2.3.jar",
+        "size": "22.33 MB"
     },
     {
         "name": "zombieawareness-1.20.1-1.13.1.jar",
