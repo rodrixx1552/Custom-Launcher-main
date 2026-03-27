@@ -8,24 +8,8 @@
         "size": "121.52 KB"
     },
     {
-        "name": "balm-forge-1.20.1-7.3.38-all.jar",
-        "size": "577.54 KB"
-    },
-    {
         "name": "BiomesOPlenty-1.20.1-18.0.0.592.jar",
         "size": "20.79 MB"
-    },
-    {
-        "name": "cfm-forge-1.20.1-7.0.0-pre36.jar",
-        "size": "2.49 MB"
-    },
-    {
-        "name": "coroutil-forge-1.20.1-1.3.7.jar",
-        "size": "62.68 KB"
-    },
-    {
-        "name": "corpse-forge-1.20.1-1.0.23.jar",
-        "size": "239.89 KB"
     },
     {
         "name": "CreativeCore_FORGE_v2.12.35_mc1.20.1.jar",
@@ -36,32 +20,12 @@
         "size": "151.85 KB"
     },
     {
-        "name": "emotecraft-for-MC1.20.1-2.2.7-b.build.50-forge.jar",
-        "size": "664.31 KB"
-    },
-    {
-        "name": "etched-3.0.4.jar",
-        "size": "597.16 KB"
-    },
-    {
         "name": "FarmersDelight-1.20.1-1.2.10.jar",
         "size": "2.82 MB"
     },
     {
         "name": "FazRoleplayClothes-1.20.1-2.4.jar",
         "size": "683.63 KB"
-    },
-    {
-        "name": "ferritecore-6.0.1-forge.jar",
-        "size": "120.15 KB"
-    },
-    {
-        "name": "framework-forge-1.20.1-0.8.0.jar",
-        "size": "374.87 KB"
-    },
-    {
-        "name": "geckolib-forge-1.20.1-4.8.3.jar",
-        "size": "1014.69 KB"
     },
     {
         "name": "ImmediatelyFast-Forge-1.5.4+1.20.4.jar",
@@ -76,12 +40,88 @@
         "size": "539.54 KB"
     },
     {
-        "name": "jei-1.20.1-forge-15.20.0.112.jar",
-        "size": "1.32 MB"
-    },
-    {
         "name": "JustEnoughGuns-0.13.2-1.20.1.jar",
         "size": "9.42 MB"
+    },
+    {
+        "name": "Kiwi-1.20.1-Forge-11.10.1.jar",
+        "size": "1.6 MB"
+    },
+    {
+        "name": "MTR-forge-4.0.3+1.20.1.jar",
+        "size": "81.29 MB"
+    },
+    {
+        "name": "MTS Official Pack-1.20.1-V28.2.jar",
+        "size": "85.44 MB"
+    },
+    {
+        "name": "OAmP-1.20.1-V2.jar",
+        "size": "20.09 MB"
+    },
+    {
+        "name": "TerraBlender-forge-1.20.1-3.0.1.10.jar",
+        "size": "105.01 KB"
+    },
+    {
+        "name": "The-Hordes-1.20.1-1.5.4c.jar",
+        "size": "572.63 KB"
+    },
+    {
+        "name": "XeKr's Decoration-1.20.1-Forge-0.9.6.jar",
+        "size": "2.23 MB"
+    },
+    {
+        "name": "balm-forge-1.20.1-7.3.38-all.jar",
+        "size": "577.54 KB"
+    },
+    {
+        "name": "blocksyouneed_luna-1.11.4-forge-1.20.1.jar",
+        "size": "15.26 MB"
+    },
+    {
+        "name": "cfm-forge-1.20.1-7.0.0-pre36.jar",
+        "size": "2.49 MB"
+    },
+    {
+        "name": "coroutil-forge-1.20.1-1.3.7.jar",
+        "size": "62.68 KB"
+    },
+    {
+        "name": "corpse-forge-1.20.1-1.0.23.jar",
+        "size": "239.89 KB"
+    },
+    {
+        "name": "emotecraft-for-MC1.20.1-2.2.7-b.build.50-forge.jar",
+        "size": "664.31 KB"
+    },
+    {
+        "name": "etched-3.0.4.jar",
+        "size": "597.16 KB"
+    },
+    {
+        "name": "fabric-api-0.92.6+1.11.14+1.20.1.jar",
+        "size": "2.92 MB"
+    },
+    {
+        "name": "ferritecore-6.0.1-forge.jar",
+        "size": "120.15 KB"
+    },
+    {
+        "name": "framework-forge-1.20.1-0.8.0.jar",
+        "size": "374.87 KB"
+    },
+    {
+        "name": "geckolib-forge-1.20.1-4.8.3.jar",
+        "size": "1014.69 KB"
+    },
+    {
+        "name": "industrialdeco-1.0.0.jar",
+        "size": "316.17 KB"
+    },
+    {
+        "name": "jei-1.20.1-forge-15.20.0.112.jar",
+        "size": "1.32 MB"
     },
     {
         "name": "kuronomy-3.2.6-forge-1.20.1.jar",
@@ -112,16 +152,12 @@
         "size": "1.33 MB"
     },
     {
-        "name": "MTR-forge-4.0.3+1.20.1.jar",
-        "size": "81.29 MB"
+        "name": "movingelevators-1.4.12-forge-mc1.20.1.jar",
+        "size": "325.46 KB"
     },
     {
-        "name": "MTS Official Pack-1.20.1-V28.2.jar",
-        "size": "85.44 MB"
-    },
-    {
-        "name": "OAmP-1.20.1-V2.jar",
-        "size": "20.09 MB"
+        "name": "neoncraft-1.1.0.jar",
+        "size": "3.02 MB"
     },
     {
         "name": "pamhc2foodextended-1.20.4-1.0.1.jar",
@@ -148,16 +184,16 @@
         "size": "202.13 KB"
     },
     {
+        "name": "supermartijn642configlib-1.1.8-forge-mc1.20.jar",
+        "size": "201.74 KB"
+    },
+    {
+        "name": "supermartijn642corelib-1.1.21-forge-mc1.20.1.jar",
+        "size": "541.97 KB"
+    },
+    {
         "name": "table_top_craft-1.20.1-6.1.2.jar",
         "size": "1.4 MB"
-    },
-    {
-        "name": "TerraBlender-forge-1.20.1-3.0.1.10.jar",
-        "size": "105.01 KB"
-    },
-    {
-        "name": "The-Hordes-1.20.1-1.5.4c.jar",
-        "size": "572.63 KB"
     },
     {
         "name": "voicechat-forge-1.20.1-2.6.12.jar",
