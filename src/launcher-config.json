@@ -1,7 +1,7 @@
 {
     "server_ip": "sprat.aternos.host:44481",
     "modpack_url": "http://www.mediafire.com/file/5cbxx4rl5jqp688/mods.zip",
-    "launcher_version": "0.4.0",
-    "latest_launcher_version": "0.4.0",
-    "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.4.0/LosPapus-v0.4.0.zip"
+    "launcher_version": "0.4.1",
+    "latest_launcher_version": "0.4.1",
+    "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.4.1/LosPapus-v0.4.1.zip"
 }
