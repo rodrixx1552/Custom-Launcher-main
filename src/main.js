@@ -104,9 +104,6 @@ ipcMain.on('window-control', (event, action) => {
             if (win.isMaximized()) win.unmaximize();
             else win.maximize();
         }
-        if (action === 'fullscreen') {
-            win.setFullScreen(!win.isFullScreen());
-        }
     }
 });
 
@@ -878,11 +875,9 @@ ipcMain.on('sync-modpacks', async (event) => {
     const tempZip = path.join(app.getPath('temp'), 'modpack.zip');
 
     try {
-        event.sender.send('sync-progress', { step: 'CONECTANDO CON LA NUBE...', progress: 5 });
+        event.sender.send('sync-progress', { step: 'SCANNING CLOUD...', progress: 5 });
         console.log('OTA Mods: Fetching manifest from:', MODS_MANIFEST_URL);
-        
-        // Timeout 15s to be safe
-        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 15000 });
+        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 10000 });
         const modsToList = response.data;
 
         if (Array.isArray(modsToList)) {
@@ -890,55 +885,34 @@ ipcMain.on('sync-modpacks', async (event) => {
             if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
 
             // 1. CLEANUP: Delete local mods not in manifest
-            event.sender.send('sync-progress', { step: 'ANALIZANDO ARCHIVOS LOCALES...', progress: 15 });
+            event.sender.send('sync-progress', { step: 'CLEANING MATRIX...', progress: 15 });
             const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
-            
-            let deletedCount = 0;
             for (const file of localFiles) {
                 if (!modsToList.find(m => m.name === file)) {
-                    deletedCount++;
-                    event.sender.send('sync-progress', { step: `LIMPIANDO: ${file}`, progress: 15 });
-                    try {
-                        const filePath = path.join(modsPath, file);
-                        if (fs.existsSync(filePath)) {
-                            fs.chmodSync(filePath, 0o666);
-                            fs.unlinkSync(filePath);
-                        }
-                    } catch (delErr) {
-                        console.warn('OTA Mods: Could not delete mod:', file, delErr.message);
-                    }
+                    console.log('OTA Mods: Removing extra mod:', file);
+                    fs.unlinkSync(path.join(modsPath, file));
                 }
             }
-            console.log(`OTA Mods: Cleanup finished. Deleted ${deletedCount} mods.`);
 
             // 2. DOWNLOAD: Missing mods
-            event.sender.send('sync-progress', { step: 'VERIFICANDO INTEGRIDAD...', progress: 25 });
             for (let i = 0; i < modsToList.length; i++) {
                 const mod = modsToList[i];
                 const dest = path.join(modsPath, mod.name);
-                const progress = 25 + Math.floor((i / modsToList.length) * 70);
+                const progress = 20 + Math.floor((i / modsToList.length) * 75);
 
                 if (!fs.existsSync(dest)) {
-                    event.sender.send('sync-progress', { step: `DESCARGANDO: ${mod.name}`, progress });
+                    event.sender.send('sync-progress', { step: `DOWNLOADING: ${mod.name}`, progress });
                     console.log('OTA Mods: Downloading missing mod:', mod.name);
-                    try {
-                        await downloadFile(MODS_BASE_URL + encodeURIComponent(mod.name), dest);
-                    } catch (dlErr) {
-                        console.error(`OTA Mods: Failed to download ${mod.name}:`, dlErr.message);
-                        throw new Error(`Error descargando ${mod.name}`);
-                    }
+                    await downloadFile(MODS_BASE_URL + encodeURIComponent(mod.name), dest);
                 }
             }
 
             manifestSuccess = true;
-            event.sender.send('sync-progress', { step: '¡SINCRONIZACIÓN EXITOSA!', progress: 100 });
+            event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
             event.sender.send('sync-finished');
-        } else {
-            throw new Error('El manifiesto no es un array válido.');
         }
     } catch (err) {
-        console.error('OTA Mods: Incremental sync failed:', err.message);
-        event.sender.send('sync-progress', { step: 'ERROR: REINTENTANDO CON ZIP...', progress: 20 });
+        console.warn('OTA Mods: Incremental sync failed, falling back to ZIP.', err.message);
     }
 
     if (!manifestSuccess) {
@@ -948,23 +922,9 @@ ipcMain.on('sync-modpacks', async (event) => {
             const mediafireUrl = getModpackUrl();
             const directUrl = await getMediafireDirectLink(mediafireUrl);
             await downloadFile(directUrl, tempZip);
-            event.sender.send('sync-progress', { step: 'EXTRACTING ZIP...', progress: 60 });
             const zip = new AdmZip(tempZip);
             const rootPath = path.join(app.getPath('appData'), '.lospapus-minecraft');
-            const entries = zip.getEntries();
-            for (const entry of entries) {
-                if (entry.isDirectory) continue;
-                const destPath = path.join(rootPath, entry.entryName);
-                const destDir = path.dirname(destPath);
-                if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
-                try {
-                    // Remove read-only flag if file already exists (Windows EPERM fix)
-                    if (fs.existsSync(destPath)) fs.chmodSync(destPath, 0o666);
-                    fs.writeFileSync(destPath, entry.getData());
-                } catch (entryErr) {
-                    console.warn('ZIP Extract: skipping locked file:', entry.entryName, entryErr.message);
-                }
-            }
+            zip.extractAllTo(rootPath, true);
             if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
             event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
             event.sender.send('sync-finished');
@@ -972,7 +932,6 @@ ipcMain.on('sync-modpacks', async (event) => {
             console.error('Sync Error Final Fallback:', zipErr);
             event.sender.send('sync-error', 'Matrix error: ' + zipErr.message);
             if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
-
         }
     }
 });
@@ -984,17 +943,12 @@ ipcMain.handle('check-mods-status', async () => {
 
         const response = await axios.get(MODS_MANIFEST_URL, { timeout: 5000 });
         const remoteMods = response.data;
-        if (!Array.isArray(remoteMods)) return typeof remoteMods === 'object' && remoteMods.length > 0;
+        if (!Array.isArray(remoteMods)) return typeof remoteMods === 'object' && remoteMods.length > 0; // if it is an object but not array, check its length if it has one
 
         if (Array.isArray(remoteMods)) {
             const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
-            // Check if any remote mod is missing locally
             for (const mod of remoteMods) {
                 if (!localFiles.includes(mod.name)) return true;
-            }
-            // Check if any local mod is NOT in the remote manifest (needs to be removed)
-            for (const file of localFiles) {
-                if (!remoteMods.find(m => m.name === file)) return true;
             }
         }
         return false;

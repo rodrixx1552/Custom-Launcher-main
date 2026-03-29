@@ -437,6 +437,15 @@
   box-shadow: 0 10px 20px rgba(255, 183, 197, 0.1);
 }
 
+.active-theme {
+    animation: themePulse 2s infinite alternate;
+}
+
+@keyframes themePulse {
+    from { box-shadow: 0 0 10px var(--primary-glow); }
+    to { box-shadow: 0 0 30px var(--primary-glow); }
+}
+
 .premium-scroll::-webkit-scrollbar {
   width: 4px;
 }
@@ -531,76 +540,19 @@ body {
   z-index: -1;
   background: radial-gradient(circle at center, #0a0b1a 0%, #000 100%);
 }
-.background-animation.bg-original .background-image {
-  background-image: url("../assets/backgrounds/main_bg.png");
+.background-animation.bg-void {
+  background: #000 !important;
 }
-.background-animation.bg-void .background-image {
-  background: radial-gradient(circle at center, #1e0030 0%, #000 100%);
+.background-animation.bg-void .particles, .background-animation.bg-void .clouds, .background-animation.bg-void .scanning-grid {
+  display: none !important;
 }
-.background-animation.bg-void .background-image::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url("../assets/backgrounds/nebula.png");
-  opacity: 0.3;
-  animation: pulse-bg 8s infinite alternate;
-}
-.background-animation.bg-emerald .background-image {
-  background: radial-gradient(circle at center, #002b11 0%, #000 100%);
-}
-.background-animation.bg-emerald .background-image::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, transparent 45%, #2ecc71 50%, transparent 55%);
-  background-size: 200% 200%;
-  opacity: 0.1;
-  animation: shine-bg 10s infinite linear;
-}
-.background-animation.bg-glacier .background-image {
-  background: radial-gradient(circle at center, #001a2e 0%, #000 100%);
-}
-.background-animation.bg-glacier .background-image::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url("../assets/backgrounds/ice_texture.png");
-  opacity: 0.15;
-  filter: brightness(1.5);
-}
-.background-animation.bg-toxic .background-image {
-  background: radial-gradient(circle at center, #0d1a00 0%, #000 100%);
-  box-shadow: inset 0 0 100px rgba(162, 255, 0, 0.1333333333);
-}
-.background-animation.bg-nether .background-image {
-  background: radial-gradient(circle at center, #2e0000 0%, #000 100%);
-}
-.background-animation.bg-nether .background-image::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url("../assets/backgrounds/fire_particles.png");
-  opacity: 0.2;
-}
-.background-animation.bg-emerald-old {
+.background-animation.bg-emerald {
   background: radial-gradient(circle at center, #081a0e 0%, #000 100%);
 }
-.background-animation.bg-emerald-old .scanning-grid::after {
+.background-animation.bg-emerald .scanning-grid::after {
   background-image: linear-gradient(to right, rgba(131, 255, 172, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(131, 255, 172, 0.05) 1px, transparent 1px);
 }
-.background-animation.bg-emerald-old .particles {
+.background-animation.bg-emerald .particles {
   opacity: 0.15;
   filter: hue-rotate(240deg);
 }
@@ -679,6 +631,14 @@ body {
     background-position: 500px 1000px;
   }
 }
+@keyframes bgMoving {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.1) translate(-2%, -2%);
+  }
+}
 #root {
   position: absolute;
   width: 100%;
@@ -702,7 +662,6 @@ body {
   align-items: center;
   padding: 20px 0;
   z-index: 10;
-  transition: width 0.3s ease;
 }
 .sidebar .sidebar-top {
   margin-bottom: 40px;
@@ -748,7 +707,6 @@ body {
   z-index: 100;
   border: 1px solid rgba(255, 183, 197, 0.2);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  transition: right 0.3s ease;
 }
 #user-hub .user-info {
   display: flex;
@@ -778,6 +736,10 @@ body {
   background: rgba(0, 0, 0, 0.4);
 }
 
+.user-footer {
+  display: none !important;
+}
+
 .version-card {
   transition: transform 0.3s, box-shadow 0.3s;
 }
@@ -792,262 +754,65 @@ body {
   overflow: hidden;
 }
 
-#mainContainer {
-  position: relative;
-  height: 100%;
-  padding: clamp(20px, 4vh, 40px);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  color: white;
-  font-family: "Outfit", sans-serif;
+#bg-anim {
+    z-index: -1;
+}
+
+.sidebar {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes themePulse {
+  from { box-shadow: 0 0 10px var(--primary-glow); }
+  to { box-shadow: 0 0 30px var(--primary-glow); }
+}
+
+#root {
+  position: absolute;
+  width: 100%;
+  height: calc(100% - 45px);
   overflow: hidden;
-  animation: scaleIn 0.8s ease-out;
-}
-#mainContainer .top-section {
-  margin-bottom: clamp(20px, 4vh, 40px);
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-#mainContainer .top-section .logo-wrapper {
-  position: relative;
-  padding: 10px;
-}
-#mainContainer .top-section .logo-wrapper::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 150%;
-  height: 150%;
-  background: radial-gradient(circle, rgba(255, 183, 197, 0.2) 0%, transparent 60%);
-  transform: translate(-50%, -50%);
-  z-index: -1;
-  animation: pulseGlow 4s infinite alternate ease-in-out;
-}
-#mainContainer .top-section .logo-wrapper .main-logo {
-  width: 100%;
-  max-width: min(550px, 70vw);
-  height: auto;
-  filter: drop-shadow(0 0 50px rgba(255, 183, 197, 0.5));
-  animation: logoFloat 6s infinite ease-in-out;
-}
-#mainContainer .middle-section {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-bottom: clamp(30px, 6vh, 60px);
-}
-#mainContainer .middle-section .version-card {
-  text-align: center;
-  padding: clamp(30px, 5vw, 50px);
-  width: 100%;
-  max-width: 500px;
-  border-radius: 30px;
-  position: relative;
-}
-#mainContainer .middle-section .version-card .version-badge {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #ffb7c5;
-  color: #000;
-  padding: 5px 20px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 2px;
-  white-space: nowrap;
-}
-#mainContainer .middle-section .version-card .version-edition {
-  font-weight: 900;
-  letter-spacing: clamp(4px, 1vw, 8px);
-  color: #ffb7c5;
-  margin-bottom: 10px;
-  text-shadow: 0 0 20px rgba(255, 183, 197, 0.3);
-  font-size: clamp(1.2rem, 2vw, 2rem);
-}
-#mainContainer .middle-section .version-card .version-number {
-  font-size: clamp(1.1rem, 1.8vw, 1.7rem);
-  font-weight: 900;
-  opacity: 0.9;
-  margin-bottom: 30px;
-}
-#mainContainer .middle-section .version-card .server-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 10px 20px;
-  border-radius: 50px;
-  border: 1px solid rgba(255, 183, 197, 0.3);
-}
-#mainContainer .middle-section .version-card .server-status-pill .pulse-dot {
-  width: 10px;
-  height: 10px;
-  background: #4cd137;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-#mainContainer .middle-section .version-card .server-status-pill #server-ping-text {
-  font-size: clamp(10px, 1vw, 13px);
-  font-weight: 900;
-  color: #ddd;
-}
-#mainContainer .bottom-section {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-#mainContainer .bottom-section .play-area {
-  position: relative;
-}
-#mainContainer .bottom-section .play-area .play-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 150%;
-  height: 150%;
-  background: radial-gradient(circle, rgba(255, 183, 197, 0.3) 0%, transparent 70%);
-  filter: blur(20px);
-  z-index: -1;
-}
-#mainContainer .bottom-section .play-area .btn-play-custom {
-  background: linear-gradient(135deg, #ffb7c5 0%, #ff8c4a 100%);
-  border: none;
-  border-radius: 20px;
-  padding: clamp(15px, 3vh, 30px) clamp(60px, 8vw, 140px);
-  font-size: clamp(24px, 4vw, 42px);
-  font-weight: 900;
-  color: #000;
-  cursor: pointer;
-  transition: 0.3s;
-  letter-spacing: 5px;
-}
-#mainContainer .bottom-section .play-area .btn-play-custom:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 30px rgba(255, 183, 197, 0.5);
-}
-#mainContainer .bottom-section .user-footer {
-  margin-top: clamp(20px, 4vh, 40px);
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px 20px;
-  font-size: clamp(10px, 1vw, 13px);
-}
-#mainContainer .bottom-section .user-footer .version-info {
-  opacity: 0.6;
-}
-#mainContainer .bottom-section .user-footer .user-display {
-  background: rgba(255, 183, 197, 0.1);
-  padding: 8px 15px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 183, 197, 0.2);
-  color: #ffb7c5;
-  font-weight: 900;
-}
-#mainContainer .bottom-section .user-footer .social-icons {
-  display: flex;
-  gap: 15px;
-}
-#mainContainer .bottom-section .user-footer .social-icons a {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 18px;
-  transition: 0.3s;
-}
-#mainContainer .bottom-section .user-footer .social-icons a:hover {
-  color: #ffb7c5;
 }
 
-@media (max-width: 1100px) {
-  .sidebar {
-    width: 70px;
-  }
-  #mainContainer {
-    padding: 25px;
-  }
+.app-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
-@media (max-width: 900px) {
-  .sidebar {
-    width: 60px;
-  }
-  .sidebar span {
-    display: none;
-  }
-  #user-hub {
-    right: 15px;
-  }
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none !important;
 }
-@media (max-height: 750px) {
-  #mainContainer .top-section {
-    margin-bottom: 20px;
-  }
-  #mainContainer .middle-section {
-    margin-bottom: 20px;
-  }
-  #mainContainer .middle-section .version-card {
-    padding: 25px;
-  }
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
-@media (max-width: 1200px) and (max-height: 800px) {
-  #mainContainer .top-section .logo-wrapper .main-logo {
-    max-width: 400px;
-  }
+
+.btn-app-store {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes logoFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+
+.btn-app-store:hover {
+    background: var(--primary) !important;
+    color: #000 !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px var(--primary-glow);
 }
-@keyframes pulse {
-  0% {
+
+.btn-app-store:active {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(76, 209, 55, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(76, 209, 55, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(76, 209, 55, 0);
-  }
-}
-.glass {
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-@keyframes shine-bg {
-  0% {
-    background-position: -200% -200%;
-  }
-  100% {
-    background-position: 200% 200%;
-  }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-@keyframes pulse-bg {
-  0% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0.4;
-    transform: scale(1.1);
-  }
-}
-
-/*# sourceMappingURL=main.css.map */
