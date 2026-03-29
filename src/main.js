@@ -104,6 +104,9 @@ ipcMain.on('window-control', (event, action) => {
             if (win.isMaximized()) win.unmaximize();
             else win.maximize();
         }
+        if (action === 'fullscreen') {
+            win.setFullScreen(!win.isFullScreen());
+        }
     }
 });
 
@@ -875,9 +878,11 @@ ipcMain.on('sync-modpacks', async (event) => {
     const tempZip = path.join(app.getPath('temp'), 'modpack.zip');
 
     try {
-        event.sender.send('sync-progress', { step: 'SCANNING CLOUD...', progress: 5 });
+        event.sender.send('sync-progress', { step: 'CONECTANDO CON LA NUBE...', progress: 5 });
         console.log('OTA Mods: Fetching manifest from:', MODS_MANIFEST_URL);
-        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 10000 });
+        
+        // Timeout 15s to be safe
+        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 15000 });
         const modsToList = response.data;
 
         if (Array.isArray(modsToList)) {
@@ -885,40 +890,55 @@ ipcMain.on('sync-modpacks', async (event) => {
             if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
 
             // 1. CLEANUP: Delete local mods not in manifest
-            event.sender.send('sync-progress', { step: 'CLEANING MATRIX...', progress: 15 });
+            event.sender.send('sync-progress', { step: 'ANALIZANDO ARCHIVOS LOCALES...', progress: 15 });
             const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
+            
+            let deletedCount = 0;
             for (const file of localFiles) {
                 if (!modsToList.find(m => m.name === file)) {
-                    console.log('OTA Mods: Removing extra mod:', file);
+                    deletedCount++;
+                    event.sender.send('sync-progress', { step: `LIMPIANDO: ${file}`, progress: 15 });
                     try {
                         const filePath = path.join(modsPath, file);
-                        fs.chmodSync(filePath, 0o666); // Remove read-only flag (Windows fix)
-                        fs.unlinkSync(filePath);
+                        if (fs.existsSync(filePath)) {
+                            fs.chmodSync(filePath, 0o666);
+                            fs.unlinkSync(filePath);
+                        }
                     } catch (delErr) {
-                        console.warn('OTA Mods: Could not delete mod (skipping):', file, delErr.message);
+                        console.warn('OTA Mods: Could not delete mod:', file, delErr.message);
+                    }
+                }
+            }
+            console.log(`OTA Mods: Cleanup finished. Deleted ${deletedCount} mods.`);
+
+            // 2. DOWNLOAD: Missing mods
+            event.sender.send('sync-progress', { step: 'VERIFICANDO INTEGRIDAD...', progress: 25 });
+            for (let i = 0; i < modsToList.length; i++) {
+                const mod = modsToList[i];
+                const dest = path.join(modsPath, mod.name);
+                const progress = 25 + Math.floor((i / modsToList.length) * 70);
+
+                if (!fs.existsSync(dest)) {
+                    event.sender.send('sync-progress', { step: `DESCARGANDO: ${mod.name}`, progress });
+                    console.log('OTA Mods: Downloading missing mod:', mod.name);
+                    try {
+                        await downloadFile(MODS_BASE_URL + encodeURIComponent(mod.name), dest);
+                    } catch (dlErr) {
+                        console.error(`OTA Mods: Failed to download ${mod.name}:`, dlErr.message);
+                        throw new Error(`Error descargando ${mod.name}`);
                     }
                 }
             }
 
-            // 2. DOWNLOAD: Missing mods
-            for (let i = 0; i < modsToList.length; i++) {
-                const mod = modsToList[i];
-                const dest = path.join(modsPath, mod.name);
-                const progress = 20 + Math.floor((i / modsToList.length) * 75);
-
-                if (!fs.existsSync(dest)) {
-                    event.sender.send('sync-progress', { step: `DOWNLOADING: ${mod.name}`, progress });
-                    console.log('OTA Mods: Downloading missing mod:', mod.name);
-                    await downloadFile(MODS_BASE_URL + encodeURIComponent(mod.name), dest);
-                }
-            }
-
             manifestSuccess = true;
-            event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
+            event.sender.send('sync-progress', { step: '¡SINCRONIZACIÓN EXITOSA!', progress: 100 });
             event.sender.send('sync-finished');
+        } else {
+            throw new Error('El manifiesto no es un array válido.');
         }
     } catch (err) {
-        console.warn('OTA Mods: Incremental sync failed, falling back to ZIP.', err.message);
+        console.error('OTA Mods: Incremental sync failed:', err.message);
+        event.sender.send('sync-progress', { step: 'ERROR: REINTENTANDO CON ZIP...', progress: 20 });
     }
 
     if (!manifestSuccess) {

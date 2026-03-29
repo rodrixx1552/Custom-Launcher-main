@@ -28,12 +28,50 @@ body {
     z-index: -1;
     background: radial-gradient(circle at center, #0a0b1a 0%, #000 100%);
     
-    &.bg-void {
-        background: #000 !important;
-        .particles, .clouds, .scanning-grid { display: none !important; }
+    &.bg-original .background-image { background-image: url('../assets/backgrounds/main_bg.png'); }
+    
+    &.bg-void .background-image { 
+        background: radial-gradient(circle at center, #1e0030 0%, #000 100%);
+        &::after {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: url('../assets/backgrounds/nebula.png'); opacity: 0.3;
+            animation: pulse-bg 8s infinite alternate;
+        }
     }
 
-    &.bg-emerald {
+    &.bg-emerald .background-image { 
+        background: radial-gradient(circle at center, #002b11 0%, #000 100%);
+        &::after {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: linear-gradient(45deg, transparent 45%, #2ecc71 50%, transparent 55%);
+            background-size: 200% 200%; opacity: 0.1;
+            animation: shine-bg 10s infinite linear;
+        }
+    }
+
+    &.bg-glacier .background-image { 
+        background: radial-gradient(circle at center, #001a2e 0%, #000 100%);
+        &::after {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: url('../assets/backgrounds/ice_texture.png'); opacity: 0.15;
+            filter: brightness(1.5);
+        }
+    }
+
+    &.bg-toxic .background-image { 
+        background: radial-gradient(circle at center, #0d1a00 0%, #000 100%);
+        box-shadow: inset 0 0 100px #a2ff0022;
+    }
+
+    &.bg-nether .background-image { 
+        background: radial-gradient(circle at center, #2e0000 0%, #000 100%);
+        &::after {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: url('../assets/backgrounds/fire_particles.png'); opacity: 0.2;
+        }
+    }
+
+    &.bg-emerald-old {
         background: radial-gradient(circle at center, #081a0e 0%, #000 100%);
         .scanning-grid::after {
             background-image: 
@@ -421,3 +459,5 @@ body {
 }
 
 .glass { background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); }
+@keyframes shine-bg { 0% { background-position: -200% -200%; } 100% { background-position: 200% 200%; } }
+@keyframes pulse-bg { 0% { opacity: 0.2; transform: scale(1); } 100% { opacity: 0.4; transform: scale(1.1); } }

@@ -215,7 +215,21 @@ class PapuEconomy {
         if (!theme) return;
         this.activeTheme = id;
         localStorage.setItem('activeTheme', id);
+        
+        // Update CSS Variables
         Object.keys(theme.colors).forEach(key => document.documentElement.style.setProperty(key, theme.colors[key]));
+        
+        // Update Background Class
+        const bg = document.getElementById('bg-anim');
+        if (bg) {
+            // Remove all bg- classes
+            bg.className = 'background-animation'; 
+            // Add the theme class (some themes might reuse backgrounds)
+            const bgClass = `bg-${id}`;
+            bg.classList.add(bgClass);
+            bg.style.opacity = '1';
+        }
+
         this.updateHUD();
     }
 
@@ -573,7 +587,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         if (!mainContent) return;
         
         const themeKeys = Object.keys(store.themes);
-        const featured = themeKeys.slice(7, 10); // Solar, End, Golden
+        const featured = ['cyberpunk', 'end', 'godly']; // High value themes
         const others = themeKeys.filter(k => !featured.includes(k));
 
         const getMiniPreview = (themeId) => {
@@ -583,55 +597,48 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             const glow = theme.colors['--primary-glow'];
             
             return `
-                <div style="width: 100%; height: 100%; background: #000; border-radius: 20px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.6);">
-                    <!-- Mini Sidebar -->
-                    <div style="position: absolute; left: 0; top: 0; width: 15%; height: 100%; background: rgba(15,15,15,0.9); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; padding-top: 6px; gap: 5px;">
-                        <div style="width: 10px; height: 10px; border-radius: 50%; background: ${primary}; filter: drop-shadow(0 0 3px ${glow});"></div>
-                        <div style="width: 8px; height: 8px; border-radius: 20%; background: rgba(255,255,255,0.15);"></div>
-                        <div style="width: 8px; height: 8px; border-radius: 20%; background: rgba(255,255,255,0.1);"></div>
-                        <div style="width: 8px; height: 8px; border-radius: 20%; background: rgba(255,255,255,0.1);"></div>
-                    </div>
-                    <!-- Mini Content -->
-                    <div style="position: absolute; left: 15%; top: 0; right: 0; height: 100%; background: radial-gradient(circle at 30% 30%, ${primary}22 0%, #000 100%);">
-                        <!-- Mini Header -->
-                        <div style="position: absolute; top: 12%; left: 10%; width: 40px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px;"></div>
-                        <!-- Mini Logo -->
-                        <div style="position: absolute; top: 25%; left: 50%; transform: translateX(-50%); width: 45px; height: 35px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.03);">
-                            <div style="width: 25px; height: 4px; background: ${primary}; border-radius: 10px; box-shadow: 0 0 12px ${glow};"></div>
-                        </div>
-                        <!-- Mini Button -->
-                        <div style="position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); width: 55px; height: 20px; border-radius: 50px; background: linear-gradient(90deg, ${primary}, ${secondary}); box-shadow: 0 4px 15px ${glow}44;"></div>
+                <div class="store-mini-preview" style="width: 100%; height: 100%; background: #000; border-radius: 25px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); transition: 0.5s;">
+                    <div style="position: absolute; inset: 0; background: radial-gradient(circle at 30% 30%, ${primary}33 0%, #000 100%);"></div>
+                    <div style="position: absolute; left: 15px; top: 15px; width: 40px; height: 40px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid ${primary}44; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-palette" style="color: ${primary}; font-size: 14px; filter: drop-shadow(0 0 5px ${glow});"></i>
                     </div>
                 </div>
             `;
         };
 
         mainContent.innerHTML = `
-            <div class="store-container premium-scroll" style="padding: 50px 80px; height: 100%; overflow-y: auto; background: linear-gradient(180deg, rgba(255,183,197,0.03) 0%, transparent 100%); animation: fadeIn 0.6s ease-out;">
-                <header style="margin-bottom: 60px;">
-                    <span style="font-size: 10px; font-weight: 950; color: var(--primary); letter-spacing: 4px; text-transform: uppercase; opacity: 0.8;">Premium Selection</span>
-                    <h1 style="font-size: 56px; font-weight: 900; letter-spacing: -2.5px; color: #fff; margin-top: 5px;">Papu Store</h1>
+            <div class="store-container premium-scroll" style="padding: 40px 60px; height: 100%; overflow-y: auto; background: linear-gradient(180deg, rgba(255,183,197,0.03) 0%, transparent 100%); animation: fadeIn 0.6s ease-out;">
+                <header style="margin-bottom: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <span style="font-size: 10px; font-weight: 900; color: #ffb7c5; letter-spacing: 5px; text-transform: uppercase; opacity: 0.6;">Estética de Vanguardia</span>
+                        <h1 style="font-size: 48px; font-weight: 950; letter-spacing: -2px; color: #fff; margin: 0;">Papu Store</h1>
+                    </div>
+                    <div class="glass" style="padding: 15px 30px; border-radius: 20px; text-align: right; border: 1px solid rgba(255,183,197,0.2);">
+                        <div style="font-size: 9px; font-weight: 800; opacity: 0.5; letter-spacing: 2px;">SALDO ACTUAL</div>
+                        <div style="font-size: 20px; font-weight: 950; color: #ffb7c5; letter-spacing: 1px;">${store.coins.toLocaleString()} <span style="font-size: 12px; opacity: 0.5;">CP</span></div>
+                    </div>
                 </header>
 
-                <section style="margin-bottom: 80px;">
-                    <h2 style="font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 35px; letter-spacing: -0.5px;">Destacados</h2>
-                    <div style="display: flex; gap: 30px; overflow-x: auto; padding-bottom: 35px; scroll-snap-type: x mandatory;" class="no-scrollbar">
+                <!-- FEATUTED SECTION -->
+                <section style="margin-bottom: 60px;">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px;">
+                        <h2 style="font-size: 20px; font-weight: 950; color: #fff; margin: 0; letter-spacing: 1px;">COLECCIÓN LEGENDARIA</h2>
+                        <div style="flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,183,197,0.3), transparent);"></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;">
                         ${featured.map(id => {
                             const theme = store.themes[id];
                             const isOwned = store.ownedThemes.includes(id);
                             const isActive = store.activeTheme === id;
                             return `
-                                <div class="glass market-card" style="min-width: 500px; height: 380px; border-radius: 45px; flex-shrink: 0; scroll-snap-align: start; position: relative; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.08); cursor: pointer; transition: 0.6s; padding: 25px;" onclick="window.handleThemeAction('${id}')">
-                                    <div style="width: 100%; height: 230px; margin-bottom: 25px;">
+                                <div class="glass market-card featured-item" style="height: 320px; border-radius: 35px; border: 1px solid ${isActive ? '#ffb7c5' : 'rgba(255,255,255,0.1)'}; overflow: hidden; position: relative; cursor: pointer; transition: 0.4s;" onclick="window.handleThemeAction('${id}')">
+                                    <div style="height: 180px; padding: 15px;">
                                         ${getMiniPreview(id)}
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 20px;">
-                                        <div style="flex: 1;">
-                                            <h3 style="font-size: 24px; font-weight: 950; color: #fff; margin-bottom: 4px; letter-spacing: -0.5px;">${theme.name.toUpperCase()}</h3>
-                                            <p style="font-size: 11px; opacity: 0.5; font-weight: 800; letter-spacing: 1px;">PREVISUALIZACIÓN REAL</p>
-                                        </div>
-                                        <button class="btn-app-store" style="min-width: 110px; padding: 12px 25px; border-radius: 50px; border: none; background: ${isActive ? 'transparent' : 'rgba(255,255,255,0.15)'}; color: ${isActive ? 'var(--primary)' : '#fff'}; font-weight: 900; font-size: 14px; cursor: pointer; border: 2px solid ${isActive ? 'var(--primary)' : 'transparent'}; backdrop-filter: blur(15px);">
-                                            ${isActive ? 'OPEN' : (isOwned ? 'GET' : theme.price + ' CP')}
+                                    <div style="padding: 20px; text-align: center;">
+                                        <h3 style="font-size: 18px; font-weight: 950; color: #fff; margin-bottom: 12px; letter-spacing: 1px;">${theme.name.toUpperCase()}</h3>
+                                        <button class="btn-play-custom ${isActive ? '' : 'btn-outline'}" style="width: 100%; border-radius: 12px; padding: 10px; font-size: 10px;">
+                                            ${isActive ? 'ACTIVO' : (isOwned ? 'APLICAR' : `DESBLOQUEAR - ${theme.price} CP`)}
                                         </button>
                                     </div>
                                 </div>
@@ -640,25 +647,29 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                     </div>
                 </section>
 
+                <!-- COMPLETE CATALOG -->
                 <section>
-                    <h2 style="font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 45px; letter-spacing: -0.5px;">Catálogo Completo</h2>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 50px;">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px;">
+                        <h2 style="font-size: 20px; font-weight: 950; color: #fff; margin: 0; letter-spacing: 1px;">CATÁLOGO COMPLETO</h2>
+                        <div style="flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,183,197,0.3), transparent);"></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
                         ${others.map(id => {
                             const theme = store.themes[id];
                             const isOwned = store.ownedThemes.includes(id);
                             const isActive = store.activeTheme === id;
                             return `
-                                <div style="display: flex; align-items: center; gap: 25px; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.1); transition: 0.3s; cursor: pointer;" onclick="window.handleThemeAction('${id}')">
-                                    <div style="width: 100px; height: 75px; flex-shrink: 0;">
-                                        ${getMiniPreview(id)}
+                                <div class="glass market-card" style="display: flex; align-items: center; gap: 20px; padding: 20px; border-radius: 20px; cursor: pointer; border: 1px solid ${isActive ? '#ffb7c5' : 'rgba(255,255,255,0.05)'};" onclick="window.handleThemeAction('${id}')">
+                                    <div style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 15px; background: ${theme.colors['--primary']}22; border: 1px solid ${theme.colors['--primary']}44; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-swatchbook" style="color: ${theme.colors['--primary']}; font-size: 18px;"></i>
                                     </div>
                                     <div style="flex: 1;">
-                                        <h3 style="font-size: 19px; font-weight: 950; color: #fff; margin-bottom: 4px;">${theme.name}</h3>
-                                        <p style="font-size: 11px; opacity: 0.4; font-weight: 800;">${isOwned ? 'COLECCIÓN PROPIA' : theme.price + ' CP'}</p>
+                                        <div style="font-size: 15px; font-weight: 900; color: #fff;">${theme.name}</div>
+                                        <div style="font-size: 9px; font-weight: 800; color: #ffb7c5; opacity: 0.6; letter-spacing: 1px;">${isOwned ? 'ADQUIRIDO' : theme.price + ' CP'}</div>
                                     </div>
-                                    <button class="btn-app-store" style="min-width: 85px; height: 36px; border-radius: 50px; border: none; background: rgba(255,255,255,0.08); color: var(--primary); font-weight: 950; font-size: 12px;">
-                                        ${isActive ? '✓' : (isOwned ? 'GET' : 'BUY')}
-                                    </button>
+                                    <div style="font-size: 18px; color: ${isActive ? '#ffb7c5' : 'rgba(255,255,255,0.2)'};">
+                                        ${isActive ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-chevron-right"></i>'}
+                                    </div>
                                 </div>
                             `;
                         }).join('')}
@@ -1550,6 +1561,15 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
         document.getElementById('frameBtn_close')?.addEventListener('click', () => window.electronAPI.closeWindow());
         document.getElementById('frameBtn_minimize')?.addEventListener('click', () => window.electronAPI.minimizeWindow());
         document.getElementById('frameBtn_maximize')?.addEventListener('click', () => window.electronAPI.maximizeWindow());
+        document.getElementById('frameBtn_fullscreen')?.addEventListener('click', () => window.electronAPI.windowControl('fullscreen'));
+
+        // F11 TO TOGGLE FULLSCREEN
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                window.electronAPI.windowControl('fullscreen');
+            }
+        });
     }
 
     // PING HANDLER
