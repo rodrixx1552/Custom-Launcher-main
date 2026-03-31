@@ -393,7 +393,7 @@
                 </div>
             </div>
             <button class="copy-ip" onclick="copyIP()">
-                <i class="fas fa-copy"></i> sprat.aternos.host
+                <i class="fas fa-copy"></i> LosPapusLovers.aternos.me
             </button>
         </section>
 
@@ -474,7 +474,7 @@
             const statsText = document.getElementById('server-stats');
             const dot = document.getElementById('status-dot');
             try {
-                const res = await fetch('https://api.mcsrvstat.us/2/sprat.aternos.host:44481');
+                const res = await fetch('https://api.mcsrvstat.us/2/LosPapusLovers.aternos.me');
                 const data = await res.json();
                 if (data.online) {
                     statsText.innerText = `Online: ${data.players.online}/${data.players.max} Jugadores`;
@@ -491,7 +491,7 @@
         setInterval(updateStatus, 30000);
 
         function copyIP() {
-            navigator.clipboard.writeText('sprat.aternos.host:44481');
+            navigator.clipboard.writeText('LosPapusLovers.aternos.me');
             alert('¡IP Copiada al portapapeles!');
         }
 
