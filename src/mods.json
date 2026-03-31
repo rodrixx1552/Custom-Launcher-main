@@ -4,86 +4,6 @@
         "size": "28.86 KB"
     },
     {
-        "name": "Atlas Lib-1.20.1-1.1.12.jar",
-        "size": "121.52 KB"
-    },
-    {
-        "name": "BiomesOPlenty-1.20.1-18.0.0.592.jar",
-        "size": "20.79 MB"
-    },
-    {
-        "name": "CreativeCore_FORGE_v2.12.35_mc1.20.1.jar",
-        "size": "1.09 MB"
-    },
-    {
-        "name": "CustomSkinLoader_ForgeV2-14.27.jar",
-        "size": "151.85 KB"
-    },
-    {
-        "name": "Dayzombies_rebooted-1.0.5_1.20.1.jar",
-        "size": "50.3 KB"
-    },
-    {
-        "name": "FarmersDelight-1.20.1-1.2.10.jar",
-        "size": "2.82 MB"
-    },
-    {
-        "name": "FazRoleplayClothes-1.20.1-2.4.jar",
-        "size": "683.63 KB"
-    },
-    {
-        "name": "GlitchCore-forge-1.20.1-0.0.1.1.jar",
-        "size": "85.5 KB"
-    },
-    {
-        "name": "ImmediatelyFast-Forge-1.5.4+1.20.4.jar",
-        "size": "526.36 KB"
-    },
-    {
-        "name": "Immersive Vehicles-1.20.1-23.0.0.jar",
-        "size": "5.94 MB"
-    },
-    {
-        "name": "Jade-1.20.1-Forge-11.13.2.jar",
-        "size": "539.54 KB"
-    },
-    {
-        "name": "JustEnoughGuns-0.13.2-1.20.1.jar",
-        "size": "9.42 MB"
-    },
-    {
-        "name": "Kiwi-1.20.1-Forge-11.10.1.jar",
-        "size": "1.6 MB"
-    },
-    {
-        "name": "MTR-forge-4.0.3+1.20.1.jar",
-        "size": "81.29 MB"
-    },
-    {
-        "name": "MTS Official Pack-1.20.1-V28.2.jar",
-        "size": "85.44 MB"
-    },
-    {
-        "name": "OAmP-1.20.1-V2.jar",
-        "size": "20.09 MB"
-    },
-    {
-        "name": "SereneSeasons-forge-1.20.1-9.1.0.2.jar",
-        "size": "157.12 KB"
-    },
-    {
-        "name": "TerraBlender-forge-1.20.1-3.0.1.10.jar",
-        "size": "105.01 KB"
-    },
-    {
-        "name": "The-Hordes-1.20.1-1.5.4c.jar",
-        "size": "572.63 KB"
-    },
-    {
-        "name": "XeKr's Decoration-1.20.1-Forge-0.9.6.jar",
-        "size": "2.23 MB"
-    },
-    {
         "name": "architectury-9.2.14-forge.jar",
         "size": "566.99 KB"
     },
@@ -92,8 +12,16 @@
         "size": "89.66 KB"
     },
     {
+        "name": "Atlas Lib-1.20.1-1.1.12.jar",
+        "size": "121.52 KB"
+    },
+    {
         "name": "balm-forge-1.20.1-7.3.38-all.jar",
         "size": "577.54 KB"
+    },
+    {
+        "name": "BiomesOPlenty-1.20.1-18.0.0.592.jar",
+        "size": "20.79 MB"
     },
     {
         "name": "blocksyouneed_luna-1.11.4-forge-1.20.1.jar",
@@ -116,8 +44,16 @@
         "size": "239.89 KB"
     },
     {
+        "name": "CreativeCore_FORGE_v2.12.35_mc1.20.1.jar",
+        "size": "1.09 MB"
+    },
+    {
+        "name": "CustomSkinLoader_ForgeV2-14.27.jar",
+        "size": "151.85 KB"
+    },
+    {
         "name": "cwb-forge-3.0.0+mc1.20.jar",
-        "size": "252.55 KB"
+        "size": "172 Bytes"
     },
     {
         "name": "dynamic-fps-3.11.4+minecraft-1.20.0-forge.jar",
@@ -133,11 +69,11 @@
     },
     {
         "name": "entity_model_features_1.20.1-forge-3.0.17.jar",
-        "size": "669.09 KB"
+        "size": "172 Bytes"
     },
     {
         "name": "entity_texture_features_1.20.1-forge-7.0.13.jar",
-        "size": "905.92 KB"
+        "size": "172 Bytes"
     },
     {
         "name": "etched-3.0.4.jar",
@@ -146,6 +82,14 @@
     {
         "name": "fabric-api-0.92.6+1.11.14+1.20.1.jar",
         "size": "2.92 MB"
+    },
+    {
+        "name": "FarmersDelight-1.20.1-1.2.10.jar",
+        "size": "2.82 MB"
+    },
+    {
+        "name": "FazRoleplayClothes-1.20.1-2.4.jar",
+        "size": "683.63 KB"
     },
     {
         "name": "ferritecore-6.0.1-forge.jar",
@@ -160,12 +104,36 @@
         "size": "1014.69 KB"
     },
     {
+        "name": "GlitchCore-forge-1.20.1-0.0.1.1.jar",
+        "size": "85.5 KB"
+    },
+    {
+        "name": "ImmediatelyFast-Forge-1.5.4+1.20.4.jar",
+        "size": "526.36 KB"
+    },
+    {
+        "name": "Immersive Vehicles-1.20.1-23.0.0.jar",
+        "size": "5.94 MB"
+    },
+    {
         "name": "industrialdeco-1.0.0.jar",
         "size": "316.17 KB"
     },
     {
+        "name": "Jade-1.20.1-Forge-11.13.2.jar",
+        "size": "539.54 KB"
+    },
+    {
         "name": "jei-1.20.1-forge-15.20.0.112.jar",
         "size": "1.32 MB"
+    },
+    {
+        "name": "JustEnoughGuns-0.13.2-1.20.1.jar",
+        "size": "9.42 MB"
+    },
+    {
+        "name": "Kiwi-1.20.1-Forge-11.10.1.jar",
+        "size": "1.6 MB"
     },
     {
         "name": "kuronomy-3.2.6-forge-1.20.1.jar",
@@ -208,8 +176,20 @@
         "size": "325.46 KB"
     },
     {
+        "name": "MTR-forge-4.0.3+1.20.1.jar",
+        "size": "81.29 MB"
+    },
+    {
+        "name": "MTS Official Pack-1.20.1-V28.2.jar",
+        "size": "85.44 MB"
+    },
+    {
         "name": "neoncraft-1.1.0.jar",
         "size": "3.02 MB"
+    },
+    {
+        "name": "OAmP-1.20.1-V2.jar",
+        "size": "20.09 MB"
     },
     {
         "name": "oculus-mc1.20.1-1.8.0.jar",
@@ -226,6 +206,10 @@
     {
         "name": "resourcefullib-forge-1.20.1-2.1.29.jar",
         "size": "422.61 KB"
+    },
+    {
+        "name": "SereneSeasons-forge-1.20.1-9.1.0.2.jar",
+        "size": "157.12 KB"
     },
     {
         "name": "simpleradio-forge-1.20.1-3.4.6.jar",
@@ -260,6 +244,14 @@
         "size": "1.4 MB"
     },
     {
+        "name": "TerraBlender-forge-1.20.1-3.0.1.10.jar",
+        "size": "105.01 KB"
+    },
+    {
+        "name": "The-Hordes-1.20.1-1.5.4c.jar",
+        "size": "572.63 KB"
+    },
+    {
         "name": "voicechat-forge-1.20.1-2.6.12.jar",
         "size": "4.67 MB"
     },
@@ -286,6 +278,10 @@
     {
         "name": "waystones-forge-1.20.1-14.1.20.jar",
         "size": "521.23 KB"
+    },
+    {
+        "name": "XeKr's Decoration-1.20.1-Forge-0.9.6.jar",
+        "size": "2.23 MB"
     },
     {
         "name": "yuushya-1.20.1-forge-2.2.3.jar",
