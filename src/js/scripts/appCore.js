@@ -1502,7 +1502,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
             <div style="padding: 40px; animation: slideUpFade 0.6s ease; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <h1 style="font-weight: 900; letter-spacing: 5px; color: #ffb7c5; margin-bottom: 50px;">ELITE NETWORK</h1>
                 <div style="display: grid; grid-template-columns: repeat(3, 200px); gap: 30px;">
-                    <div class="glass version-card" onclick="window.electronAPI.openExternal('https://discord.gg/kMvmrT3M')" style="padding: 30px; text-align: center; cursor: pointer; border-radius: 20px;">
+                    <div class="glass version-card" onclick="window.electronAPI.openExternal('https://discord.gg/gQVw7b5Kuh')" style="padding: 30px; text-align: center; cursor: pointer; border-radius: 20px;">
                         <i class="fab fa-discord" style="font-size: 40px; color: #7289da; margin-bottom: 15px;"></i>
                         <div style="font-weight: 900; font-size: 12px;">DISCORD</div>
                     </div>
@@ -1510,7 +1510,7 @@ console.log('--- 🔊 SYSTEM AUDIO ENGINE INITIALIZING... ---');
                         <i class="fab fa-twitter" style="font-size: 40px; color: #1da1f2; margin-bottom: 15px;"></i>
                         <div style="font-weight: 900; font-size: 12px;">TWITTER</div>
                     </div>
-                    <div class="glass version-card" onclick="window.electronAPI.openExternal('https://rodrixx1552.github.io/Custom-Launcher-main')" style="padding: 30px; text-align: center; cursor: pointer; border-radius: 20px;">
+                    <div class="glass version-card" onclick="window.electronAPI.openExternal('https://rodrixx1552.github.io/Custom-Launcher-main/')" style="padding: 30px; text-align: center; cursor: pointer; border-radius: 20px;">
                         <i class="fas fa-globe" style="font-size: 40px; color: #ffb7c5; margin-bottom: 15px;"></i>
                         <div style="font-weight: 900; font-size: 12px;">WEB</div>
                     </div>
