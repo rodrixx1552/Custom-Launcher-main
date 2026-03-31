@@ -822,7 +822,7 @@ function getModpackUrl() {
         const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
         if (config.modpack_url) return config.modpack_url;
     } catch(e) {}
-    return 'https://www.mediafire.com/file/la1uhes3g1agnzl/mods.zip/file';
+    return 'https://github.com/rodrixx1552/Custom-Launcher-main';
 }
 
 // Compare semver strings, returns true if remote > local
