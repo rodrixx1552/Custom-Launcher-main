@@ -1,0 +1,79 @@
+{
+  "name": "custom-launcher",
+  "version": "0.5.0",
+  "description": "Launcher de Minecraft personalizable basado en ElectronJS",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev:start": "npx sass src/scss/main.scss src/css/main.css && electron .",
+    "build": "npx sass src/scss/main.scss src/css/main.css && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/lpv_main.png --overwrite --asar"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rodrixx1552/Custom-Launcher-main.git"
+  },
+  "keywords": [
+    "electron",
+    "minecraft",
+    "launcher",
+    "lospapus",
+    "custom-launcher"
+  ],
+  "author": "LosPapus Lover Team",
+  "launcher_version": "0.5.0",
+  "latest_launcher_version": "0.5.0",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/rodrixx1552/Custom-Launcher-main/issues"
+  },
+  "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.5.0/LosPapus-v0.5.0.zip",
+  "devDependencies": {
+    "electron": "^19.0.9",
+    "electron-builder": "^26.8.1",
+    "electron-installer-windows": "^3.0.0",
+    "electron-packager": "^17.1.2",
+    "electron-reload": "^2.0.0-alpha.1",
+    "esm": "^3.2.25",
+    "requirejs": "^2.3.6",
+    "sass": "^1.54.4"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.0.8",
+    "@fortawesome/fontawesome-free": "^6.1.2",
+    "adm-zip": "^0.5.16",
+    "axios": "^1.6.0",
+    "discord-rpc": "^4.0.1",
+    "ejs": "^3.1.8",
+    "ejs-electron": "^2.1.1",
+    "jimp": "^0.16.13",
+    "mcping-js": "^1.5.0",
+    "minecraft-launcher-core": "^3.16.13",
+    "msmc": "^5.0.5",
+    "png-to-ico": "^3.0.1",
+    "skinview3d": "^3.4.1"
+  },
+  "build": {
+    "appId": "com.lospapus.launcher",
+    "productName": "LosPapus Launcher",
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/main.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

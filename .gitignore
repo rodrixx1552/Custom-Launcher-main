@@ -1,0 +1,7 @@
+node_modules/
+minecraft/
+dist/
+*.exe
+*.zip
+*.log
+.DS_Store

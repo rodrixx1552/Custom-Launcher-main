@@ -1,0 +1,20 @@
+[
+  {
+    "title": "¡Bienvenidos a HolyHosting!",
+    "tag": "NUEVO",
+    "description": "Hemos migrado oficialmente a un servidor de alta performance. ¡Disfruten de cero lag!",
+    "image": "../assets/los_papus/news_1.png"
+  },
+  {
+    "title": "Actualización v0.5.0",
+    "tag": "LAUNCHER",
+    "description": "Nueva interfaz Frappe y sistema de auto-conexión activado.",
+    "image": "../assets/los_papus/news_2.png"
+  },
+  {
+    "title": "Pack de 73 Mods",
+    "tag": "MODS",
+    "description": "Sincroniza tus mods con el botón circular para evitar errores al entrar.",
+    "image": "../assets/los_papus/news_3.png"
+  }
+]

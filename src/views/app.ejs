@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Engine Logic -->
+    <script src="../js/scripts/launcherEngine.js"></script>
+    <script src="../js/scripts/appCore.js" defer></script>
+    
+    <script src="../../node_modules/skinview3d/bundles/skinview3d.bundle.js"></script>
+    <link rel="stylesheet" href="../../node_modules/@fortawesome/fontawesome-free/css/all.css">
+    <link rel="stylesheet" href="../css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;950&display=swap" rel="stylesheet">
+    
+    <title> <%=title%> </title>
+</head>
+<body>
+    <div id="preloader" class="preloader-overlay">
+        <div class="preloader-content">
+            <img src="../assets/los_papus/logo.png" class="preloader-logo">
+            <div class="preloader-bar-container">
+                <div class="preloader-bar"></div>
+            </div>
+            <div class="preloader-text">CARGANDO PROTOCOLO PAPU...</div>
+        </div>
+    </div>
+
+    <audio id="clickAudio" src="../assets/click.mp3" preload="auto"></audio>
+    
+    <div id="root">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="../assets/los_papus/sidebar_logo.png" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); padding: 2px;">
+            </div>
+            
+            <nav class="nav-group">
+                <div class="nav-item active" data-tab="play">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="nav-item" data-tab="accounts">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="nav-item" data-tab="mods">
+                    <i class="fas fa-th-large"></i>
+                </div>
+                <div class="nav-item" data-tab="skins">
+                    <i class="fas fa-video"></i>
+                </div>
+                <div class="nav-item" data-tab="market" title="Mercado de Temas">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+            </nav>
+            
+            <div class="sidebar-bottom">
+                <div class="nav-item" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- MAIN AREA -->
+        <div class="main-area">
+            <!-- TOP HEADER -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="header-social" onclick="window.openSocial('twitter')"><i class="fab fa-twitter"></i></div>
+                    <div class="header-social" onclick="window.openSocial('discord')"><i class="fab fa-discord"></i></div>
+                    <div class="header-social" onclick="window.openSocial('instagram')"><i class="fab fa-instagram"></i></div>
+                    <div class="header-social" onclick="window.openSocial('tiktok')"><i class="fab fa-tiktok"></i></div>
+                    <div class="header-social" onclick="window.openSocial('telegram')"><i class="fab fa-telegram"></i></div>
+                    <div class="header-social" onclick="window.openSocial('youtube')"><i class="fab fa-youtube"></i></div>
+                    
+                    <div class="player-counter">
+                        <div class="pulse-dot"></div>
+                        <span id="player-count">0 JUGADORES EN LÍNEA</span>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="premium-pill" onclick="window.renderTab('market')" style="background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.2); margin-right: 15px;">
+                        <i class="fas fa-coins" style="color: gold;"></i>
+                        <span id="coins-count">0</span>
+                    </div>
+
+                    <div class="premium-pill" onclick="window.renderTab('accounts')">
+                        <i class="fas fa-star" id="premium-ribbon-icon"></i>
+                        <span id="premium-ribbon-text">PERFIL PREMIUM</span>
+                    </div>
+                    
+                    <div class="ctrl-btn" onclick="window.toggleJarvis()"><i class="fas fa-comment-dots"></i></div>
+                    <div class="ctrl-btn" onclick="window.toggleNotifs()"><i class="fas fa-bell"></i><div id="notif-dot" style="display:none; position:absolute; top:8px; right:8px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:2px solid var(--bg-deep);"></div></div>
+                    
+                    <div class="window-controls">
+                        <div class="ctrl-btn" id="frameBtn_minimize"><i class="fas fa-minus"></i></div>
+                        <div class="ctrl-btn close" id="frameBtn_close"><i class="fas fa-times"></i></div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- CONTENT AREA -->
+            <main id="main-content" class="content-wrapper">
+                <!-- Tab content will be rendered here by appCore.js -->
+            </main>
+        </div>
+    </div> 
+
+    <!-- MODAL OVERLAY -->
+    <div id="overlay-container" class="overlay-container" onclick="window.closeModals()">
+        <div id="modal-content" class="modal-content" onclick="event.stopPropagation()">
+            <!-- Dynamic content injected here -->
+        </div>
+    </div>
+
+    <!-- JARVIS DROPDOWN -->
+    <div id="jarvis-dropdown" class="jarvis-dropdown">
+        <h3 style="font-size: 13px; font-weight: 950; margin-bottom: 15px; color: var(--primary); letter-spacing: 2px;">PROTOCOLO NEURAL</h3>
+        <div class="jarvis-item">
+            <span style="font-size: 12px; font-weight: 700;">Soundscape</span>
+            <input type="checkbox" checked onchange="window.toggleSoundscape(this.checked)">
+        </div>
+        <div class="jarvis-item">
+            <span style="font-size: 12px; font-weight: 700;">Asistente Voz</span>
+            <span style="font-size: 11px; color: var(--accent);">ACTIVO</span>
+        </div>
+        <div class="jarvis-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+            <span style="font-size: 11px; color: var(--text-muted);">VOLUMEN MAESTRO</span>
+            <input type="range" style="width: 100%;" oninput="window.updateVolume(this.value)">
+        </div>
+    </div>
+</body>
+</html>

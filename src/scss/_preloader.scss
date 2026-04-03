@@ -1,0 +1,68 @@
+.preloader-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s cubic-bezier(1, 0, 0, 1), visibility 0.8s;
+}
+
+.preloader-overlay.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.preloader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.preloader-logo {
+    width: 250px;
+    animation: logoPulse 2.5s infinite ease-in-out;
+    filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.4));
+}
+
+.preloader-bar-container {
+    width: 200px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.preloader-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    box-shadow: 0 0 10px var(--primary);
+    animation: barFill 2s forwards ease-out;
+}
+
+.preloader-text {
+    font-size: 10px;
+    letter-spacing: 4px;
+    font-weight: 950;
+    color: var(--text-muted);
+    animation: textFlash 1.5s infinite;
+}
+
+@keyframes logoPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.4)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(124, 58, 237, 0.7)); }
+}
+
+@keyframes barFill {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+@keyframes textFlash {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
