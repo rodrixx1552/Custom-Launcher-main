@@ -989,5 +989,35 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(updateStatus, 30000); // Pulse every 30s
     };
 
+    // --- OTA UPDATE LISTENER ---
+    window.electronAPI.onUpdateAvailable((data) => {
+        console.log(`📡 [OTA] Nueva versión detectada: ${data.version}`);
+        
+        // Evitar duplicados
+        if (document.getElementById('ota-update-banner')) return;
+
+        const mainArea = document.querySelector('.main-area');
+        const banner = document.createElement('div');
+        banner.id = 'ota-update-banner';
+        banner.className = 'update-banner';
+        banner.innerHTML = `
+            <div class="update-banner-content">
+                <div class="update-icon"><i class="fas fa-rocket"></i></div>
+                <div class="update-text">
+                    <span class="update-title">¡ACTUALIZACIÓN DISPONIBLE! (v${data.version})</span>
+                    <span class="update-subtitle">Hay mejoras de red y diseño listas para ti.</span>
+                </div>
+                <div class="update-actions">
+                    <button class="update-btn-action" onclick="window.electronAPI.openExternal('${data.url}')">DESCARGAR AHORA</button>
+                    <button class="update-btn-close" onclick="this.parentElement.parentElement.parentElement.remove()"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        `;
+        
+        if (mainArea) {
+            mainArea.prepend(banner);
+        }
+    });
+
     window.startRealTimeStatus();
 });
