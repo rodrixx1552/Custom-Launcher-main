@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onGameStarted: (callback) => { ipcRenderer.removeAllListeners('game-started'); ipcRenderer.on('game-started', (event) => callback()) },
     onLaunchError: (callback) => { ipcRenderer.removeAllListeners('launch-error'); ipcRenderer.on('launch-error', (event, data) => callback(data)) },
     pingServer: (serverIP) => ipcRenderer.send('ping-server', serverIP),
-    onPingResult: (callback) => { ipcRenderer.removeAllListeners('ping-result'); ipcRenderer.on('ping-result', (event, data) => callback(data)) },
+    onPingResult: (callback) => { ipcRenderer.on('ping-result', (event, data) => callback(data)) },
     syncModpacks: () => ipcRenderer.send('sync-modpacks'),
     onModsList: (callback) => { ipcRenderer.removeAllListeners('mods-list'); ipcRenderer.on('mods-list', (event, data) => callback(data)) },
     onSyncProgress: (callback) => { ipcRenderer.removeAllListeners('sync-progress'); ipcRenderer.on('sync-progress', (event, data) => callback(data)) },
