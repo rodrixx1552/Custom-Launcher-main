@@ -365,13 +365,13 @@
     <main>
         <!-- Hero Section -->
         <section class="hero">
-            <div class="stable-badge">v0.5.0 Estable - ¡Mods Listos!</div>
+            <div class="stable-badge">v0.5.2 Estable - ¡Radar On!</div>
             <h1>El Client Definitivo para <span>Los Papus</span></h1>
-            <p class="subtitle">La experiencia de Minecraft más optimizada para tu servidor. Sincronización OTA de mods, Boost de FPS nativo y encendido automático de Aternos.</p>
+            <p class="subtitle">La experiencia de Minecraft más optimizada para tu servidor. Sincronización OTA de mods, Boost de FPS nativo y nuevo Radar Social premium.</p>
             
             <div class="cta-group">
                 <a href="javascript:void(0)" onclick="downloadStableEXE()" class="btn-primary" id="hero-dl-btn">
-                    <i class="fab fa-windows"></i> Descargar v0.5.0 (EXE)
+                    <i class="fab fa-windows"></i> Descargar v0.5.2 (EXE)
                 </a>
                 <a href="https://discord.gg/gQVw7b5Kuh" target="_blank" class="btn-secondary">
                     <i class="fab fa-discord"></i> Unirse al Discord
@@ -393,7 +393,7 @@
                 </div>
             </div>
             <button class="copy-ip" onclick="copyIP()">
-                <i class="fas fa-copy"></i> LosPapusLovers.aternos.me
+                <i class="fas fa-copy"></i> na34.holy.gg:26068
             </button>
         </section>
 
@@ -474,7 +474,8 @@
             const statsText = document.getElementById('server-stats');
             const dot = document.getElementById('status-dot');
             try {
-                const res = await fetch('https://api.mcsrvstat.us/2/LosPapusLovers.aternos.me');
+                // HolyHosting na34.holy.gg:26068
+                const res = await fetch('https://api.mcsrvstat.us/2/na34.holy.gg:26068');
                 const data = await res.json();
                 if (data.online) {
                     statsText.innerText = `Online: ${data.players.online}/${data.players.max} Jugadores`;
@@ -491,7 +492,7 @@
         setInterval(updateStatus, 30000);
 
         function copyIP() {
-            navigator.clipboard.writeText('LosPapusLovers.aternos.me');
+            navigator.clipboard.writeText('na34.holy.gg:26068');
             alert('¡IP Copiada al portapapeles!');
         }
 
@@ -509,7 +510,7 @@
         }
         loadMods();
 
-        // --- Direct EXE Download (v0.4.0) ---
+        // --- Direct EXE Download (v0.5.2) ---
         async function downloadStableEXE() {
             const btns = [document.getElementById('hero-dl-btn'), document.getElementById('nav-dl-btn')];
             btns.forEach(b => { 
@@ -518,7 +519,7 @@
             });
 
             try {
-                const res = await fetch('https://api.github.com/repos/rodrixx1552/Custom-Launcher-main/releases/tags/v0.5.0');
+                const res = await fetch('https://api.github.com/repos/rodrixx1552/Custom-Launcher-main/releases/tags/v0.5.2');
                 const data = await res.json();
                 
                 const asset = data.assets.find(a => a.name.toLowerCase().endsWith('.exe'));
@@ -531,13 +532,13 @@
                 }
             } catch (e) {
                 // Fallback to releases page
-                window.location.href = 'https://github.com/rodrixx1552/Custom-Launcher-main/releases/tag/v0.5.0';
+                window.location.href = 'https://github.com/rodrixx1552/Custom-Launcher-main/releases/tag/v0.5.2';
                 resetBtns(btns);
             }
         }
 
         function resetBtns(btns) {
-            btns[0].innerHTML = '<i class="fab fa-windows"></i> Descargar v0.5.0 (EXE)';
+            btns[0].innerHTML = '<i class="fab fa-windows"></i> Descargar v0.5.2 (EXE)';
             btns[1].innerHTML = 'Descargar';
             btns.forEach(b => b.style.pointerEvents = 'auto');
         }
