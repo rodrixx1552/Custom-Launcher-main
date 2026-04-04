@@ -226,13 +226,11 @@ body {
   justify-content: space-between;
   padding: 0 40px;
   z-index: 50;
-  -webkit-app-region: drag;
 }
 
 .header-left {
   display: flex;
   gap: 15px;
-  -webkit-app-region: no-drag;
 }
 
 .header-social {
@@ -341,7 +339,6 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  -webkit-app-region: no-drag;
 }
 
 .premium-pill {
