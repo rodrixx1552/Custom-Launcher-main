@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onAutoUpdateError: (callback) => { ipcRenderer.removeAllListeners('auto-update-error'); ipcRenderer.on('auto-update-error', (event, error) => callback(error)) },
     checkModsStatus: () => ipcRenderer.invoke('check-mods-status'),
     getServerIp: () => ipcRenderer.invoke('get-server-ip'),
+    getLauncherConfig: () => ipcRenderer.invoke('get-launcher-config'),
     startAternosServer: () => ipcRenderer.send('auto-start-server'),
     onAternosStatus: (callback) => { ipcRenderer.removeAllListeners('aternos-status'); ipcRenderer.on('aternos-status', (event, data) => callback(data)) },
     
