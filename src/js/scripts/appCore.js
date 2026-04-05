@@ -5,6 +5,75 @@
 
 console.log('UI: appCore.js initializing Dashboard Design...');
 
+// =====================================================================
+// SISTEMA DE TOASTS PREMIUM (reemplaza alert() nativo)
+// =====================================================================
+const TOAST_ICONS = {
+    success: 'fa-check-circle',
+    error:   'fa-times-circle',
+    warning: 'fa-exclamation-triangle',
+    info:    'fa-info-circle'
+};
+const TOAST_TITLES = {
+    success: 'ÉXITO',
+    error:   'ERROR',
+    warning: 'ADVERTENCIA',
+    info:    'INFO'
+};
+
+window.showToast = (message, type = 'info', duration = 5000) => {
+    const container = document.getElementById('toast-container');
+    if (!container) { console.log('[Toast]', type, message); return; }
+
+    // Limitar a 5 toasts simultáneos
+    const existing = container.querySelectorAll('.toast');
+    if (existing.length >= 5) existing[0].remove();
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <i class="fas ${TOAST_ICONS[type] || TOAST_ICONS.info} toast-icon"></i>
+        <div class="toast-body">
+            <div class="toast-title">${TOAST_TITLES[type] || type.toUpperCase()}</div>
+            <div class="toast-msg">${message.replace(/\n/g, '<br>')}</div>
+        </div>
+        <button class="toast-close" onclick="window._dismissToast(this.parentElement)">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
+    `;
+
+    container.appendChild(toast);
+    window.playClick?.();
+
+    const timer = setTimeout(() => window._dismissToast(toast), duration);
+    toast._timer = timer;
+};
+
+window._dismissToast = (toast) => {
+    if (!toast || toast.classList.contains('removing')) return;
+    clearTimeout(toast._timer);
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 300);
+};
+
+// Añadir tooltips al sidebar
+const addSidebarTooltips = () => {
+    const labels = { play: 'Jugar', accounts: 'Cuentas', mods: 'Mods', skins: 'Skin Vault', market: 'Mercado', settings: 'Configuración' };
+    document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
+        const tab = item.getAttribute('data-tab');
+        if (labels[tab] && !item.querySelector('.nav-tooltip')) {
+            const tip = document.createElement('span');
+            tip.className = 'nav-tooltip';
+            tip.textContent = labels[tab];
+            tip.style.cssText = 'position:absolute;left:65px;background:rgba(22,22,26,0.97);color:white;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.2s;border:1px solid rgba(255,255,255,0.08);z-index:9999;';
+            item.appendChild(tip);
+            item.addEventListener('mouseenter', () => tip.style.opacity = '1');
+            item.addEventListener('mouseleave', () => tip.style.opacity = '0');
+        }
+    });
+};
+
 // Initialize the Engine
 if (typeof initEngine === 'function') {
     initEngine();
@@ -232,6 +301,8 @@ function renderSkinsTab(container) {
                         <button class="skin-btn secondary" onclick="window.electronAPI.selectFile()">SELECCIONAR .PNG</button>
                     </div>
 
+                    <div id="skin-load-status" style="font-size: 11px; font-weight: 700; color: var(--accent); min-height: 18px; text-align: center; padding: 4px 0; letter-spacing: 1px;"></div>
+
                     <div class="info-card">
                         <i class="fas fa-info-circle"></i>
                         Las skins de alta resolución (HD) son compatibles. Si eres usuario Premium, puedes aplicar la skin a tu cuenta oficial.
@@ -255,29 +326,66 @@ function renderSkinsTab(container) {
         viewer.controls.enableZoom = true;
         
         window.vaultViewer = viewer;
+        window._currentSkinB64 = null; // Reset al entrar
+
+        // Escuchar cuando el usuario selecciona un archivo PNG local
+        window.electronAPI.onFileSelected((base64Data) => {
+            window._currentSkinB64 = base64Data;
+            if (window.vaultViewer) window.vaultViewer.loadSkin(base64Data);
+            const statusEl = document.getElementById('skin-load-status');
+            if (statusEl) { statusEl.innerText = 'Skin local cargada ✓'; statusEl.style.color = 'var(--accent)'; }
+        });
     }, 100);
 }
 
-window.loadSkinFromSearch = () => {
+window.loadSkinFromSearch = async () => {
     const input = document.getElementById('skin-search-input');
     const name = input.value.trim();
     if (!name) return;
     
     window.playClick();
     const skinUrl = `https://mc-heads.net/skin/${name}`;
-    window.vaultViewer.loadSkin(skinUrl);
+    if (window.vaultViewer) window.vaultViewer.loadSkin(skinUrl);
+
+    // Guardar como base64 para poder subirlo a Mojang despues
+    try {
+        const res = await fetch(skinUrl);
+        const blob = await res.blob();
+        await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => { window._currentSkinB64 = reader.result; resolve(); };
+            reader.readAsDataURL(blob);
+        });
+        const statusEl = document.getElementById('skin-load-status');
+        if (statusEl) { statusEl.innerText = `Skin de "${name}" cargada ✓`; statusEl.style.color = 'var(--accent)'; }
+    } catch(e) {
+        console.warn('UI: No se pudo obtener skin como base64:', e);
+    }
 };
 
 window.applySkinToMojang = () => {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || '{}');
     if (acc.type !== 'microsoft') {
-        alert("Lo siento, esta función solo está disponible para cuentas Premium (Microsoft).");
+        alert('Solo disponible para cuentas Premium (Microsoft).\nCrea una cuenta Microsoft en la pestaña de Cuentas.');
         return;
     }
-    
-    // Logic to get current canvas as base64 or similar
-    // For now, let's just show feedback
-    alert("Iniciando subida a Mojang para: " + acc.name);
+    if (!window._currentSkinB64) {
+        window.showToast('Primero carga una skin: busca por nombre o selecciona un archivo .PNG local', 'warning');
+        return;
+    }
+    if (!acc.access_token) {
+        window.showToast('Token de acceso no encontrado. Vuelve a iniciar sesión con Microsoft.', 'error');
+        return;
+    }
+
+    window.playClick();
+    const applyBtn = document.querySelector('.skin-btn.accent');
+    if (applyBtn) { applyBtn.disabled = true; applyBtn.innerText = 'SUBIENDO...'; }
+
+    const statusEl = document.getElementById('skin-load-status');
+    if (statusEl) { statusEl.innerText = 'Subiendo a Mojang...'; statusEl.style.color = 'var(--text-dim)'; }
+
+    window.electronAPI.uploadSkin({ accessToken: acc.access_token, base64Image: window._currentSkinB64 });
 };
 
 function renderPlaceholderTab(container, name) {
@@ -408,9 +516,9 @@ function initSkinViewer(name) {
     } catch(e) { console.error('UI: Skin viewer fail', e); }
 }
 
-window.tryLaunch = () => {
+window.tryLaunch = async () => {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
-    if (!acc) return alert('No account selected. Por favor inicia sesión.');
+    if (!acc) return window.showToast('No hay cuenta seleccionada. Por favor inicia sesión.', 'warning');
     
     const btn = document.getElementById('play-btn');
     if (btn) {
@@ -423,6 +531,20 @@ window.tryLaunch = () => {
     }
 
     const version = localStorage.getItem('selectedVersion') || '1.20.1';
+
+    // Obtener forge_version desde el config remoto/local (ya no hardcodeado)
+    let forgeVersion = null;
+    try {
+        const config = await window.electronAPI.getLauncherConfig();
+        if (config && config.forge_version) {
+            forgeVersion = config.forge_version;
+            console.log('UI: Forge version from config:', forgeVersion);
+        }
+    } catch(e) {
+        console.warn('UI: No se pudo obtener forge_version del config. Usando fallback.', e);
+        if (version === '1.20.1') forgeVersion = '47.4.17';
+    }
+
     window.electronAPI.launchGame({
         nick: acc.name,
         version: version,
@@ -430,7 +552,7 @@ window.tryLaunch = () => {
         width: localStorage.getItem('windowWidth') || '1280',
         height: localStorage.getItem('windowHeight') || '720',
         account: acc,
-        forgeVersion: version === '1.20.1' ? '47.4.17' : null
+        forgeVersion
     });
 };
 
@@ -549,13 +671,9 @@ window.filterMods = (query) => {
 };
 
 // --- THEME MARKET ---
-const NEW_THEMES = {
-    'cyberpink': { name: 'Cyber-Pink (Default)', colors: { '--primary': '#7c3aed', '--accent': '#4ade80' }, price: 0 },
-    'midnight': { name: 'Midnight Void', colors: { '--primary': '#1e40af', '--accent': '#f472b6' }, price: 500 },
-    'solar': { name: 'Solar Flare', colors: { '--primary': '#ea580c', '--accent': '#fbbf24' }, price: 500 },
-    'arctic': { name: 'Arctic Frost', colors: { '--primary': '#e2e8f0', '--accent': '#38bdf8' }, price: 500 },
-    'toxic': { name: 'Forest Phantom', colors: { '--primary': '#166534', '--accent': '#bef264' }, price: 500 }
-};
+// NEW_THEMES apunta al objeto global definido en launcherEngine.js
+// Esto garantiza que el Mercado y PapuEconomy siempre usen los mismos temas
+const NEW_THEMES = window.LAUNCHER_THEMES;
 
 function renderMarketTab(container) {
     const coins = parseInt(localStorage.getItem('papuCoins') || '1000');
@@ -606,7 +724,7 @@ function renderMarketTab(container) {
 
 window.buyTheme = (id, price) => {
     let coins = parseInt(localStorage.getItem('papuCoins') || '0');
-    if (coins < price) return alert("¡No tienes suficientes Papu-Coins!");
+    if (coins < price) return window.showToast('¡No tienes suficientes Papu-Coins!', 'warning');
     
     window.playClick();
     coins -= price;
@@ -752,7 +870,7 @@ window.toggleNotifs = () => {
     window.playClick();
     const dot = document.getElementById('notif-dot');
     if (dot) dot.style.display = 'none';
-    alert("¡Novedades del Launcher: La versión 0.4.1 traerá más animaciones 3D!");
+    window.showToast('LosPapus Launcher v0.5.2 — Mods sincronizados desde GitHub. ¡Próxima actualización con más contenido!', 'info', 7000);
 };
 
 window.toggleSoundscape = (enabled) => {
@@ -792,7 +910,7 @@ window.addEventListener('engine-launch-error', (e) => {
             <div style="font-size: 9px; opacity: 0.6; font-weight: 700; margin-top: 2px;">FALLÓ EL ÚLTIMO INTENTO</div>
         `;
     }
-    alert("CRITICAL LAUNCH ERROR: " + e.detail);
+    window.showToast('CRITICAL LAUNCH ERROR: ' + e.detail, 'error', 10000);
 });
 
 window.addEventListener('engine-sync-progress', (e) => {
@@ -873,7 +991,24 @@ if (window.electronAPI) {
     });
 
     window.electronAPI.onLoginError((err) => {
-        alert("Error de Login: " + err);
+        window.showToast('Error de Login: ' + err, 'error');
+    });
+
+    // --- SKIN UPLOAD LISTENERS ---
+    window.electronAPI.onSkinUploadSuccess(() => {
+        const applyBtn = document.querySelector('.skin-btn.accent');
+        if (applyBtn) { applyBtn.disabled = false; applyBtn.innerText = 'APLICAR A MI CUENTA'; }
+        const statusEl = document.getElementById('skin-load-status');
+        if (statusEl) { statusEl.innerText = '✅ ¡Skin aplicada a tu cuenta de Mojang!'; statusEl.style.color = 'var(--accent)'; }
+        window.showToast('¡Skin aplicada correctamente a tu cuenta de Mojang!', 'success');
+    });
+
+    window.electronAPI.onSkinUploadError((err) => {
+        const applyBtn = document.querySelector('.skin-btn.accent');
+        if (applyBtn) { applyBtn.disabled = false; applyBtn.innerText = 'APLICAR A MI CUENTA'; }
+        const statusEl = document.getElementById('skin-load-status');
+        if (statusEl) { statusEl.innerText = '❌ Error al subir skin'; statusEl.style.color = 'var(--danger)'; }
+        window.showToast('Error al subir skin: ' + err, 'error');
     });
 
     // Mods Listener
@@ -963,6 +1098,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeTheme = localStorage.getItem('activeTheme') || 'cyberpink';
     applyTheme(activeTheme);
     updateMarketHeader();
+
+    // Activar tooltips del sidebar
+    addSidebarTooltips();
     
     // Real-time Player Status Hook
     window.startRealTimeStatus = async () => {
