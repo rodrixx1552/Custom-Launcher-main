@@ -425,18 +425,20 @@ ipcMain.on('get-accounts', (event) => {
 ipcMain.on('add-offline-account', (event, name) => {
     console.log('IPC: add-offline-account triggered for:', name);
     try {
-        const accounts = getAccounts();
-        const newAccount = {
-            uuid: 'offline-' + Math.random().toString(36).substring(2, 11),
-            name: name,
-            type: 'offline',
-            addedAt: new Date().toISOString()
-        };
-        
+        // UUID determinístico (igual al de Minecraft offline nativo) para evitar duplicados
+        const crypto = require('crypto');
+        const hash = crypto.createHash('md5').update('OfflinePlayer:' + name).digest('hex');
+        const uuid = `${hash.substring(0,8)}-${hash.substring(8,12)}-${hash.substring(12,16)}-${hash.substring(16,20)}-${hash.substring(20,32)}`;
+
+        let accounts = getAccounts();
+        // Evitar duplicados por nombre de usuario (case-insensitive)
+        accounts = accounts.filter(a => a.name.toLowerCase() !== name.toLowerCase());
+
+        const newAccount = { uuid, name, type: 'offline', addedAt: new Date().toISOString() };
         accounts.push(newAccount);
         saveAccounts(accounts);
-        
-        console.log('Offline account added:', name);
+
+        console.log('Offline account added:', name, 'UUID:', uuid);
         event.sender.send('login-success', newAccount);
         event.sender.send('accounts-list', accounts);
     } catch (e) {
@@ -584,33 +586,7 @@ ipcMain.on('login-microsoft', async (event) => {
     }
 });
 
-ipcMain.on('add-offline-account', (event, name) => {
-    console.log('IPC: add-offline-account triggered for', name);
-    const crypto = require('crypto');
-    // Generate a deterministic UUID V3/V4-like for offline accounts
-    const hash = crypto.createHash('md5').update('OfflinePlayer:' + name).digest('hex');
-    const pseudoUuid = `${hash.substring(0,8)}-${hash.substring(8,12)}-${hash.substring(12,16)}-${hash.substring(16,20)}-${hash.substring(20,32)}`;
-    
-    const account = {
-        name: name,
-        uuid: pseudoUuid, 
-        type: 'offline'
-    };
-    let accounts = getAccounts();
-    // Filter by name for offline to avoid duplicates
-    accounts = accounts.filter(a => a.name.toLowerCase() !== name.toLowerCase());
-    accounts.push(account);
-    saveAccounts(accounts);
-    console.log('Offline Account Saved:', name, 'UUID:', pseudoUuid);
-    event.sender.send('login-success', account);
-});
-
-ipcMain.on('remove-account', (event, uuid) => {
-    let accounts = getAccounts();
-    accounts = accounts.filter(a => a.uuid !== uuid);
-    saveAccounts(accounts);
-    event.sender.send('accounts-list', accounts);
-});
+// [DUPLICADOS ELIMINADOS] add-offline-account y remove-account ya están definidos arriba con la lógica correcta.
 
 ipcMain.on('ping-server', async (event, serverIP) => {
     const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36' };
@@ -1060,29 +1036,7 @@ ipcMain.on('install-mod', (event, filePath) => {
     }
 });
 
-// RESTORED: Get Local Mods List
-ipcMain.on('get-mods-list', (event) => {
-    try {
-        const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
-        if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
-
-        const files = fs.readdirSync(modsPath);
-        const mods = files.filter(f => f.endsWith('.jar') || f.endsWith('.jar.disabled')).map(f => {
-            const stats = fs.statSync(path.join(modsPath, f));
-            return {
-                name: f.replace('.jar', '').replace('.disabled', '').replace('.active', ''),
-                filename: f,
-                enabled: !f.endsWith('.disabled'),
-                size: (stats.size / 1024 / 1024).toFixed(2) + ' MB',
-                author: 'Local Mod',
-                description: 'Mod instalado en tu carpeta local.'
-            };
-        });
-        event.sender.send('mods-list', mods);
-    } catch (e) {
-        console.error('Error listing mods:', e);
-    }
-});
+// [DUPLICADO ELIMINADO] get-mods-list ya está definido arriba con soporte de Modrinth API para íconos y metadatos.
 
 ipcMain.on('toggle-mod', (event, filename) => {
     try {
@@ -1108,23 +1062,7 @@ ipcMain.on('toggle-mod', (event, filename) => {
     }
 });
 
-// FEATURE: Drag & Drop Mod Installation
-ipcMain.on('install-mod', (event, filePath) => {
-    try {
-        if (!filePath.endsWith('.jar')) throw new Error('Solo se admiten archivos .jar o mods.');
-        const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
-        if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
-        
-        const fileName = path.basename(filePath);
-        const dest = path.join(modsPath, fileName);
-        fs.copyFileSync(filePath, dest);
-        console.log('Mod installed via Drag and Drop:', fileName);
-        event.sender.send('mod-installed-success', fileName);
-    } catch (e) {
-        console.error('Drag & Drop Error:', e);
-        event.sender.send('mod-installed-error', e.message);
-    }
-});
+// [DUPLICADO ELIMINADO] install-mod ya está definido arriba con la lógica completa (incluye trigger-mods-refresh).
 
 
 ipcMain.on('start-auto-update', async (event, { url }) => {
