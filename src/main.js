@@ -871,7 +871,7 @@ ipcMain.on('sync-modpacks', async (event) => {
     try {
         event.sender.send('sync-progress', { step: 'SCANNING CLOUD...', progress: 5 });
         console.log('OTA Mods: Fetching manifest from:', MODS_MANIFEST_URL);
-        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 10000 });
+        const response = await axios.get(`${MODS_MANIFEST_URL}?t=${Date.now()}`, { timeout: 10000 });
         const modsToList = response.data;
 
         if (Array.isArray(modsToList)) {
@@ -935,7 +935,7 @@ ipcMain.handle('check-mods-status', async () => {
         const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
         if (!fs.existsSync(modsPath)) return true;
 
-        const response = await axios.get(MODS_MANIFEST_URL, { timeout: 5000 });
+        const response = await axios.get(`${MODS_MANIFEST_URL}?t=${Date.now()}`, { timeout: 5000 });
         const remoteMods = response.data;
         if (!Array.isArray(remoteMods)) return typeof remoteMods === 'object' && remoteMods.length > 0; // if it is an object but not array, check its length if it has one
 
