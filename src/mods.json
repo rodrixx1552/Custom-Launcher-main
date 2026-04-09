@@ -152,6 +152,10 @@
         "size": "1.6 MB"
     },
     {
+        "name": "kotlinforforge-4.12.0-all.jar",
+        "size": "7.1 MB"
+    },
+    {
         "name": "kuronomy-3.2.6-forge-1.20.1.jar",
         "size": "1.09 MB"
     },
@@ -206,6 +210,10 @@
     {
         "name": "neoncraft-1.1.0.jar",
         "size": "3.02 MB"
+    },
+    {
+        "name": "nirvana-forge-1.2.5.jar",
+        "size": "2.64 MB"
     },
     {
         "name": "OAmP-1.20.1-V2.jar",
