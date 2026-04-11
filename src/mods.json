@@ -52,6 +52,10 @@
         "size": "1.09 MB"
     },
     {
+        "name": "Croptopia-1.20.1-FORGE-3.0.4.jar",
+        "size": "2 MB"
+    },
+    {
         "name": "CustomSkinLoader_ForgeV2-14.27.jar",
         "size": "151.85 KB"
     },
@@ -90,6 +94,10 @@
     {
         "name": "entity_texture_features_1.20.1-forge-7.0.13.jar",
         "size": "905.92 KB"
+    },
+    {
+        "name": "EpheroLib-1.20.1-FORGE-1.2.0.jar",
+        "size": "739.13 KB"
     },
     {
         "name": "etched-3.0.4.jar",
@@ -174,6 +182,10 @@
     {
         "name": "letsdo-brewery-forge-1.1.9.jar",
         "size": "2.13 MB"
+    },
+    {
+        "name": "letsdo-candlelight-forge-1.2.13.jar",
+        "size": "2.5 MB"
     },
     {
         "name": "letsdo-vinery-forge-1.4.41.jar",
