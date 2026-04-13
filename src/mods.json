@@ -68,6 +68,10 @@
         "size": "2 MB"
     },
     {
+        "name": "CustomPlayerModels-1.20-0.6.25a.jar",
+        "size": "2.66 MB"
+    },
+    {
         "name": "CustomSkinLoader_ForgeV2-14.27.jar",
         "size": "151.85 KB"
     },
@@ -370,6 +374,10 @@
     {
         "name": "XeKr's Decoration-1.20.1-Forge-0.9.6.jar",
         "size": "2.23 MB"
+    },
+    {
+        "name": "xercapaint-1.20.1-1.1.0.jar",
+        "size": "394.13 KB"
     },
     {
         "name": "yuushya-1.20.1-forge-2.2.3.jar",
