@@ -88,7 +88,13 @@ window.renderTab = (tabName) => {
     if (!mainContent) return;
     
     window.currentTab = tabName;
-    window.playClick();
+
+    // [FIXED] Only one navigation sound — tabSFX tone replaces the old playClick
+    if (typeof window.playTabSFX === 'function') {
+        window.playTabSFX(tabName);
+    } else {
+        window.playClick?.();
+    }
     
     // Update Sidebar State
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -107,6 +113,7 @@ window.renderTab = (tabName) => {
     updateUserHeader();
     updateMarketHeader();
 };
+
 
 function updateUserHeader() {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
@@ -195,9 +202,13 @@ async function loadNews() {
         // We try to fetch from GitHub first, otherwise use local from src/news.json (via electronAPI if exposed, or just simple fetch)
         const newsUrl = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/news.json';
         const response = await fetch(newsUrl + '?t=' + Date.now());
-        const news = await response.json();
+        const data = await response.json();
+        
+        // Handle new object format { news: [], playlist: [] } or legacy array [...]
+        const news = Array.isArray(data) ? data : (data.news || []);
 
         grid.innerHTML = news.map(item => `
+
             <div class="news-card">
                 <div class="news-img" style="background-image: url('${item.image}');"></div>
                 <div class="news-overlay">
@@ -211,8 +222,10 @@ async function loadNews() {
         // Fallback to local file if fetch fails
         fetch('../news.json')
             .then(res => res.json())
-            .then(news => {
+            .then(data => {
+                const news = Array.isArray(data) ? data : (data.news || []);
                 grid.innerHTML = news.map(item => `
+
                     <div class="news-card">
                         <div class="news-img" style="background-image: url('${item.image}');"></div>
                         <div class="news-overlay">
@@ -403,6 +416,9 @@ function renderSettingsTab(container) {
     const width = localStorage.getItem('windowWidth') || '1280';
     const height = localStorage.getItem('windowHeight') || '720';
     const version = localStorage.getItem('selectedVersion') || '1.20.1';
+    const sfxVol = parseFloat(localStorage.getItem('sfxVolume') ?? '0.5');
+    const musicVol = parseFloat(localStorage.getItem('musicVolume') ?? '0.3');
+    const jarvisVoice = localStorage.getItem('jarvisVoice') || 'female';
 
     container.innerHTML = `
         <div style="grid-column: 1 / span 2; animation: fadeIn 0.4s ease;">
@@ -472,6 +488,59 @@ function renderSettingsTab(container) {
                         </select>
                     </div>
                 </div>
+
+                <!-- AUDIO GROUP 🎵 [NEW] -->
+                <div class="settings-group" style="grid-column: 1 / span 2;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+                        <i class="fas fa-volume-up" style="color: #a78bfa;"></i>
+                        <span style="font-weight: 900; font-size: 13px; letter-spacing: 1px; color: var(--text-dim);">AUDIO Y JARVIS</span>
+                    </div>
+
+                    <div class="settings-item">
+                        <div class="settings-label">
+                            <span class="settings-title">Volumen SFX (Interfaz)</span>
+                            <span class="settings-subtitle">Controla los sonidos de navegación, clicks y notificaciones.</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" min="0" max="1" step="0.05" value="${sfxVol}" class="modern-slider"
+                                oninput="window.updateSfxVolume(this.value); this.nextElementSibling.innerText = Math.round(this.value * 100) + '%'">
+                            <span class="slider-value">${Math.round(sfxVol * 100)}%</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-item" style="margin-top: 15px;">
+                        <div class="settings-label">
+                            <span class="settings-title">Volumen Música de Temporada</span>
+                            <span class="settings-subtitle">Música ambiental cargada desde las noticias del servidor.</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" min="0" max="1" step="0.05" value="${musicVol}" class="modern-slider"
+                                oninput="window.updateMusicVolume(this.value); this.nextElementSibling.innerText = Math.round(this.value * 100) + '%'">
+                            <span class="slider-value">${Math.round(musicVol * 100)}%</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-item" style="margin-top: 15px;">
+                        <div class="settings-label">
+                            <span class="settings-title">Voz de JARVIS (TikTok Meme Edition)</span>
+                            <span class="settings-subtitle">El asistente usará las famosas voces de Jessie y el Narrador de TikTok.</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${[
+                                { id: 'female',    label: '👩 Jessie (TikTok)',  lang: 'es-MX' },
+                                { id: 'male',      label: '👨 Narrador (Meme)', lang: 'es-MX' },
+                                { id: 'ghostface', label: '🔪 Ghostface',        lang: 'es-MX' },
+                                { id: 'epic',      label: '🎬 Narrador Épico',  lang: 'es-MX' }
+                            ].map(v => `
+                                <button class="user-btn ${jarvisVoice === v.id ? 'primary' : ''}" 
+                                    id="voice-btn-${v.id}"
+                                    onclick="window.setJarvisVoice('${v.id}', '${v.lang}', this)">
+                                    ${v.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -489,6 +558,20 @@ window.updateRes = (key, val) => {
 
 window.updateSetting = (key, val) => {
     localStorage.setItem(key, val);
+};
+
+// [NEW] JARVIS Voice Selector
+window.setJarvisVoice = (voiceId, lang, btn) => {
+    window.playClick();
+    localStorage.setItem('jarvisVoice', voiceId);
+    localStorage.setItem('jarvisLang', lang);
+    // Update button styles
+    document.querySelectorAll('[id^="voice-btn-"]').forEach(b => b.classList.remove('primary'));
+    if (btn) btn.classList.add('primary');
+    // Demo the selected voice
+    if (typeof window.speak === 'function') {
+        window.speak('Voz de JARVIS activada. Sistema listo.');
+    }
 };
 
 // --- LOGIC HELPERS ---
@@ -519,7 +602,45 @@ function initSkinViewer(name) {
 window.tryLaunch = async () => {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
     if (!acc) return window.showToast('No hay cuenta seleccionada. Por favor inicia sesión.', 'warning');
-    
+
+    // [FIX 3] Check mod sync status before launching — avoid crashes from missing mods
+    try {
+        const needsSync = await window.electronAPI.checkModsStatus();
+        if (needsSync) {
+            const confirmed = await new Promise((resolve) => {
+                const overlay = document.getElementById('overlay-container');
+                const content = document.getElementById('modal-content');
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 30px 20px;">
+                        <div style="font-size: 50px; margin-bottom: 20px;">⚠️</div>
+                        <h2 style="font-weight: 950; color: white; font-size: 20px; margin-bottom: 10px;">MODS DESACTUALIZADOS</h2>
+                        <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 25px;">
+                            Tu carpeta de mods no está sincronizada con el servidor.<br>
+                            <b style="color: var(--accent)">Iniciar sin sincronizar puede causar crashes.</b>
+                        </p>
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button class="user-btn primary" id="warn-sync-btn" style="flex: 1; max-width: 160px;">SINCRONIZAR</button>
+                            <button class="user-btn" id="warn-launch-btn" style="flex: 1; max-width: 160px; opacity: 0.7;">JUGAR DE TODAS FORMAS</button>
+                        </div>
+                    </div>
+                `;
+                overlay.classList.add('show');
+                document.getElementById('warn-sync-btn').onclick = () => {
+                    overlay.classList.remove('show');
+                    window.trySync();
+                    resolve(false); // Don't launch
+                };
+                document.getElementById('warn-launch-btn').onclick = () => {
+                    overlay.classList.remove('show');
+                    resolve(true); // Launch anyway
+                };
+            });
+            if (!confirmed) return;
+        }
+    } catch(e) {
+        console.warn('UI: Could not check mods before launch:', e);
+    }
+
     const btn = document.getElementById('play-btn');
     if (btn) {
         btn.disabled = true;
@@ -634,6 +755,7 @@ window.loadAccounts = () => {
     window.electronAPI.getAccounts();
 };
 
+
 // --- MODS TAB ---
 function renderModsTab(container) {
     container.innerHTML = `
@@ -677,8 +799,8 @@ const NEW_THEMES = window.LAUNCHER_THEMES;
 
 function renderMarketTab(container) {
     const coins = parseInt(localStorage.getItem('papuCoins') || '1000');
-    const owned = JSON.parse(localStorage.getItem('ownedThemes') || '["cyberpink"]');
-    const active = localStorage.getItem('activeTheme') || 'cyberpink';
+    const owned = JSON.parse(localStorage.getItem('ownedThemes') || '["original"]');
+    const active = localStorage.getItem('activeTheme') || 'original';
 
     // Ensure initial balance
     if (!localStorage.getItem('papuCoins')) localStorage.setItem('papuCoins', '1000');
@@ -817,7 +939,7 @@ window.electronAPI.onPingResult((data) => {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div>
                 <h2 style="font-weight: 950; color: white; margin: 0; font-size: 20px; letter-spacing: 1px;">RADAR SOCIAL</h2>
-                <div style="font-size: 10px; color: var(--accent); font-weight: 900; margin-top: 4px; text-transform: uppercase;">Protocolo LosPapus v0.5.0</div>
+                <div style="font-size: 10px; color: var(--accent); font-weight: 900; margin-top: 4px; text-transform: uppercase;">Protocolo LosPapus v0.5.3</div>
             </div>
             <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); color: var(--accent); padding: 8px 15px; border-radius: 12px; font-weight: 950; font-size: 12px; display: flex; align-items: center; gap: 8px;">
                 <div class="pulse-dot" style="width: 8px; height: 8px; background: var(--accent); margin:0;"></div>
@@ -870,7 +992,7 @@ window.toggleNotifs = () => {
     window.playClick();
     const dot = document.getElementById('notif-dot');
     if (dot) dot.style.display = 'none';
-    window.showToast('LosPapus Launcher v0.5.2 — Mods sincronizados desde GitHub. ¡Próxima actualización con más contenido!', 'info', 7000);
+    window.showToast('LosPapus Launcher v0.5.3 — Mods sincronizados desde GitHub. ¡Próxima actualización con más contenido!', 'info', 7000);
 };
 
 window.toggleSoundscape = (enabled) => {
@@ -898,6 +1020,34 @@ window.addEventListener('engine-launch-progress', (e) => {
     }
     const status = document.getElementById('play-status');
     if (status) status.innerText = `${e.detail.step || e.detail.type || '...'}`.toUpperCase();
+});
+
+// --- MUSIC PLAYER SYNC ---
+window.handleMusicToggle = () => {
+    const isPlaying = window.toggleMusic();
+    const btnIcon = document.querySelector('#music-toggle-btn i');
+    if (btnIcon) {
+        btnIcon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+    }
+    window.playClick();
+};
+
+window.addEventListener('music-updated', (e) => {
+    const playerUI = document.getElementById('music-player-ui');
+    const songNameText = document.getElementById('current-song-name');
+    const btnIcon = document.querySelector('#music-toggle-btn i');
+    
+    if (playerUI && songNameText) {
+        playerUI.style.display = 'flex';
+        songNameText.innerText = e.detail.name.toUpperCase();
+        if (btnIcon) btnIcon.className = 'fas fa-pause'; // Reset to pause icon on new track
+        
+        // Add a small animation effect when track changes
+        songNameText.style.opacity = '0';
+        setTimeout(() => {
+            songNameText.style.opacity = '1';
+        }, 300);
+    }
 });
 
 window.addEventListener('engine-launch-error', (e) => {
@@ -1095,7 +1245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.renderTab('play');
     
     // Initial Theme Load
-    const activeTheme = localStorage.getItem('activeTheme') || 'cyberpink';
+    const activeTheme = localStorage.getItem('activeTheme') || 'original';
     applyTheme(activeTheme);
     updateMarketHeader();
 
@@ -1103,9 +1253,17 @@ document.addEventListener('DOMContentLoaded', () => {
     addSidebarTooltips();
     
     // Real-time Player Status Hook
+    // [FIX 2] Track the interval ID so we can clear it and avoid memory leaks
+    let statusIntervalId = null;
     window.startRealTimeStatus = async () => {
         const countEl = document.getElementById('player-count');
         if (!countEl) return;
+
+        // Clear any previous interval before creating a new one
+        if (statusIntervalId) {
+            clearInterval(statusIntervalId);
+            statusIntervalId = null;
+        }
         
         const updateStatus = async () => {
             const ip = await window.electronAPI.getServerIp();
@@ -1124,13 +1282,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         updateStatus();
-        setInterval(updateStatus, 30000); // Pulse every 30s
+        statusIntervalId = setInterval(updateStatus, 30000); // Pulse every 30s
     };
 
     // --- OTA UPDATE LISTENER ---
     window.electronAPI.onUpdateAvailable((data) => {
         console.log(`📡 [OTA] Nueva versión detectada: ${data.version}`);
         
+        // [NEW] Play notification SFX on update
+        if (typeof window.playNotifSFX === 'function') window.playNotifSFX();
+
         // Evitar duplicados
         if (document.getElementById('ota-update-banner')) return;
 
@@ -1158,4 +1319,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.startRealTimeStatus();
+
+    // [NEW] Load seasonal background music if configured in news.json
+    if (typeof window.loadSeasonalMusic === 'function') {
+        setTimeout(() => window.loadSeasonalMusic(), 500);
+    }
+
+    // --- MODS STATUS CHECK ON STARTUP ---
+    // Runs after 5s to let the UI settle. Shows a warning if local mods are out of sync.
+    setTimeout(async () => {
+        try {
+            const needsSync = await window.electronAPI.checkModsStatus();
+            if (needsSync) {
+                window.showToast(
+                    '⚠️ Tus mods están desactualizados. Presiona el botón <b>⟳</b> para sincronizar.',
+                    'warning',
+                    10000
+                );
+                // Also pulse the sync button if we're on the play tab
+                const syncBtn = document.querySelector('.sync-btn');
+                if (syncBtn) {
+                    syncBtn.style.animation = 'spin 1s linear infinite';
+                    setTimeout(() => { if (syncBtn) syncBtn.style.animation = ''; }, 4000);
+                }
+            }
+        } catch (e) {
+            console.warn('UI: Could not check mods status on startup:', e);
+        }
+    }, 5000);
 });

@@ -1,8 +1,8 @@
 {
-    "server": {
-        "ip": "na34.holy.gg",
-        "port": 26068
-    },
+  "server": {
+    "ip": "na34.holy.gg",
+    "port": 26068
+  },
   "modpack_url": "https://www.mediafire.com/file/la1uhes3g1agnzl/mods.zip/file",
   "forge_version": "47.4.17",
   "launcher_version": "0.5.3",

@@ -1,20 +1,36 @@
-[
-  {
-    "title": "¡Bienvenidos a HolyHosting!",
-    "tag": "NUEVO",
-    "description": "Hemos migrado oficialmente a un servidor de alta performance. ¡Disfruten de cero lag!",
-    "image": "../assets/los_papus/news_1.png"
-  },
-  {
-    "title": "Actualización v0.5.0",
-    "tag": "LAUNCHER",
-    "description": "Nueva interfaz Frappe y sistema de auto-conexión activado.",
-    "image": "../assets/los_papus/news_2.png"
-  },
-  {
-    "title": "Pack de 73 Mods",
-    "tag": "MODS",
-    "description": "Sincroniza tus mods con el botón circular para evitar errores al entrar.",
-    "image": "../assets/los_papus/news_3.png"
-  }
-]
+{
+  "playlist": [
+    {
+      "name": "Chill Lofi Beats",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    },
+    {
+      "name": "Ambient Space Journey",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+    },
+    {
+      "name": "Electronic Dreams",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+    }
+  ],
+  "news": [
+    {
+      "title": "¡Bienvenidos a HolyHosting!",
+      "tag": "SERVIDOR",
+      "description": "Hemos migrado oficialmente a un servidor de alta performance. ¡Disfruten de cero lag y máxima estabilidad!",
+      "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_1.png"
+    },
+    {
+      "title": "Launcher v0.5.3 Estable",
+      "tag": "LAUNCHER",
+      "description": "Nueva interfaz con sistema OTA, auto-conexión al servidor y actualizaciones automáticas de mods.",
+      "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_2.png"
+    },
+    {
+      "title": "Pack de 97 Mods Activos",
+      "tag": "MODS",
+      "description": "Sincroniza tus mods con el botón circular antes de entrar. Incluye vehículos, decoración, biomas y mucho más.",
+      "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_3.png"
+    }
+  ]
+}

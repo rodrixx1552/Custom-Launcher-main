@@ -89,6 +89,17 @@
                         <span id="premium-ribbon-text">PERFIL PREMIUM</span>
                     </div>
                     
+                    <!-- [NEW] MUSIC PLAYER UI -->
+                    <div class="music-controller" id="music-player-ui" style="display:none; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px; gap: 8px; margin: 0 10px;">
+                        <div class="ctrl-btn-mini" onclick="window.handleMusicToggle()" id="music-toggle-btn" title="Pausar/Reproducir" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s;">
+                            <i class="fas fa-pause" style="font-size: 9px;"></i>
+                        </div>
+                        <span id="current-song-name" style="font-size: 10px; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; max-width: 100px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; opacity: 0.8;">CARGANDO...</span>
+                        <div class="ctrl-btn-mini" onclick="window.skipTrack()" title="Siguiente canción" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s;">
+                            <i class="fas fa-step-forward" style="font-size: 9px;"></i>
+                        </div>
+                    </div>
+
                     <div class="ctrl-btn" onclick="window.toggleJarvis()"><i class="fas fa-comment-dots"></i></div>
                     <div class="ctrl-btn" onclick="window.toggleNotifs()"><i class="fas fa-bell"></i><div id="notif-dot" style="display:none; position:absolute; top:8px; right:8px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:2px solid var(--bg-deep);"></div></div>
                     
@@ -125,7 +136,7 @@
             <span style="font-size: 11px; color: var(--accent);">ACTIVO</span>
         </div>
         <div class="jarvis-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-            <span style="font-size: 11px; color: var(--text-muted);">VOLUMEN MAESTRO</span>
+            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">VOLUMEN DE JARVIS</span>
             <input type="range" style="width: 100%;" oninput="window.updateVolume(this.value)">
         </div>
     </div>

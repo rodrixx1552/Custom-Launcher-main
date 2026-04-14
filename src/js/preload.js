@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onGameStarted: (callback) => { ipcRenderer.removeAllListeners('game-started'); ipcRenderer.on('game-started', (event) => callback()) },
     onLaunchError: (callback) => { ipcRenderer.removeAllListeners('launch-error'); ipcRenderer.on('launch-error', (event, data) => callback(data)) },
     pingServer: (serverIP) => ipcRenderer.send('ping-server', serverIP),
-    onPingResult: (callback) => { ipcRenderer.on('ping-result', (event, data) => callback(data)) },
+    onPingResult: (callback) => { ipcRenderer.removeAllListeners('ping-result'); ipcRenderer.on('ping-result', (event, data) => callback(data)) },
     syncModpacks: () => ipcRenderer.send('sync-modpacks'),
     onModsList: (callback) => { ipcRenderer.removeAllListeners('mods-list'); ipcRenderer.on('mods-list', (event, data) => callback(data)) },
     onSyncProgress: (callback) => { ipcRenderer.removeAllListeners('sync-progress'); ipcRenderer.on('sync-progress', (event, data) => callback(data)) },
@@ -46,11 +46,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     startAternosServer: () => ipcRenderer.send('auto-start-server'),
     onAternosStatus: (callback) => { ipcRenderer.removeAllListeners('aternos-status'); ipcRenderer.on('aternos-status', (event, data) => callback(data)) },
     
-    // MODS MANAGEMENT
+    // Neural TTS
+    generateSpeech: (text, voice) => ipcRenderer.invoke('tts:generate', { text, voice }),
+
+    // MODS MANAGEMENT — getModsList, onModsList, toggleMod, onModToggled already defined above
     getModsList: () => ipcRenderer.send('get-mods-list'),
-    onModsList: (callback) => { ipcRenderer.removeAllListeners('mods-list'); ipcRenderer.on('mods-list', (event, data) => callback(data)) },
-    toggleMod: (filename) => ipcRenderer.send('toggle-mod', filename),
-    onModToggled: (callback) => { ipcRenderer.removeAllListeners('mod-toggled'); ipcRenderer.on('mod-toggled', (event, data) => callback(data)) }
 });
 
 window.addEventListener("DOMContentLoaded", () => {

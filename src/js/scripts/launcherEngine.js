@@ -6,6 +6,241 @@
 
 console.log('ENGINE: launcherEngine.js initializing...');
 
+// =====================================================================
+// AUDIO SYSTEM — Navigation SFX, Notifications, Seasonal Music
+// =====================================================================
+
+// Tab SFX: each tab gets a unique musical tone (Web Audio API — no files needed)
+const TAB_TONES = {
+    play:     { freq: 523, type: 'sine',     ms: 120 }, // C5
+    accounts: { freq: 659, type: 'sine',     ms: 100 }, // E5
+    mods:     { freq: 784, type: 'triangle', ms: 110 }, // G5
+    skins:    { freq: 880, type: 'sine',     ms: 100 }, // A5
+    market:   { freq: 1047,type: 'sine',     ms: 120 }, // C6
+    settings: { freq: 392, type: 'triangle', ms: 130 }, // G4
+};
+
+window.playTabSFX = (tabName) => {
+    try {
+        const sfxVol = parseFloat(localStorage.getItem('sfxVolume') ?? '0.5');
+        if (sfxVol === 0) return;
+        const tone = TAB_TONES[tabName];
+        if (!tone) return;
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = tone.type;
+        osc.frequency.setValueAtTime(tone.freq, ctx.currentTime);
+        gain.gain.setValueAtTime(sfxVol * 0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + tone.ms / 1000);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + tone.ms / 1000);
+    } catch(e) {}
+};
+
+// Notification SFX — double-ping suave
+window.playNotifSFX = () => {
+    try {
+        const sfxVol = parseFloat(localStorage.getItem('sfxVolume') ?? '0.5');
+        if (sfxVol === 0) return;
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [880, 1100].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const startAt = ctx.currentTime + i * 0.12;
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, startAt);
+            gain.gain.setValueAtTime(sfxVol * 0.2, startAt);
+            gain.gain.exponentialRampToValueAtTime(0.001, startAt + 0.15);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startAt);
+            osc.stop(startAt + 0.15);
+        });
+    } catch(e) {}
+};
+
+// Clean UI Click/Tick (replaces old click.mp3)
+window.playClick = () => {
+    try {
+        const sfxVol = parseFloat(localStorage.getItem('sfxVolume') ?? '0.5');
+        if (sfxVol === 0) return;
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.05); // Snap pitch down for click sound
+        gain.gain.setValueAtTime(sfxVol * 0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+    } catch(e) {}
+};
+
+// =====================================================================
+// SEASONAL MUSIC PLAYER — Playlist & Shuffle (Spotify-like)
+// =====================================================================
+let _seasonalAudio = null;
+let _playlist = [];
+let _currentIndex = -1;
+
+window.loadSeasonalMusic = async () => {
+    try {
+        const newsUrl = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/news.json';
+        const res = await fetch(newsUrl + '?t=' + Date.now());
+        const data = await res.json();
+
+        // Handle both formats: [...] (legacy) or { news: [], playlist: [] } (new)
+        if (processPlaylistData(data)) {
+            return; // Successfully loaded from remote
+        }
+        
+        // --- LOCAL FALLBACK (if remote has no music yet) ---
+        console.log('[SeasonalMusic] Remote has no music data. Checking local fallback...');
+        const localRes = await fetch('../news.json');
+        const localData = await localRes.json();
+        processPlaylistData(localData);
+
+    } catch(e) {
+        console.warn('[SeasonalMusic] Could not load playlist:', e.message);
+        // Fallback for full fetch failure
+        try {
+            const localRes = await fetch('../news.json');
+            const localData = await localRes.json();
+            processPlaylistData(localData);
+        } catch(ee) {}
+    }
+};
+
+/**
+ * Helper to parse news/playlist data from JSON
+ */
+function processPlaylistData(data) {
+    if (data.playlist && Array.isArray(data.playlist)) {
+        _playlist = data.playlist;
+    } else if (data.music_url) {
+        _playlist = [{ name: 'Default Seasonal Music', url: data.music_url }];
+    } else {
+        return false;
+    }
+
+    if (_playlist.length > 0) {
+        window.playRandomTrack();
+        return true;
+    }
+    return false;
+}
+
+window.playRandomTrack = () => {
+    if (!_playlist.length) return;
+
+    // Pick a random track that isn't the current one (if possible)
+    let nextIndex;
+    if (_playlist.length > 1) {
+        do {
+            nextIndex = Math.floor(Math.random() * _playlist.length);
+        } while (nextIndex === _currentIndex);
+    } else {
+        nextIndex = 0;
+    }
+
+    _currentIndex = nextIndex;
+    const track = _playlist[_currentIndex];
+    
+    console.log('[SeasonalMusic] Now playing:', track.name);
+    
+    if (_seasonalAudio) {
+        // Fade out
+        const audioToClear = _seasonalAudio;
+        let fadeOut = audioToClear.volume;
+        const interval = setInterval(() => {
+            fadeOut -= 0.05;
+            if (fadeOut <= 0) {
+                fadeOut = 0;
+                audioToClear.pause();
+                clearInterval(interval);
+            }
+            audioToClear.volume = fadeOut;
+        }, 50);
+    }
+
+    const musicVol = parseFloat(localStorage.getItem('musicVolume') ?? '0.3');
+    _seasonalAudio = new Audio(track.url);
+    _seasonalAudio.volume = 0;
+    _seasonalAudio.play().catch(e => console.warn("Music play blocked:", e.message));
+
+    // Fade in
+    let fadeIn = 0;
+    const intervalIn = setInterval(() => {
+        fadeIn += 0.02;
+        if (fadeIn >= musicVol) {
+            fadeIn = musicVol;
+            clearInterval(intervalIn);
+        }
+        if (_seasonalAudio) _seasonalAudio.volume = fadeIn;
+    }, 100);
+
+    // Auto-play next track
+    _seasonalAudio.onended = () => window.playRandomTrack();
+
+    // Dispatch event for UI
+    window.dispatchEvent(new CustomEvent('music-updated', { 
+        detail: { name: track.name, index: _currentIndex, total: _playlist.length } 
+    }));
+};
+
+window.skipTrack = () => {
+    console.log('[SeasonalMusic] User skipped track.');
+    window.playRandomTrack();
+};
+
+window.toggleMusic = () => {
+    if (!_seasonalAudio) return false;
+    
+    if (_seasonalAudio.paused) {
+        _seasonalAudio.play().catch(() => {});
+        // Fade in
+        const musicVol = parseFloat(localStorage.getItem('musicVolume') ?? '0.3');
+        let fadeIn = 0;
+        const intervalIn = setInterval(() => {
+            fadeIn += 0.05;
+            if (fadeIn >= musicVol) { fadeIn = musicVol; clearInterval(intervalIn); }
+            _seasonalAudio.volume = fadeIn;
+        }, 50);
+        return true; 
+    } else {
+        // Fade out then pause
+        let fadeOut = _seasonalAudio.volume;
+        const intervalOut = setInterval(() => {
+            fadeOut -= 0.05;
+            if (fadeOut <= 0) {
+                fadeOut = 0;
+                _seasonalAudio.pause();
+                clearInterval(intervalOut);
+            }
+            _seasonalAudio.volume = fadeOut;
+        }, 50);
+        return false;
+    }
+};
+
+window.updateMusicVolume = (val) => {
+    const v = parseFloat(val);
+    localStorage.setItem('musicVolume', v);
+    if (_seasonalAudio) _seasonalAudio.volume = v;
+};
+
+window.updateSfxVolume = (val) => {
+    const v = parseFloat(val);
+    localStorage.setItem('sfxVolume', v);
+    // [REPLACED] old clickAudio volume logic — sfxVolume is now used in synthetic sounds
+};
+
 // --- MÓDULO NEURAL SOUNDSCAPE 🌌🔊 ---
 class NeuralSoundscape {
     constructor() {
@@ -26,11 +261,17 @@ class NeuralSoundscape {
             this.introAudio = new Audio(url);
             this.introAudio.volume = 0;
             this.introAudio.loop = true;
+            // Fail silently if the audio file doesn't exist (intro.mp3 is optional)
+            this.introAudio.onerror = () => {
+                console.warn('Soundscape: intro.mp3 not found — skipping intro audio.');
+                this.introAudio = null;
+            };
             const volume = parseFloat(localStorage.getItem('sysVolume') || '0.8') * 0.4;
             this.introAudio.play().catch(e => console.warn('Audio Intro blocked or missing:', e));
             
             let v = 0;
             const fadeIn = setInterval(() => {
+                if (!this.introAudio) { clearInterval(fadeIn); return; }
                 v += 0.05;
                 if (v >= volume) { v = volume; clearInterval(fadeIn); }
                 this.introAudio.volume = v;
@@ -158,7 +399,28 @@ class PapuEconomy {
 
     init() {
         this.applyTheme(this.activeTheme);
-        setInterval(() => { this.addCoins(10); }, 5 * 60 * 1000);
+
+        // [FIX 1] Offline Coin Accumulation (Anti-Farm: max 1 hour cap)
+        const COINS_PER_5MIN = 10;
+        const MAX_OFFLINE_MINUTES = 60; // Máximo 1 hora de coins offline
+        const lastSeen = parseInt(localStorage.getItem('lastSeenTimestamp') || '0');
+        const now = Date.now();
+        if (lastSeen > 0) {
+            const minutesElapsed = Math.floor((now - lastSeen) / (1000 * 60));
+            const intervals = Math.min(Math.floor(minutesElapsed / 5), MAX_OFFLINE_MINUTES / 5);
+            if (intervals > 0) {
+                const earned = intervals * COINS_PER_5MIN;
+                console.log(`[PapuStore] Offline bonus: +${earned} coins (${intervals * 5} min elapsed)`);
+                this.addCoins(earned);
+            }
+        }
+        localStorage.setItem('lastSeenTimestamp', now);
+
+        // Ganar coins mientras el launcher esté abierto (cada 5 minutos)
+        setInterval(() => {
+            this.addCoins(COINS_PER_5MIN);
+            localStorage.setItem('lastSeenTimestamp', Date.now());
+        }, 5 * 60 * 1000);
     }
 
     addCoins(amount) {
@@ -195,53 +457,115 @@ class PapuEconomy {
 window.Soundscape = new NeuralSoundscape();
 window.PapuStore = new PapuEconomy();
 
+// Expose themes globally so appCore.js (Theme Market) can reference them.
+// This is the single source of truth for all available themes.
+window.LAUNCHER_THEMES = window.PapuStore.themes;
+
 // --- JARVIS PROTOCOLO ---
 window.speak = (text) => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
         try {
-            const volume = parseFloat(localStorage.getItem('sysVolume') || '0.8');
-            console.log('🤖 JARVIS:', text);
+            const sysVol = parseFloat(localStorage.getItem('sysVolume') || '0.8');
+            const jarvisVoice = localStorage.getItem('jarvisVoice') || 'female';
+            
+            console.log('🤖 JARVIS (Requesting Neural AI):', text);
 
-            const playNeuralVoice = (txt) => {
-                return new Promise((res, rej) => {
-                    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(txt)}&tl=es&client=tw-ob`;
-                    const audio = new Audio(url);
-                    audio.volume = volume;
-                    audio.onended = res;
-                    audio.onerror = rej;
-                    audio.play().catch(rej);
-                    setTimeout(res, 6000);
-                });
+            // --- MAPPING DE VOCES (TikTok Meme Edition) ---
+            const voiceProfiles = {
+                'female':    { neural: 'tk_es_female_f6',     local: 'Google español' },
+                'male':      { neural: 'tk_es_mx_002',        local: 'Google español de Estados Unidos' },
+                'ghostface': { neural: 'tk_en_us_ghostface',  local: 'Microsoft Zira Desktop' },
+                'epic':      { neural: 'tk_en_us_006',        local: 'Google español' },
+                'robotic':   { neural: 'tk_en_us_006',        local: 'Microsoft Zira Desktop' }
             };
+            const selectedNeural = voiceProfiles[jarvisVoice]?.neural || voiceProfiles.female.neural;
 
-            const playSystemVoice = (txt) => {
-                return new Promise((res) => {
-                    if (!window.speechSynthesis) return res();
-                    window.speechSynthesis.cancel();
-                    const msg = new SpeechSynthesisUtterance(txt);
-                    msg.pitch = 0.9; msg.rate = 1.05; msg.volume = volume;
-                    msg.onend = res;
-                    window.speechSynthesis.speak(msg);
-                    setTimeout(res, 5000);
-                });
-            };
+            // Step 1: Try Premium Neural AI (requires internet)
+            if (window.electronAPI && window.electronAPI.generateSpeech) {
+                try {
+                    const base64Audio = await window.electronAPI.generateSpeech(text, selectedNeural);
+                    if (base64Audio) {
+                        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+                        audio.volume = sysVol;
+                        audio.onended = resolve;
+                        audio.play().catch(e => {
+                            console.warn('TTS: DataURI playback failed, falling back...', e);
+                            fallbackToOSVoice(text, resolve);
+                        });
+                        // Safety timeout if audio fails to end
+                        setTimeout(resolve, 8000);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('TTS: Neural AI failed, falling back to OS...', err);
+                }
+            }
 
-            playNeuralVoice(text).then(resolve).catch(() => playSystemVoice(text).then(resolve));
-        } catch (e) { resolve(); }
+            // Step 2: Fallback to Local OS Voices (Offline/Error)
+            fallbackToOSVoice(text, resolve);
+
+        } catch (e) { 
+            console.error('TTS: Critical failure', e);
+            resolve(); 
+        }
     });
 };
 
-// --- AUDIO & UI UTILS ---
-window.playClick = () => {
-    try {
-        const audio = document.getElementById('clickAudio');
-        if (audio) {
-            audio.currentTime = 0;
-            audio.volume = parseFloat(localStorage.getItem('sysVolume') || '0.8');
-            audio.play().catch(e => console.warn("Audio play blocked:", e.message));
+/**
+ * Fallback to local OS-installed voices (Robotic)
+ */
+function fallbackToOSVoice(text, resolve) {
+    const volume = parseFloat(localStorage.getItem('sysVolume') || '0.8');
+    const speakWhenReady = (voices) => {
+        const voiceId = localStorage.getItem('jarvisVoice') || 'female';
+        const msg = new SpeechSynthesisUtterance(text);
+        
+        const PROFILES = {
+            female:  { pitch: 1.1, rate: 1.1 },
+            male:    { pitch: 0.1, rate: 0.9 },
+            robotic: { pitch: 0.5, rate: 1.3 }
+        };
+        
+        msg.pitch = PROFILES[voiceId].pitch;
+        msg.rate = PROFILES[voiceId].rate;
+        msg.volume = volume;
+        msg.onend  = resolve;
+        msg.onerror = () => resolve(); 
+        window.speechSynthesis.cancel();
+
+        let selectedVoice = null;
+        const esVoices = voices.filter(v => v.lang.startsWith('es'));
+        const enVoices = voices.filter(v => v.lang.startsWith('en'));
+
+        if (voiceId === 'male') {
+            selectedVoice = esVoices.find(v => v.name.includes('Pablo') || v.name.toLowerCase().includes('male'))
+                         || esVoices[0];
+        } else if (voiceId === 'robotic') {
+            selectedVoice = enVoices.find(v => v.name.includes('Zira')) || enVoices[0];
+        } else {
+            selectedVoice = esVoices.find(v => v.name.includes('Sabina') || v.name.includes('Helena')) 
+                         || esVoices[0];
         }
-    } catch (e) { /* Silent fail for audio */ }
-};
+
+        if (selectedVoice) msg.voice = selectedVoice;
+        window.speechSynthesis.speak(msg);
+        setTimeout(resolve, 6000);
+    };
+
+    let voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+        speakWhenReady(voices);
+    } else {
+        window.speechSynthesis.onvoiceschanged = () => {
+            voices = window.speechSynthesis.getVoices();
+            speakWhenReady(voices);
+            window.speechSynthesis.onvoiceschanged = null;
+        };
+        setTimeout(resolve, 2000);
+    }
+}
+
+
 
 // --- AUTH UTILS --- (Logic handled in appCore.js, adding bridge functions here if needed)
 window.switchAccount = (uuid) => {
@@ -255,17 +579,9 @@ window.switchAccount = (uuid) => {
     });
 };
 
-window.setActive = window.switchAccount;
+// Note: window.setActive is defined in appCore.js with the full implementation.
+// window.switchAccount is available as an alias for legacy calls.
 
-window.playClick = () => {
-    try {
-        const audio = document.getElementById('clickAudio');
-        if (audio) {
-            audio.volume = parseFloat(localStorage.getItem('sysVolume') || '0.8');
-            audio.currentTime = 0; audio.play().catch(e => {});
-        }
-    } catch(e) {}
-};
 
 // --- CORE INITIALIZATION ---
 window.initEngine = () => {

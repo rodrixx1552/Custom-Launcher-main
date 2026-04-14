@@ -50,7 +50,6 @@ body {
     width: 80px;
     height: 100%;
     background: var(--bg-side);
-    border-right: 1px solid rgba(255,255,255,0.03);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -798,42 +797,4 @@ input:checked + .neon-slider:before { background-color: var(--accent); box-shado
     background: rgba(255,255,255,0.02);
     margin-bottom: 8px;
     transition: 0.2s;
-}
-.friend-item:hover { background: rgba(255,255,255,0.05); }
-
-.friend-head { width: 32px; height: 32px; border-radius: 4px; }
-.friend-name { font-weight: 700; color: white; font-size: 14px; }
-.friend-status { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-
-/* JARVIS DROPDOWN */
-.jarvis-dropdown {
-    position: absolute;
-    top: 70px; right: 80px;
-    width: 280px;
-    background: rgba(28, 28, 31, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: var(--radius-md);
-    padding: 20px;
-    z-index: 1001;
-    box-shadow: var(--shadow-lg);
-    display: none;
-    animation: fadeIn 0.3s ease;
-}
-
-.jarvis-dropdown.show { display: block; }
-
-.jarvis-item {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 15px; padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.jarvis-item:last-child { border: none; margin: 0; padding: 0; }
-
-/* FIX LINT */
-button {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
 }
