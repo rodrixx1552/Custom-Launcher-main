@@ -10,7 +10,7 @@ const TAG = 'v0.5.5';
 
 const FILES = [
     { name: 'LosPapus-v0.5.5.zip', path: path.join(__dirname, 'dist', 'LosPapus-v0.5.5.zip') },
-    { name: 'LosPapus-Launcher-Setup-v0.5.5.exe', path: path.join(__dirname, 'dist', 'LosPapus-Launcher-Setup-v0.5.5.exe') }
+    { name: 'LosPapus-Launcher-Setup-v0.5.5.exe', path: path.join(__dirname, 'dist', 'LosPapus Launcher Setup 0.5.5.exe') }
 ];
 
 async function upload() {

@@ -1286,6 +1286,44 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- OTA UPDATE LISTENER ---
+    // [NEW] AUTO-UPDATE SYSTEM (ONE-CLICK)
+    window.triggerAutoUpdate = (url) => {
+        const actions = document.querySelector('.update-actions');
+        const text = document.querySelector('.update-text');
+        
+        if (!actions || !text) return;
+
+        // Limpiar botones y mostrar estado de carga
+        actions.innerHTML = '';
+        text.innerHTML = `
+            <span class="update-title">APLICANDO ACTUALIZACIÓN...</span>
+            <div class="update-status-container">
+                <span id="update-status-text" class="update-status-text">Iniciando motor de descarga...</span>
+                <div class="update-progress-bg">
+                    <div id="update-progress-fill" class="update-progress-fill"></div>
+                </div>
+            </div>
+        `;
+
+        // Llamar a la API de Electron
+        window.electronAPI.startAutoUpdate(url);
+    };
+
+    window.electronAPI.onAutoUpdateProgress((data) => {
+        const textElem = document.getElementById('update-status-text');
+        const barElem = document.getElementById('update-progress-fill');
+        
+        if (textElem) textElem.innerText = data.step;
+        if (barElem) barElem.style.width = `${data.progress}%`;
+    });
+
+    window.electronAPI.onAutoUpdateError((err) => {
+        window.showToast(`Error al actualizar: ${err}`, 'error', 5000);
+        // Recargar el banner si falla o dejar que el usuario lo intente de nuevo
+        const banner = document.getElementById('ota-update-banner');
+        if (banner) banner.remove();
+    });
+
     window.electronAPI.onUpdateAvailable((data) => {
         console.log(`📡 [OTA] Nueva versión detectada: ${data.version}`);
         
@@ -1307,7 +1345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="update-subtitle">Hay mejoras de red y diseño listas para ti.</span>
                 </div>
                 <div class="update-actions">
-                    <button class="update-btn-action" onclick="window.electronAPI.openExternal('${data.url}')">DESCARGAR AHORA</button>
+                    <button class="update-btn-action" onclick="window.triggerAutoUpdate('${data.url}')">DESCARGAR AHORA</button>
                     <button class="update-btn-close" onclick="this.parentElement.parentElement.parentElement.remove()"><i class="fas fa-times"></i></button>
                 </div>
             </div>
