@@ -6,11 +6,11 @@ require('dotenv').config();
 
 const TOKEN = process.env.GITHUB_TOKEN;
 const [OWNER, REPO] = process.env.GITHUB_REPO.split('/');
-const TAG = 'v0.5.4';
+const TAG = 'v0.5.5';
 
 const FILES = [
-    { name: 'LosPapus-v0.5.4.zip', path: path.join(__dirname, 'dist', 'LosPapus-v0.5.4.zip') },
-    { name: 'LosPapus-Launcher-Setup-v0.5.4.exe', path: path.join(__dirname, 'dist', 'LosPapus-Launcher-Setup-v0.5.4.exe') }
+    { name: 'LosPapus-v0.5.5.zip', path: path.join(__dirname, 'dist', 'LosPapus-v0.5.5.zip') },
+    { name: 'LosPapus-Launcher-Setup-v0.5.5.exe', path: path.join(__dirname, 'dist', 'LosPapus-Launcher-Setup-v0.5.5.exe') }
 ];
 
 async function upload() {
