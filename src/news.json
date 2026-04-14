@@ -1,5 +1,10 @@
 {
-  "playlist": [],
+  "playlist": [
+    {
+      "name": "One Piece - Bink's Sake (Piano)",
+      "url": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/music/%5Bfull%5D%20One%20Piece%20OST%20-%20Bink's%20Sake%20-%20EASY%20Piano%20Tutorial%20%26%20Sheet%20Music.mp3"
+    }
+  ],
   "news": [
     {
       "title": "¡Bienvenidos a HolyHosting!",
