@@ -1,16 +1,8 @@
 {
   "playlist": [
     {
-      "name": "Chill Lofi Beats",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-    },
-    {
-      "name": "Ambient Space Journey",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
-    },
-    {
-      "name": "Electronic Dreams",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+      "name": "One Piece - Bink's Sake (Piano)",
+      "url": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/music/binks_sake.mp3"
     }
   ],
   "news": [
@@ -21,7 +13,7 @@
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_1.png"
     },
     {
-      "title": "Launcher v0.5.3 Estable",
+      "title": "Launcher v0.5.4 Estable",
       "tag": "LAUNCHER",
       "description": "Nueva interfaz con sistema OTA, auto-conexión al servidor y actualizaciones automáticas de mods.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_2.png"

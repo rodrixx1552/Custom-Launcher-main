@@ -160,7 +160,7 @@ function init(ipcMain, app, __rootDir) {
             if (remoteConfig && Object.keys(remoteConfig).length > 0) return remoteConfig;
         } catch (e) {}
 
-        return { forge_version: '47.4.17', launcher_version: '0.5.3', server: { ip: 'na34.holy.gg', port: 26068 } };
+        return { forge_version: '47.4.17', launcher_version: '0.5.4', server: { ip: 'na34.holy.gg', port: 26068 } };
     });
 
     ipcMain.on('start-auto-update', async (event, { url }) => {

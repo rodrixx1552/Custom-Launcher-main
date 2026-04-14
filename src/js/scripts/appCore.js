@@ -939,7 +939,7 @@ window.electronAPI.onPingResult((data) => {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div>
                 <h2 style="font-weight: 950; color: white; margin: 0; font-size: 20px; letter-spacing: 1px;">RADAR SOCIAL</h2>
-                <div style="font-size: 10px; color: var(--accent); font-weight: 900; margin-top: 4px; text-transform: uppercase;">Protocolo LosPapus v0.5.3</div>
+                <div style="font-size: 10px; color: var(--accent); font-weight: 900; margin-top: 4px; text-transform: uppercase;">Protocolo LosPapus v0.5.4</div>
             </div>
             <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); color: var(--accent); padding: 8px 15px; border-radius: 12px; font-weight: 950; font-size: 12px; display: flex; align-items: center; gap: 8px;">
                 <div class="pulse-dot" style="width: 8px; height: 8px; background: var(--accent); margin:0;"></div>
@@ -992,7 +992,7 @@ window.toggleNotifs = () => {
     window.playClick();
     const dot = document.getElementById('notif-dot');
     if (dot) dot.style.display = 'none';
-    window.showToast('LosPapus Launcher v0.5.3 — Mods sincronizados desde GitHub. ¡Próxima actualización con más contenido!', 'info', 7000);
+    window.showToast('LosPapus Launcher v0.5.4 — Mods sincronizados desde GitHub. ¡Próxima actualización con más contenido!', 'info', 7000);
 };
 
 window.toggleSoundscape = (enabled) => {
