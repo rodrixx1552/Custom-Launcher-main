@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const TOKEN = process.env.GITHUB_TOKEN;
 const [OWNER, REPO] = process.env.GITHUB_REPO.split('/');
-const TAG = 'v0.5.5';
+const TAG = 'v0.5.6';
 
 async function createRelease() {
     try {
@@ -13,7 +13,7 @@ async function createRelease() {
             {
                 tag_name: TAG,
                 name: `LosPapus Launcher ${TAG}`,
-                body: `## Novedades en la v0.5.5\n\n- **Reparación de Interfaz**: Corregido el error donde los botones de JARVIS y Notificaciones no respondían visualmente.\n- **Optimización Social**: Mejorada la integración del Radar Social.\n- **Protocolos de Voz**: Ajustes menores en la latencia de las voces neuronales.\n- **OTA Activado**: El sistema de actualizaciones ahora es más robusto.`,
+                body: `## Novedades en la v0.5.6 — ¡Absolute Automation! 🚀\n\n- **Actualización 100% Automática**: Ahora el launcher descarga, extrae y se reinicia solo. ¡Olvídate de descargas manuales!\n- **Barra de Progreso Real**: Visualiza el estado de la descarga del parche directamente en el launcher.\n- **UI Buttons Fix**: Consolidación definitiva de la reparación de los botones de JARVIS y Notificaciones.`,
                 draft: false,
                 prerelease: false
             },
