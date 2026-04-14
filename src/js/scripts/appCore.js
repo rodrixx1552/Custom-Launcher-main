@@ -1316,6 +1316,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mainArea) {
             mainArea.prepend(banner);
         }
+
+        // [NEW] Activate red dot on notification bell
+        const dot = document.getElementById('notif-dot');
+        if (dot) dot.style.display = 'block';
     });
 
     window.startRealTimeStatus();
