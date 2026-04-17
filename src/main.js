@@ -6,6 +6,7 @@ const ejse = require('ejs-electron');
 const path = require("path");
 const fs = require("fs");
 const url = require("url");
+const os = require("os");
 const settings = require("./js/json/settings.json");
 const ui = settings.launcher.ui;
 const lang = require(`./assets/lang/${settings.launcher.ui.default_lang}.json`);
@@ -101,6 +102,10 @@ windowManager.init(ipcMain);
 const authContext = authManager.init(ipcMain, app);
 serverServices.init(ipcMain);
 ttsManager.init();
+
+ipcMain.handle('get-total-ram', async () => {
+    return Math.floor(os.totalmem() / (1024 * 1024 * 1024));
+});
 
 
 // Provide cross-module dependencies

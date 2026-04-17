@@ -939,3 +939,76 @@ input:checked + .neon-slider:before { background-color: var(--accent); box-shado
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 10px var(--accent);
 }
+
+/* --- DIAGNOSTIC CONSOLE MODAL --- */
+.console-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    padding: 40px;
+    animation: fadeIn 0.3s ease;
+}
+
+.console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.console-title {
+    font-size: 18px;
+    font-weight: 950;
+    letter-spacing: 2px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.console-body {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    color: #e2e8f0;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.console-line.debug { color: #94a3b8; }
+.console-line.data { color: #f8fafc; }
+.console-line.error { color: #ef4444; font-weight: bold; }
+
+.console-body::-webkit-scrollbar { width: 6px; }
+.console-body::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+/* --- RAM SMART SLIDER --- */
+.ram-warning-text {
+    font-size: 10px;
+    font-weight: 800;
+    margin-top: 8px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.3s ease;
+}
+
+.ram-warning-text.safe { color: var(--accent); }
+.ram-warning-text.caution { color: #fbbf24; }
+.ram-warning-text.danger { color: #ef4444; }
+
+.modern-slider.caution { accent-color: #fbbf24; }
+.modern-slider.danger { accent-color: #ef4444; }

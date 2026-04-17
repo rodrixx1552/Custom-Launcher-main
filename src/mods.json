@@ -68,10 +68,6 @@
         "size": "2 MB"
     },
     {
-        "name": "CustomPlayerModels-1.20-0.6.25a.jar",
-        "size": "2.66 MB"
-    },
-    {
         "name": "CustomSkinLoader_ForgeV2-14.27.jar",
         "size": "151.85 KB"
     },
@@ -130,6 +126,10 @@
     {
         "name": "FazRoleplayClothes-1.20.1-2.4.jar",
         "size": "683.63 KB"
+    },
+    {
+        "name": "Female-Gender-Mod-forge-1.20.1-3.1.jar",
+        "size": "249.45 KB"
     },
     {
         "name": "ferritecore-6.0.1-forge.jar",

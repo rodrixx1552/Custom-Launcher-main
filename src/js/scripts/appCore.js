@@ -114,6 +114,78 @@ window.renderTab = (tabName) => {
     updateMarketHeader();
 };
 
+// =====================================================================
+// SISTEMA DE DIAGNÓSTICO Y CONSOLA (Pro Layer)
+// =====================================================================
+window.gameLogs = [];
+const MAX_LOG_LINES = 500;
+
+window.addLogToConsole = (text) => {
+    window.gameLogs.push(text);
+    if (window.gameLogs.length > MAX_LOG_LINES) window.gameLogs.shift();
+    
+    const body = document.getElementById('console-body-content');
+    if (body) {
+        const line = document.createElement('div');
+        line.className = 'console-line';
+        if (text.includes('[DEBUG]')) line.classList.add('debug');
+        if (text.includes('[DATA]')) line.classList.add('data');
+        if (text.includes('[ERROR]') || text.toLowerCase().includes('failed') || text.toLowerCase().includes('error')) line.classList.add('error');
+        line.innerText = text;
+        body.appendChild(line);
+        body.scrollTop = body.scrollHeight;
+    }
+};
+
+window.toggleConsole = (show = true) => {
+    const overlay = document.getElementById('console-overlay-ui');
+    if (!overlay) return;
+    overlay.style.display = show ? 'flex' : 'none';
+    if (show) {
+        // Refrescar contenido actual si se abre tarde
+        const body = document.getElementById('console-body-content');
+        if (body) {
+            body.innerHTML = window.gameLogs.map(l => `<div class="console-line">${l}</div>`).join('');
+            body.scrollTop = body.scrollHeight;
+        }
+    }
+};
+
+// Initialize Console HTML
+document.addEventListener('DOMContentLoaded', () => {
+    const consoleDiv = document.createElement('div');
+    consoleDiv.id = 'console-overlay-ui';
+    consoleDiv.className = 'console-overlay';
+    consoleDiv.innerHTML = `
+        <div class="console-header">
+            <div class="console-title">
+                <i class="fas fa-terminal"></i> CONSOLA DE DIAGNÓSTICO LOSPAPUS
+            </div>
+            <button class="update-btn-close" onclick="window.toggleConsole(false)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="console-body-content" class="console-body"></div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button class="user-btn primary" onclick="window.copyLogs()">COPIAR LOGS</button>
+            <button class="user-btn" onclick="document.getElementById('console-body-content').innerHTML = ''; window.gameLogs = [];">LIMPIAR</button>
+        </div>
+    `;
+    document.body.appendChild(consoleDiv);
+
+    if (window.electronAPI && window.electronAPI.onLaunchLog) {
+        window.electronAPI.onLaunchLog((data) => {
+            window.addLogToConsole(data);
+        });
+    }
+});
+
+window.copyLogs = () => {
+    const text = window.gameLogs.join('\n');
+    navigator.clipboard.writeText(text);
+    window.showToast('Logs copiados al portapapeles', 'success');
+};
+
 
 function updateUserHeader() {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
