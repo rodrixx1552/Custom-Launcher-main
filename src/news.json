@@ -27,19 +27,19 @@
   ],
   "news": [
     {
-      "title": "¡Bienvenidos a HolyHosting!",
-      "tag": "SERVIDOR",
-      "description": "Hemos migrado oficialmente a un servidor de alta performance. ¡Disfruten de cero lag y máxima estabilidad!",
+      "title": "Actualización Dawnera",
+      "tag": "MODS",
+      "description": "Se han añadido 4 nuevos mods, incluyendo el esperado pack de 'The Dawnera'. ¡Prepárate para el reto!",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_1.png"
     },
     {
-      "title": "Launcher v0.5.4 Estable",
+      "title": "Launcher v0.5.6 Estable",
       "tag": "LAUNCHER",
-      "description": "Nueva interfaz con sistema OTA, auto-conexión al servidor y actualizaciones automáticas de mods.",
+      "description": "Nueva interfaz mejorada con sistema de sincronización rápida y optimización de memoria.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_2.png"
     },
     {
-      "title": "Pack de 97 Mods Activos",
+      "title": "Pack de 101 Mods Activos",
       "tag": "MODS",
       "description": "Sincroniza tus mods con el botón circular antes de entrar. Incluye vehículos, decoración, biomas y mucho más.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_3.png"
