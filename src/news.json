@@ -27,9 +27,9 @@
   ],
   "news": [
     {
-      "title": "Actualización Dawnera",
+      "title": "Actualización Festiva",
       "tag": "MODS",
-      "description": "Se han añadido 4 nuevos mods, incluyendo el esperado pack de 'The Dawnera'. ¡Prepárate para el reto!",
+      "description": "Se han añadido 8 nuevos mods, incluyendo el pack 'The Dawnera' y nuevos addons de 'Farmer's Delight' (Argentina, México, Perú y Croptopia).",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_1.png"
     },
     {
@@ -39,9 +39,9 @@
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_2.png"
     },
     {
-      "title": "Pack de 101 Mods Activos",
+      "title": "Pack de 105 Mods Activos",
       "tag": "MODS",
-      "description": "Sincroniza tus mods con el botón circular antes de entrar. Incluye vehículos, decoración, biomas y mucho más.",
+      "description": "Sincroniza tus mods con el botón circular antes de entrar. Ahora con más variedad de comida, vehículos y decoración.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_3.png"
     }
   ]
