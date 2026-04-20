@@ -27,9 +27,9 @@
   ],
   "news": [
     {
-      "title": "Actualización Técnica y Gastronómica",
+      "title": "¡Pura Fachada y Accesorios!",
       "tag": "MODS",
-      "description": "¡Ya tenemos Moonlight Lib y Supplementaries! Además, se añade Pizza Delight para que disfrutes de las mejores pizzas en el juego.",
+      "description": "Se han añadido SimpleHats y Accessories para que personalices tu personaje al máximo. ¡Busca los nuevos gorros!",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_1.png"
     },
     {
@@ -39,9 +39,9 @@
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_2.png"
     },
     {
-      "title": "Pack de 108 Mods Activos",
+      "title": "Pack de 110 Mods Activos",
       "tag": "MODS",
-      "description": "Sincroniza tus mods con el botón circular antes de entrar. Ahora con más variedad técnica y gastronómica.",
+      "description": "Sincroniza tus mods con el botón circular antes de entrar. Ahora con más personalización y estética.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_3.png"
     }
   ]

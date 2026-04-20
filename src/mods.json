@@ -1,5 +1,9 @@
 [
     {
+        "name": "accessories-neoforge-1.0.0-beta.48+1.20.1.jar",
+        "size": "1.03 MB"
+    },
+    {
         "name": "AI-Improvements-1.20-0.5.2.jar",
         "size": "28.86 KB"
     },
@@ -334,6 +338,10 @@
     {
         "name": "SereneSeasons-forge-1.20.1-9.1.0.2.jar",
         "size": "157.12 KB"
+    },
+    {
+        "name": "simplehats-forge-1.20.1-0.4.0a.jar",
+        "size": "1.34 MB"
     },
     {
         "name": "simpleradio-forge-1.20.1-3.4.6.jar",
