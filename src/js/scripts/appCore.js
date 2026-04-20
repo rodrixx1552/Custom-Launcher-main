@@ -484,7 +484,7 @@ function renderPlaceholderTab(container, name) {
 
 // --- SETTINGS TAB ---
 function renderSettingsTab(container) {
-    const ram = localStorage.getItem('maxRam') || '4';
+    const ram = localStorage.getItem('maxRam') || '6';
     const width = localStorage.getItem('windowWidth') || '1280';
     const height = localStorage.getItem('windowHeight') || '720';
     const version = localStorage.getItem('selectedVersion') || '1.20.1';

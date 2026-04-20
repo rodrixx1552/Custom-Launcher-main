@@ -6,20 +6,33 @@ require('dotenv').config();
 
 const TOKEN = process.env.GITHUB_TOKEN;
 const [OWNER, REPO] = process.env.GITHUB_REPO.split('/');
-const TAG = 'v0.5.6';
+const TAG = 'v0.5.7';
 
 const FILES = [
-    { name: 'LosPapus-v0.5.6.zip', path: path.join(__dirname, 'dist', 'LosPapus-v0.5.6.zip') },
-    { name: 'LosPapus-Launcher-Setup-v0.5.6.exe', path: path.join(__dirname, 'dist', 'LosPapus Launcher Setup 0.5.6.exe') }
+    { name: 'LosPapus-v0.5.7.zip', path: path.join(__dirname, 'dist', 'LosPapus-v0.5.7.zip') },
+    { name: 'LosPapus-Launcher-Setup-v0.5.7.exe', path: path.join(__dirname, 'dist', 'LosPapus Launcher Setup 0.5.7.exe') }
 ];
 
 async function upload() {
     try {
         console.log(`📡 Buscando release ${TAG}...`);
-        const { data: release } = await axios.get(
-            `https://api.github.com/repos/${OWNER}/${REPO}/releases/tags/${TAG}`,
-            { headers: { Authorization: `token ${TOKEN}` } }
-        );
+        let release;
+        try {
+            const res = await axios.get(
+                `https://api.github.com/repos/${OWNER}/${REPO}/releases/tags/${TAG}`,
+                { headers: { Authorization: `token ${TOKEN}` } }
+            );
+            release = res.data;
+        } catch (e) {
+            console.log(`⚠️ Release ${TAG} no existe. Creando...`);
+            const res = await axios.post(
+                `https://api.github.com/repos/${OWNER}/${REPO}/releases`,
+                { tag_name: TAG, name: `Release ${TAG}`, body: "Actualización automática." },
+                { headers: { Authorization: `token ${TOKEN}` } }
+            );
+            release = res.data;
+            console.log(`✅ Release creada con ID ${release.id}`);
+        }
 
         for (const file of FILES) {
             console.log(`📤 Subiendo ${file.name}...`);
