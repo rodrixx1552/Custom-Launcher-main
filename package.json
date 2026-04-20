@@ -1,13 +1,13 @@
 {
   "name": "custom-launcher",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "Launcher de Minecraft personalizable basado en ElectronJS",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "dev:start": "npx sass src/scss/main.scss src/css/main.css && electron .",
     "build": "npx sass src/scss/main.scss src/css/main.css && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
-    "package": "electron-packager . LosPapus-Launcher --platform=win32 --arch=x64 --out=dist --icon=src/assets/lpv_main.png --overwrite --asar"
+    "package": "electron-packager . \"LosPapus Launcher\" --platform=win32 --arch=x64 --out=dist --icon=src/assets/lpv_main.png --overwrite --asar"
   },
   "repository": {
     "type": "git",
@@ -21,8 +21,8 @@
     "custom-launcher"
   ],
   "author": "LosPapus Lover Team",
-  "launcher_version": "0.5.7",
-  "latest_launcher_version": "0.5.7",
+  "launcher_version": "0.5.8",
+  "latest_launcher_version": "0.5.8",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/rodrixx1552/Custom-Launcher-main/issues"
