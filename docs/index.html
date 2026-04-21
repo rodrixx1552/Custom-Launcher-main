@@ -367,13 +367,13 @@
     <main>
         <!-- Hero Section -->
         <section class="hero">
-            <div class="stable-badge">v0.5.6 Estable - ¡Absolute Automation!</div>
+            <div class="stable-badge">v0.5.9 Estable - ¡Rendimiento Extremo + Consola ID!</div>
             <h1>El Client Definitivo para <span>Los Papus</span></h1>
-            <p class="subtitle">La experiencia de Minecraft más optimizada con sistema OTA 100% Automático, Voces AI de TikTok (JARVIS) y Reproductor de Música integrado.</p>
+            <p class="subtitle">La experiencia de Minecraft más optimizada. Adiós a los crasheos de RAM, con sistema OTA 100% Automático y Asistente JARVIS integrado.</p>
             
             <div class="cta-group">
                 <a href="javascript:void(0)" onclick="downloadStableEXE()" class="btn-primary" id="hero-dl-btn">
-                    <i class="fab fa-windows"></i> Descargar v0.5.6 (EXE)
+                    <i class="fab fa-windows"></i> Descargar v0.5.9 (EXE)
                 </a>
                 <a href="https://discord.gg/gQVw7b5Kuh" target="_blank" class="btn-secondary">
                     <i class="fab fa-discord"></i> Unirse al Discord
@@ -422,9 +422,9 @@
                     <p>Autenticación oficial de Microsoft Azure. Tus datos están protegidos por el sistema nativo de Xbox.</p>
                 </div>
                 <div class="feature-card">
-                    <i class="fas fa-palette"></i>
-                    <h4>Personalización</h4>
-                    <p>Cambia temas, skins y visualiza tu personaje en 3D directamente desde la interfaz del cliente.</p>
+                    <i class="fas fa-terminal"></i>
+                    <h4>Diagnóstico IA</h4>
+                    <p>Consola local en tiempo real para visualizar errores, mods dañados o cuellos de botella del procesador al instante.</p>
                 </div>
             </div>
         </section>
@@ -512,7 +512,7 @@
         }
         loadMods();
 
-        // --- Direct EXE Download (v0.5.6) ---
+        // --- Direct EXE Download (v0.5.9) ---
         async function downloadStableEXE() {
             const btns = [document.getElementById('hero-dl-btn'), document.getElementById('nav-dl-btn')];
             btns.forEach(b => { 
@@ -521,7 +521,7 @@
             });
 
             try {
-                const res = await fetch('https://api.github.com/repos/rodrixx1552/Custom-Launcher-main/releases/tags/v0.5.6');
+                const res = await fetch('https://api.github.com/repos/rodrixx1552/Custom-Launcher-main/releases/tags/v0.5.9');
                 const data = await res.json();
                 
                 const asset = data.assets.find(a => a.name.toLowerCase().endsWith('.exe'));
@@ -534,13 +534,13 @@
                 }
             } catch (e) {
                 // Fallback to releases page
-                window.location.href = 'https://github.com/rodrixx1552/Custom-Launcher-main/releases/tag/v0.5.6';
+                window.location.href = 'https://github.com/rodrixx1552/Custom-Launcher-main/releases/tag/v0.5.9';
                 resetBtns(btns);
             }
         }
 
         function resetBtns(btns) {
-            btns[0].innerHTML = '<i class="fab fa-windows"></i> Descargar v0.5.6 (EXE)';
+            btns[0].innerHTML = '<i class="fab fa-windows"></i> Descargar v0.5.9 (EXE)';
             btns[1].innerHTML = 'Descargar';
             btns.forEach(b => b.style.pointerEvents = 'auto');
         }
