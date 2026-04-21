@@ -367,13 +367,13 @@
     <main>
         <!-- Hero Section -->
         <section class="hero">
-            <div class="stable-badge">v0.5.9 Estable - ¡Rendimiento Extremo + Consola ID!</div>
+            <div class="stable-badge">v0.5.10 Estable - ¡Rendimiento Extremo + Consola ID!</div>
             <h1>El Client Definitivo para <span>Los Papus</span></h1>
             <p class="subtitle">La experiencia de Minecraft más optimizada. Adiós a los crasheos de RAM, con sistema OTA 100% Automático y Asistente JARVIS integrado.</p>
             
             <div class="cta-group">
                 <a href="javascript:void(0)" onclick="downloadStableEXE()" class="btn-primary" id="hero-dl-btn">
-                    <i class="fab fa-windows"></i> Descargar v0.5.9 (EXE)
+                    <i class="fab fa-windows"></i> Descargar v0.5.10 (EXE)
                 </a>
                 <a href="https://discord.gg/gQVw7b5Kuh" target="_blank" class="btn-secondary">
                     <i class="fab fa-discord"></i> Unirse al Discord
@@ -512,7 +512,7 @@
         }
         loadMods();
 
-        // --- Direct EXE Download (v0.5.9) ---
+        // --- Direct EXE Download (v0.5.10) ---
         async function downloadStableEXE() {
             const btns = [document.getElementById('hero-dl-btn'), document.getElementById('nav-dl-btn')];
             btns.forEach(b => { 
@@ -521,7 +521,7 @@
             });
 
             try {
-                const res = await fetch('https://api.github.com/repos/rodrixx1552/Custom-Launcher-main/releases/tags/v0.5.9');
+                const res = await fetch('https://api.github.com/repos/rodrixx1552/Custom-Launcher-main/releases/tags/v0.5.10');
                 const data = await res.json();
                 
                 const asset = data.assets.find(a => a.name.toLowerCase().endsWith('.exe'));
@@ -534,13 +534,13 @@
                 }
             } catch (e) {
                 // Fallback to releases page
-                window.location.href = 'https://github.com/rodrixx1552/Custom-Launcher-main/releases/tag/v0.5.9';
+                window.location.href = 'https://github.com/rodrixx1552/Custom-Launcher-main/releases/tag/v0.5.10';
                 resetBtns(btns);
             }
         }
 
         function resetBtns(btns) {
-            btns[0].innerHTML = '<i class="fab fa-windows"></i> Descargar v0.5.9 (EXE)';
+            btns[0].innerHTML = '<i class="fab fa-windows"></i> Descargar v0.5.10 (EXE)';
             btns[1].innerHTML = 'Descargar';
             btns.forEach(b => b.style.pointerEvents = 'auto');
         }
