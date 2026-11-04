@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const crypto = require('crypto');
+const AdmZip = require('adm-zip');
 
 const CURRENT_VERSION = require('../../package.json').version;
 const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/launcher-config.json';
@@ -69,9 +71,9 @@ async function getRemoteConfig() {
     try {
         console.log('OTA: Fetching remote config from:', REMOTE_CONFIG_URL);
         const res = await axios.get(`${REMOTE_CONFIG_URL}?t=${Date.now()}`, { timeout: 8000 });
-        if (res.data) {
-            fs.writeFileSync(CONFIG_PATH, JSON.stringify(res.data, null, 2), 'utf8');
-            return res.data;
+        if (res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
+            const config = { ...res.data, minecraft_version: '1.21.1', modloader: 'neoforge', neoforge_version: '21.1.265' };
+            return config;
         }
     } catch (e) {
         console.warn('OTA config fetch error:', e.message);
@@ -81,43 +83,42 @@ async function getRemoteConfig() {
 
 function init(ipcMain, app, __rootDir) {
     CONFIG_PATH = path.join(__rootDir, 'launcher-config.json');
-    const UPDATER_SOURCE = path.join(__rootDir, 'js', 'scripts', 'LosPapusUpdater.cs');
-    const UPDATER_EXE = path.join(app.getPath('userData'), 'LosPapus-Updater.exe');
+    const UPDATER_SCRIPT = path.join(app.getPath('userData'), 'LosPapus-Updater.ps1');
+    let updateInProgress = false;
 
     async function ensureUpdaterExists() {
-        if (fs.existsSync(UPDATER_EXE)) return;
-
-        console.log('UPDATER: Compiling Visual Updater...');
-        const cscPath = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe';
-        
-        if (!fs.existsSync(cscPath)) {
-            console.error('UPDATER: C# Compiler not found. Fallback to basic mode.');
-            return;
-        }
-
-        try {
-            const { execSync } = require('child_process');
-            const tempSourcePath = path.join(app.getPath('temp'), 'LosPapusUpdater.cs');
-            const sourceCode = fs.readFileSync(UPDATER_SOURCE, 'utf8');
-            fs.writeFileSync(tempSourcePath, sourceCode, 'utf8');
-            
-            execSync(`"${cscPath}" /out:"${UPDATER_EXE}" /target:winexe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "${tempSourcePath}"`, { windowsHide: true });
-            console.log('UPDATER: Visual Updater compiled successfully at:', UPDATER_EXE);
-            if (fs.existsSync(tempSourcePath)) fs.unlinkSync(tempSourcePath);
-        } catch (e) {
-            console.error('UPDATER: Failed to compile visual updater:', e);
-        }
+        if (process.platform !== 'win32') return;
+        const script = `param([int]$LauncherPid,[string]$Source,[string]$Destination,[string]$Executable)
+$ErrorActionPreference = 'Stop'
+try {
+  for ($i = 0; $i -lt 60 -and (Get-Process -Id $LauncherPid -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Seconds 1 }
+  $process = Get-Process -Id $LauncherPid -ErrorAction SilentlyContinue
+  if ($process) { Stop-Process -Id $LauncherPid -Force }
+  $copied = $false
+  for ($attempt = 0; $attempt -lt 6 -and -not $copied; $attempt++) {
+    try {
+      Get-ChildItem -LiteralPath $Source -Force | Copy-Item -Destination $Destination -Recurse -Force
+      $copied = $true
+    } catch { Start-Sleep -Seconds 2 }
+  }
+  if (-not $copied) { throw 'No se pudieron reemplazar los archivos del launcher.' }
+  Start-Process -FilePath (Join-Path $Destination $Executable)
+} catch {
+  Add-Type -AssemblyName System.Windows.Forms
+  [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Error al actualizar LosPapus') | Out-Null
+}`;
+        fs.writeFileSync(UPDATER_SCRIPT, script, 'utf8');
     }
 
     async function checkForUpdates(win) {
         try {
             const config = await getRemoteConfig();
-            const latestVersion = config.latest_launcher_version || CURRENT_VERSION;
-            const downloadUrl = config.launcher_download_url || '';
+            const latestVersion = config?.latest_launcher_version || CURRENT_VERSION;
+            const downloadUrl = config?.launcher_download_url || '';
             
             console.log(`[OTA Checker] Local: ${CURRENT_VERSION} | Remote: ${latestVersion}`);
             
-            if (isNewerVersion(latestVersion, CURRENT_VERSION)) {
+            if (/^\d+\.\d+\.\d+$/.test(latestVersion) && isNewerVersion(latestVersion, CURRENT_VERSION) && isTrustedReleaseUrl(downloadUrl) && /^[a-f0-9]{64}$/i.test(config.launcher_sha256 || '')) {
                 console.log(`OTA: UPDATE AVAILABLE -> ${latestVersion}`);
                 setTimeout(() => {
                     if (win && !win.isDestroyed()) {
@@ -160,48 +161,49 @@ function init(ipcMain, app, __rootDir) {
             if (remoteConfig && Object.keys(remoteConfig).length > 0) return remoteConfig;
         } catch (e) {}
 
-        return { forge_version: '47.4.17', launcher_version: '0.5.4', server: { ip: 'na34.holy.gg', port: 26068 } };
+        return { modloader: 'neoforge', neoforge_version: '21.1.265', minecraft_version: '1.21.1', launcher_version: CURRENT_VERSION, server: { ip: 'na34.holy.gg', port: 26068 } };
     });
 
-    ipcMain.on('start-auto-update', async (event, { url }) => {
-        console.log('AUTO-UPDATE: Initialization started for:', url);
+    ipcMain.on('start-auto-update', async (event) => {
+        if (updateInProgress) return event.sender.send('auto-update-error', 'Ya hay una actualización en curso.');
+        updateInProgress = true;
         const tempZip = path.join(app.getPath('temp'), 'launcher-update.zip');
         const extractPath = path.join(app.getPath('temp'), 'launcher-update-files');
 
         try {
-            event.sender.send('auto-update-progress', { step: 'Resolviendo servidor...', progress: 10 });
-            let downloadUrl = url;
-            if (url.includes('mediafire.com')) downloadUrl = await getMediafireDirectLink(url);
-
+            const config = await getRemoteConfig();
+            const downloadUrl = config?.launcher_download_url;
+            const expectedHash = config?.launcher_sha256;
+            if (!isTrustedReleaseUrl(downloadUrl) || !/^[a-f0-9]{64}$/i.test(expectedHash || '')) throw new Error('Actualización sin URL de GitHub o hash SHA-256 válido.');
             event.sender.send('auto-update-progress', { step: 'Descargando paquete...', progress: 20 });
-            const response = await axios({ url: downloadUrl, method: 'GET', responseType: 'stream' });
+            const response = await axios({ url: downloadUrl, method: 'GET', responseType: 'stream', timeout: 120000, maxRedirects: 5 });
+            const totalLength = Number(response.headers['content-length'] || 0);
+            if (totalLength > 500 * 1024 * 1024) throw new Error('El paquete de actualización supera el límite de 500 MB.');
             const writer = fs.createWriteStream(tempZip);
-            const totalLength = response.headers['content-length'];
             let downloadedLength = 0;
 
             response.data.on('data', (chunk) => {
                 downloadedLength += chunk.length;
-                const progress = 20 + Math.floor((downloadedLength / totalLength) * 50);
+                const progress = totalLength ? 20 + Math.floor((downloadedLength / totalLength) * 50) : 20;
+                if (downloadedLength > 500 * 1024 * 1024) response.data.destroy(new Error('El paquete supera el límite de 500 MB.'));
                 event.sender.send('auto-update-progress', { step: 'Descargando...', progress });
             });
 
+            const hash = crypto.createHash('sha256');
+            response.data.on('data', chunk => hash.update(chunk));
             response.data.pipe(writer);
             await new Promise((resolve, reject) => {
-                writer.on('finish', () => setTimeout(resolve, 2500));
+                writer.on('finish', resolve);
                 writer.on('error', reject);
+                response.data.on('error', reject);
             });
+            if (hash.digest('hex').toLowerCase() !== expectedHash.toLowerCase()) throw new Error('El hash del paquete no coincide; se canceló la actualización.');
 
             event.sender.send('auto-update-progress', { step: 'Descomprimiendo parche...', progress: 80 });
             if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true, force: true });
             fs.mkdirSync(extractPath, { recursive: true });
             
-            try {
-                const { execSync } = require('child_process');
-                execSync(`tar -xf "${tempZip}" -C "${extractPath}"`, { windowsHide: true, stdio: 'ignore' });
-            } catch (e) {
-                event.sender.send('auto-update-error', 'Falló la descompresión nativa del parche OTA.');
-                return;
-            }
+            extractZipSafely(tempZip, extractPath);
 
             const appPath = path.dirname(process.execPath);
             let sourcePath = extractPath;
@@ -212,29 +214,55 @@ function init(ipcMain, app, __rootDir) {
 
             const exeName = path.basename(process.execPath);
             if (!fs.existsSync(path.join(sourcePath, 'resources', 'app.asar')) || !fs.existsSync(path.join(sourcePath, exeName))) {
-                event.sender.send('auto-update-error', `El servidor envió un parche incompleto o corrupto.`);
-                return;
+                throw new Error('El paquete descargado está incompleto o corrupto.');
             }
 
             event.sender.send('auto-update-progress', { step: 'Lanzando actualizador visual...', progress: 95 });
-            const tempLogo = path.join(app.getPath('temp'), 'update-logo.png');
-            try { fs.copyFileSync(path.join(__rootDir, 'assets', 'los_papus', 'logo.png'), tempLogo); } catch(e) {}
-
-            if (fs.existsSync(UPDATER_EXE)) {
+            if (process.platform === 'win32' && fs.existsSync(UPDATER_SCRIPT)) {
                 const { spawn } = require('child_process');
-                const child = spawn(UPDATER_EXE, [ process.pid.toString(), sourcePath, appPath, exeName, tempLogo ], { detached: true, stdio: 'ignore', windowsHide: false });
+                const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', UPDATER_SCRIPT, process.pid.toString(), sourcePath, appPath, exeName], { detached: true, stdio: 'ignore', windowsHide: true });
                 child.unref();
-                setTimeout(() => { app.quit(); }, 500);
+                const quitTimer = setTimeout(() => { app.quit(); }, 500);
+                child.once('error', error => {
+                    clearTimeout(quitTimer);
+                    event.sender.send('auto-update-error', `No se pudo iniciar el actualizador: ${error.message}`);
+                });
             } else {
                 event.sender.send('auto-update-error', 'No se pudo iniciar el actualizador visual.');
             }
 
         } catch (err) {
+            try { if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip); } catch (_) {}
+            try { if (fs.existsSync(extractPath)) fs.rmSync(extractPath, { recursive: true, force: true }); } catch (_) {}
             event.sender.send('auto-update-error', err.message);
+        } finally {
+            updateInProgress = false;
         }
     });
 
     return { ensureUpdaterExists, getRemoteConfig, getMediafireDirectLink, checkForUpdates };
+}
+
+function isTrustedReleaseUrl(value) {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'https:' && url.hostname === 'github.com' && /^\/rodrixx1552\/Custom-Launcher-main\/releases\/download\/v\d+\.\d+\.\d+\//.test(url.pathname);
+    } catch (_) { return false; }
+}
+
+function extractZipSafely(zipPath, destination) {
+    const zip = new AdmZip(zipPath);
+    const entries = zip.getEntries();
+    if (entries.length > 10000 || entries.reduce((total, entry) => total + Number(entry.header.size || 0), 0) > 1024 * 1024 * 1024) throw new Error('El paquete de actualización excede los límites de extracción.');
+    for (const entry of entries) {
+        const name = entry.entryName.replace(/\\/g, '/');
+        if (name.startsWith('/') || /^[a-z]:/i.test(name) || name.split('/').includes('..')) throw new Error('El archivo de actualización contiene una ruta no permitida.');
+        const target = path.resolve(destination, name);
+        if (!target.startsWith(path.resolve(destination) + path.sep) && target !== path.resolve(destination)) throw new Error('Ruta insegura en el paquete de actualización.');
+        if (entry.isDirectory) { fs.mkdirSync(target, { recursive: true }); continue; }
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, entry.getData());
+    }
 }
 
 module.exports = { init };

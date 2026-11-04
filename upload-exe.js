@@ -1,66 +1,45 @@
-
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const axios = require('axios');
-require('dotenv').config();
 
-const TOKEN = process.env.GITHUB_TOKEN;
-const [OWNER, REPO] = process.env.GITHUB_REPO.split('/');
-const TAG = 'v0.5.10';
-
-const FILES = [
-    { name: 'LosPapus-v0.5.10.zip', path: path.join(__dirname, 'dist', 'LosPapus-v0.5.10.zip') },
-    { name: 'LosPapus-Launcher-Setup-v0.5.10.exe', path: path.join(__dirname, 'dist', 'LosPapus Launcher Setup 0.5.10.exe') }
+const { version } = require('./package.json');
+const token = process.env.GITHUB_TOKEN;
+const [owner, repo, ...extra] = (process.env.GITHUB_REPO || '').split('/');
+const tag = `v${version}`;
+const dist = path.join(__dirname, 'dist');
+const files = [
+    { name: `LosPapus-v${version}.zip`, path: path.join(dist, `LosPapus-v${version}.zip`) },
+    { name: `LosPapus-Launcher-Setup-v${version}.exe`, path: path.join(dist, `LosPapus Launcher Setup ${version}.exe`) }
 ];
 
-async function upload() {
-    try {
-        console.log(`📡 Buscando release ${TAG}...`);
-        let release;
-        try {
-            const res = await axios.get(
-                `https://api.github.com/repos/${OWNER}/${REPO}/releases/tags/${TAG}`,
-                { headers: { Authorization: `token ${TOKEN}` } }
-            );
-            release = res.data;
-        } catch (e) {
-            console.log(`⚠️ Release ${TAG} no existe. Creando...`);
-            const res = await axios.post(
-                `https://api.github.com/repos/${OWNER}/${REPO}/releases`,
-                { tag_name: TAG, name: `Release ${TAG}`, body: "Actualización automática." },
-                { headers: { Authorization: `token ${TOKEN}` } }
-            );
-            release = res.data;
-            console.log(`✅ Release creada con ID ${release.id}`);
-        }
+async function uploadReleaseAssets() {
+    if (!token || !owner || !repo || extra.length || !/^[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(repo)) {
+        throw new Error('Define GITHUB_TOKEN y GITHUB_REPO (owner/repo) en el entorno.');
+    }
+    for (const file of files) {
+        if (!fs.existsSync(file.path)) throw new Error(`No se encuentra el artefacto: ${file.path}. Ejecuta npm run build.`);
+    }
 
-        for (const file of FILES) {
-            console.log(`📤 Subiendo ${file.name}...`);
-            const fileBuffer = fs.readFileSync(file.path);
-            const uploadUrl = release.upload_url.replace('{?name,label}', `?name=${file.name}`);
-
-            try {
-                await axios.post(uploadUrl, fileBuffer, {
-                    headers: {
-                        Authorization: `token ${TOKEN}`,
-                        'Content-Type': 'application/octet-stream',
-                        'Content-Length': fileBuffer.length
-                    },
-                    maxContentLength: Infinity,
-                    maxBodyLength: Infinity
-                });
-                console.log(`✅ ${file.name} subido con éxito!`);
-            } catch (err) {
-                if (err.response && err.response.data.errors && err.response.data.errors[0].code === 'already_exists') {
-                    console.warn(`ℹ️ ${file.name} ya existe. Saltando...`);
-                } else {
-                    console.error(`❌ Error subiendo ${file.name}:`, err.response ? err.response.data : err.message);
-                }
-            }
-        }
-    } catch (err) {
-        console.error('❌ Error general:', err.response ? err.response.data : err.message);
+    const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+    const api = `https://api.github.com/repos/${owner}/${repo}`;
+    const { data: release } = await axios.get(`${api}/releases/tags/${tag}`, { headers });
+    for (const file of files) {
+        if (release.assets.some(asset => asset.name === file.name)) throw new Error(`El release ya tiene el asset ${file.name}; no se sobrescribió.`);
+        const contents = fs.readFileSync(file.path);
+        if (file.name.endsWith('.zip')) console.log(`SHA-256 ${file.name}: ${crypto.createHash('sha256').update(contents).digest('hex')}`);
+        const uploadUrl = new URL(release.upload_url.replace('{?name,label}', ''));
+        uploadUrl.searchParams.set('name', file.name);
+        await axios.post(uploadUrl.toString(), contents, {
+            headers: { ...headers, 'Content-Type': 'application/octet-stream', 'Content-Length': contents.length },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity
+        });
+        console.log(`Subido: ${file.name}`);
     }
 }
 
-upload();
+uploadReleaseAssets().catch(error => {
+    console.error('Falló la publicación de assets:', error.response?.data || error.message);
+    process.exitCode = 1;
+});

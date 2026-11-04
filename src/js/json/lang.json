@@ -32,10 +32,10 @@
         "commit_changes": "CONFIRMAR CAMBIOS",
         "active_pilot_texture": "TEXTURA DE PILOTO ACTIVA",
         "access_denied": "ACCESO DENEGADO: No se detecta perfil de piloto. Navega al CENTRO ÉLITE.",
-        "forge_engine": "MOTOR FORGE",
-        "forge_active": "FORJA ACTIVA",
-        "forge_inactive": "FORJA INACTIVA",
-        "forge_required_mods": "Requerido para Sincronizar Mods (1.20.1)"
+        "forge_engine": "MOTOR NEOFORGE",
+        "forge_active": "NEOFORGE ACTIVO",
+        "forge_inactive": "NEOFORGE INACTIVO",
+        "forge_required_mods": "Requerido para Sincronizar Mods (1.21.1)"
     },
     "en": {
         "play": "PLAY",
@@ -70,9 +70,9 @@
         "commit_changes": "COMMIT CORE CHANGES",
         "active_pilot_texture": "ACTIVE PILOT TEXTURE",
         "access_denied": "ACCESS DENIED: No pilot profile detected. Navigate to ELITE HUB.",
-        "forge_engine": "FORGE ENGINE",
-        "forge_active": "FORGE ACTIVE",
-        "forge_inactive": "FORGE INACTIVE",
-        "forge_required_mods": "Required for Mods Sync (1.20.1)"
+        "forge_engine": "NEOFORGE ENGINE",
+        "forge_active": "NEOFORGE ACTIVE",
+        "forge_inactive": "NEOFORGE INACTIVE",
+        "forge_required_mods": "Required for Mods Sync (1.21.1)"
     }
 }

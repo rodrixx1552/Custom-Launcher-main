@@ -1,5 +1,4 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const settings = require('./json/settings.json');
 
 contextBridge.exposeInMainWorld('electronAPI', {
     closeWindow: () => ipcRenderer.send('window-control', 'close'),
@@ -27,8 +26,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onLoginError: (callback) => { ipcRenderer.removeAllListeners('login-error'); ipcRenderer.on('login-error', (event, data) => callback(data)) },
     selectFile: () => ipcRenderer.send('select-file'),
     onFileSelected: (callback) => { ipcRenderer.removeAllListeners('file-selected'); ipcRenderer.on('file-selected', (event, data) => callback(data)) },
-    getSettings: () => settings,
-    getTranslations: () => require('./json/lang.json'),
+    getSettings: () => ipcRenderer.sendSync('sync-get-settings'),
+    getTranslations: () => ipcRenderer.sendSync('sync-get-translations'),
     uploadSkin: (data) => ipcRenderer.send('upload-skin', data),
     onSkinUploadSuccess: (callback) => { ipcRenderer.removeAllListeners('skin-upload-success'); ipcRenderer.on('skin-upload-success', (event) => callback()) },
     onSkinUploadError: (callback) => { ipcRenderer.removeAllListeners('skin-upload-error'); ipcRenderer.on('skin-upload-error', (event, data) => callback(data)) },
@@ -38,7 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onModToggled: (callback) => { ipcRenderer.removeAllListeners('mod-toggled'); ipcRenderer.on('mod-toggled', (event, data) => callback(data)) },
     onUpdateAvailable: (callback) => { ipcRenderer.removeAllListeners('update-available'); ipcRenderer.on('update-available', (event, data) => callback(data)) },
     // OTA Auto-Update
-    startAutoUpdate: (url) => ipcRenderer.send('start-auto-update', { url }),
+    startAutoUpdate: () => ipcRenderer.send('start-auto-update'),
     onAutoUpdateProgress: (callback) => { ipcRenderer.removeAllListeners('auto-update-progress'); ipcRenderer.on('auto-update-progress', (event, data) => callback(data)) },
     onAutoUpdateError: (callback) => { ipcRenderer.removeAllListeners('auto-update-error'); ipcRenderer.on('auto-update-error', (event, error) => callback(error)) },
     checkModsStatus: () => ipcRenderer.invoke('check-mods-status'),

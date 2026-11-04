@@ -4,6 +4,22 @@
  */
 
 console.log('UI: appCore.js initializing Dashboard Design...');
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const safeImageUrl = (value) => {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'https:' && ['raw.githubusercontent.com', 'images.modrinth.com', 'cdn.modrinth.com', 'mc-heads.net', 'img.icons8.com', 'i.ytimg.com'].includes(url.hostname) ? url.href : '';
+    } catch (_) { return ''; }
+};
+// Older builds kept Microsoft bearer tokens in renderer localStorage. Remove them during migration.
+try {
+    const legacyAccount = JSON.parse(localStorage.getItem('activeAccount') || 'null');
+    if (legacyAccount && (legacyAccount.access_token || legacyAccount.meta)) {
+        delete legacyAccount.access_token;
+        delete legacyAccount.meta;
+        localStorage.setItem('activeAccount', JSON.stringify(legacyAccount));
+    }
+} catch (_) { localStorage.removeItem('activeAccount'); }
 
 // =====================================================================
 // SISTEMA DE TOASTS PREMIUM (reemplaza alert() nativo)
@@ -35,7 +51,7 @@ window.showToast = (message, type = 'info', duration = 5000) => {
         <i class="fas ${TOAST_ICONS[type] || TOAST_ICONS.info} toast-icon"></i>
         <div class="toast-body">
             <div class="toast-title">${TOAST_TITLES[type] || type.toUpperCase()}</div>
-            <div class="toast-msg">${message.replace(/\n/g, '<br>')}</div>
+            <div class="toast-msg">${escapeHtml(message).replace(/\n/g, '<br>')}</div>
         </div>
         <button class="toast-close" onclick="window._dismissToast(this.parentElement)">
             <i class="fas fa-times"></i>
@@ -78,6 +94,15 @@ const addSidebarTooltips = () => {
 if (typeof initEngine === 'function') {
     initEngine();
 }
+
+// The launcher supports one fixed game profile.
+(function migrateVersion() {
+    const saved = localStorage.getItem('selectedVersion');
+    if (saved !== '1.21.1') {
+        localStorage.setItem('selectedVersion', '1.21.1');
+        console.log('[Migration] selectedVersion actualizado a 1.21.1 (NeoForge)');
+    }
+})();
 
 // Global UI State
 window.currentTab = 'play';
@@ -145,7 +170,7 @@ window.toggleConsole = (show = true) => {
         // Refrescar contenido actual si se abre tarde
         const body = document.getElementById('console-body-content');
         if (body) {
-            body.innerHTML = window.gameLogs.map(l => `<div class="console-line">${l}</div>`).join('');
+            body.innerHTML = window.gameLogs.map(l => `<div class="console-line">${escapeHtml(l)}</div>`).join('');
             body.scrollTop = body.scrollHeight;
         }
     }
@@ -208,7 +233,7 @@ function updateUserHeader() {
 // --- PLAY TAB (INICIO) ---
 function renderPlayTab(container) {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
-    const version = localStorage.getItem('selectedVersion') || '1.20.1';
+    const version = localStorage.getItem('selectedVersion') || '1.21.1';
     
     container.innerHTML = `
         <!-- HERO SECTION -->
@@ -219,7 +244,7 @@ function renderPlayTab(container) {
             <div class="hero-content">
                 <div style="background: rgba(74, 222, 128, 0.1); color: var(--accent); display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; margin-bottom: 20px; border: 1px solid rgba(74, 222, 128, 0.2);">MODPACK PERSONALIZADO</div>
                 <h1 class="hero-title">Minecraft ${version}</h1>
-                <p class="hero-desc">La actualización Minecraft Trails & Tales, anteriormente conocida como la versión 1.20, fue introducida originalmente durante el Minecraft Live 2022, donde los fans votaron por el nuevo mob y los desarrolladores dieron adelantos de las próximas funciones.</p>
+                <p class="hero-desc">Minecraft ${version} con NeoForge — el sucesor oficial de Forge, con mejor rendimiento y compatibilidad para mods modernos.</p>
                 
                 <div class="launch-btn-group">
                     <button class="launch-btn" id="play-btn" onclick="window.tryLaunch()">
@@ -240,7 +265,7 @@ function renderPlayTab(container) {
                 <!-- Skinview3d Canvas will be here -->
             </div>
             
-            <h2 class="user-name">${acc ? acc.name : 'INVITADO'}</h2>
+            <h2 class="user-name">${acc ? escapeHtml(acc.name) : 'INVITADO'}</h2>
             <div class="user-role">${acc ? acc.type.toUpperCase() + ' PROTOCOLO' : 'PILOTO INVITADO'}</div>
             
             <div class="user-actions">
@@ -282,10 +307,10 @@ async function loadNews() {
         grid.innerHTML = news.map(item => `
 
             <div class="news-card">
-                <div class="news-img" style="background-image: url('${item.image}');"></div>
+                <div class="news-img" style="background-image: url('${escapeHtml(safeImageUrl(item.image))}');"></div>
                 <div class="news-overlay">
-                    <span class="news-tag">${item.tag}</span>
-                    <h3 class="news-title">${item.title}</h3>
+                    <span class="news-tag">${escapeHtml(item.tag)}</span>
+                    <h3 class="news-title">${escapeHtml(item.title)}</h3>
                 </div>
             </div>
         `).join('');
@@ -299,10 +324,10 @@ async function loadNews() {
                 grid.innerHTML = news.map(item => `
 
                     <div class="news-card">
-                        <div class="news-img" style="background-image: url('${item.image}');"></div>
+                        <div class="news-img" style="background-image: url('${escapeHtml(safeImageUrl(item.image))}');"></div>
                         <div class="news-overlay">
-                            <span class="news-tag">${item.tag}</span>
-                            <h3 class="news-title">${item.title}</h3>
+                            <span class="news-tag">${escapeHtml(item.tag)}</span>
+                            <h3 class="news-title">${escapeHtml(item.title)}</h3>
                         </div>
                     </div>
                 `).join('');
@@ -404,7 +429,7 @@ function renderSkinsTab(container) {
             canvas: document.getElementById("skin-vault-canvas"),
             width: 500,
             height: 480,
-            skin: `https://mc-heads.net/skin/${acc.name}`
+            skin: `https://mc-heads.net/skin/${encodeURIComponent(acc.name)}`
         });
 
         viewer.autoRotate = false;
@@ -458,7 +483,7 @@ window.applySkinToMojang = () => {
         window.showToast('Primero carga una skin: busca por nombre o selecciona un archivo .PNG local', 'warning');
         return;
     }
-    if (!acc.access_token) {
+    if (acc.type !== 'microsoft') {
         window.showToast('Token de acceso no encontrado. Vuelve a iniciar sesión con Microsoft.', 'error');
         return;
     }
@@ -470,14 +495,14 @@ window.applySkinToMojang = () => {
     const statusEl = document.getElementById('skin-load-status');
     if (statusEl) { statusEl.innerText = 'Subiendo a Mojang...'; statusEl.style.color = 'var(--text-dim)'; }
 
-    window.electronAPI.uploadSkin({ accessToken: acc.access_token, base64Image: window._currentSkinB64 });
+    window.electronAPI.uploadSkin({ uuid: acc.uuid, base64Image: window._currentSkinB64 });
 };
 
 function renderPlaceholderTab(container, name) {
     container.innerHTML = `
         <div style="grid-column: 1 / span 2; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3;">
             <i class="fas fa-tools" style="font-size: 60px; margin-bottom: 20px;"></i>
-            <h1 style="font-weight: 900; letter-spacing: 5px;">RE-DISEÑO DE ${name.toUpperCase()} EN PROGRESO</h1>
+            <h1 style="font-weight: 900; letter-spacing: 5px;">RE-DISEÑO DE ${escapeHtml(name.toUpperCase())} EN PROGRESO</h1>
         </div>
     `;
 }
@@ -487,7 +512,7 @@ function renderSettingsTab(container) {
     const ram = localStorage.getItem('maxRam') || '6';
     const width = localStorage.getItem('windowWidth') || '1280';
     const height = localStorage.getItem('windowHeight') || '720';
-    const version = localStorage.getItem('selectedVersion') || '1.20.1';
+    const version = localStorage.getItem('selectedVersion') || '1.21.1';
     const sfxVol = parseFloat(localStorage.getItem('sfxVolume') ?? '0.5');
     const musicVol = parseFloat(localStorage.getItem('musicVolume') ?? '0.3');
     const jarvisVoice = localStorage.getItem('jarvisVoice') || 'female';
@@ -552,11 +577,7 @@ function renderSettingsTab(container) {
                             <span class="settings-subtitle">Cambia la versión base de Minecraft. Requiere reinicio.</span>
                         </div>
                         <select class="res-field" style="width: 150px; text-align: left;" onchange="window.updateSetting('selectedVersion', this.value)">
-                            <option value="1.20.1" ${version === '1.20.1' ? 'selected' : ''}>1.20.1 (Latest)</option>
-                            <option value="1.19.4" ${version === '1.19.4' ? 'selected' : ''}>1.19.4</option>
-                            <option value="1.18.2" ${version === '1.18.2' ? 'selected' : ''}>1.18.2</option>
-                            <option value="1.16.5" ${version === '1.16.5' ? 'selected' : ''}>1.16.5</option>
-                            <option value="1.12.2" ${version === '1.12.2' ? 'selected' : ''}>1.12.2</option>
+                            <option value="1.21.1" ${version === '1.21.1' ? 'selected' : ''}>1.21.1 + NeoForge (Latest)</option>
                         </select>
                     </div>
                 </div>
@@ -723,20 +744,9 @@ window.tryLaunch = async () => {
         btn.style.filter = "grayscale(0.5) contrast(0.8)";
     }
 
-    const version = localStorage.getItem('selectedVersion') || '1.20.1';
-
-    // Obtener forge_version desde el config remoto/local (ya no hardcodeado)
-    let forgeVersion = null;
-    try {
-        const config = await window.electronAPI.getLauncherConfig();
-        if (config && config.forge_version) {
-            forgeVersion = config.forge_version;
-            console.log('UI: Forge version from config:', forgeVersion);
-        }
-    } catch(e) {
-        console.warn('UI: No se pudo obtener forge_version del config. Usando fallback.', e);
-        if (version === '1.20.1') forgeVersion = '47.4.17';
-    }
+    const version = '1.21.1';
+    const neoforgeVersion = '21.1.265';
+    const modloader = 'neoforge';
 
     window.electronAPI.launchGame({
         nick: acc.name,
@@ -745,7 +755,8 @@ window.tryLaunch = async () => {
         width: localStorage.getItem('windowWidth') || '1280',
         height: localStorage.getItem('windowHeight') || '720',
         account: acc,
-        forgeVersion
+        modloader,
+        neoforgeVersion
     });
 };
 
@@ -1011,11 +1022,11 @@ window.electronAPI.onPingResult((data) => {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div>
                 <h2 style="font-weight: 950; color: white; margin: 0; font-size: 20px; letter-spacing: 1px;">RADAR SOCIAL</h2>
-                <div style="font-size: 10px; color: var(--accent); font-weight: 900; margin-top: 4px; text-transform: uppercase;">Protocolo LosPapus v0.5.4</div>
+                <div style="font-size: 10px; color: var(--accent); font-weight: 900; margin-top: 4px; text-transform: uppercase;">Protocolo LosPapus v0.5.12</div>
             </div>
             <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); color: var(--accent); padding: 8px 15px; border-radius: 12px; font-weight: 950; font-size: 12px; display: flex; align-items: center; gap: 8px;">
                 <div class="pulse-dot" style="width: 8px; height: 8px; background: var(--accent); margin:0;"></div>
-                ${data.players.online} / ${data.players.max} ONLINE
+                ${escapeHtml(data.players.online)} / ${escapeHtml(data.players.max)} ONLINE
             </div>
         </div>
         
@@ -1024,10 +1035,10 @@ window.electronAPI.onPingResult((data) => {
                 ? players.map(p => `
                     <div class="friend-item">
                         <div class="friend-head-wrapper">
-                            <img src="https://mc-heads.net/avatar/${p.name}" class="friend-head">
+            <img src="https://mc-heads.net/avatar/${encodeURIComponent(p.name)}" class="friend-head">
                         </div>
                         <div class="friend-info">
-                            <span class="friend-name">${p.name}</span>
+                            <span class="friend-name">${escapeHtml(p.name)}</span>
                             <span class="friend-meta">Explorando el Mundo</span>
                         </div>
                         <div style="flex: 1"></div>
@@ -1064,7 +1075,7 @@ window.toggleNotifs = () => {
     window.playClick();
     const dot = document.getElementById('notif-dot');
     if (dot) dot.style.display = 'none';
-    window.showToast('LosPapus Launcher v0.5.4 — Mods sincronizados desde GitHub. ¡Próxima actualización con más contenido!', 'info', 7000);
+    window.showToast('LosPapus Launcher v0.5.12 — Perfil Minecraft 1.21.1 con NeoForge 21.1.265.', 'info', 7000);
 };
 
 window.toggleSoundscape = (enabled) => {
@@ -1163,11 +1174,11 @@ if (window.electronAPI) {
         let html = accounts.map(acc => `
             <div class="account-card-new ${activeAcc.uuid === acc.uuid ? 'active' : ''}">
                 ${activeAcc.uuid === acc.uuid ? '<div class="account-badge">ACTIVA</div>' : ''}
-                <img src="https://mc-heads.net/avatar/${acc.name}/64" class="account-avatar">
+                <img src="https://mc-heads.net/avatar/${encodeURIComponent(acc.name)}/64" class="account-avatar">
                 
                 <div class="account-info">
-                    <h3 class="account-name">${acc.name}</h3>
-                    <span class="account-type">${acc.type} protocol</span>
+                    <h3 class="account-name">${escapeHtml(acc.name)}</h3>
+                    <span class="account-type">${escapeHtml(acc.type)} protocol</span>
                 </div>
                 
                 <div class="user-actions" style="margin-top: auto;">
@@ -1246,13 +1257,13 @@ if (window.electronAPI) {
         grid.innerHTML = mods.map(mod => `
             <div class="mod-card-new ${mod.enabled ? '' : 'disabled'}">
                 <div class="mod-icon-wrapper">
-                    <img src="${mod.icon_url || 'https://img.icons8.com/isometric/512/puzzle.png'}" class="mod-icon">
+                    <img src="${escapeHtml(safeImageUrl(mod.icon_url) || 'https://img.icons8.com/isometric/512/puzzle.png')}" class="mod-icon">
                 </div>
                 
                 <div class="mod-main">
-                    <h3 class="mod-name">${mod.name}</h3>
-                    <p class="mod-author">por ${mod.author}</p>
-                    <p class="mod-desc">${mod.description?.substring(0, 70) || 'Sin descripción disponible'}...</p>
+                    <h3 class="mod-name">${escapeHtml(mod.name)}</h3>
+                    <p class="mod-author">por ${escapeHtml(mod.author)}</p>
+                    <p class="mod-desc">${escapeHtml(mod.description?.substring(0, 70) || 'Sin descripción disponible')}...</p>
                 </div>
                 
                 <div class="mod-control">
@@ -1378,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         // Llamar a la API de Electron
-        window.electronAPI.startAutoUpdate(url);
+        window.electronAPI.startAutoUpdate();
     };
 
     window.electronAPI.onAutoUpdateProgress((data) => {
@@ -1413,11 +1424,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="update-banner-content">
                 <div class="update-icon"><i class="fas fa-rocket"></i></div>
                 <div class="update-text">
-                    <span class="update-title">¡ACTUALIZACIÓN DISPONIBLE! (v${data.version})</span>
+                    <span class="update-title">¡ACTUALIZACIÓN DISPONIBLE! (v${escapeHtml(data.version)})</span>
                     <span class="update-subtitle">Hay mejoras de red y diseño listas para ti.</span>
                 </div>
                 <div class="update-actions">
-                    <button class="update-btn-action" onclick="window.triggerAutoUpdate('${data.url}')">DESCARGAR AHORA</button>
+                    <button class="update-btn-action" onclick="window.triggerAutoUpdate()">DESCARGAR AHORA</button>
                     <button class="update-btn-close" onclick="this.parentElement.parentElement.parentElement.remove()"><i class="fas fa-times"></i></button>
                 </div>
             </div>

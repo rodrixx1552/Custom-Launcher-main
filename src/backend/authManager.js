@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const msmc = require('msmc');
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, safeStorage } = require('electron');
 
 let authManager = null;
 try {
@@ -21,25 +21,49 @@ function init(ipcMain, app) {
     const accountsPath = path.join(app.getPath('userData'), 'accounts.json');
 
     function saveAccounts(accounts) {
-        fs.writeFileSync(accountsPath, JSON.stringify(accounts, null, 2));
+        const payload = JSON.stringify(accounts, null, 2);
+        if (safeStorage.isEncryptionAvailable()) {
+            const encrypted = safeStorage.encryptString(payload);
+            fs.writeFileSync(accountsPath, JSON.stringify({ encrypted: encrypted.toString('base64') }), { mode: 0o600 });
+        } else {
+            if (accounts.some(account => account.access_token)) throw new Error('El almacén seguro del sistema no está disponible; no se guardó la sesión Microsoft.');
+            fs.writeFileSync(accountsPath, JSON.stringify(accounts, null, 2), { mode: 0o600 });
+        }
     }
 
     function getAccounts() {
         if (!fs.existsSync(accountsPath)) return [];
         try {
-            return JSON.parse(fs.readFileSync(accountsPath, 'utf8'));
+            const stored = JSON.parse(fs.readFileSync(accountsPath, 'utf8'));
+            if (stored && typeof stored.encrypted === 'string' && safeStorage.isEncryptionAvailable()) {
+                return JSON.parse(safeStorage.decryptString(Buffer.from(stored.encrypted, 'base64')));
+            }
+            // Migrate legacy plaintext token files on the next save.
+            if (Array.isArray(stored)) {
+                if (stored.some(account => account.access_token)) {
+                    if (safeStorage.isEncryptionAvailable()) saveAccounts(stored);
+                    else {
+                        const safeAccounts = stored.map(publicAccount);
+                        fs.writeFileSync(accountsPath, JSON.stringify(safeAccounts, null, 2), { mode: 0o600 });
+                        return safeAccounts;
+                    }
+                }
+                return stored;
+            }
+            return [];
         } catch (e) {
             return [];
         }
     }
+    const publicAccount = ({ access_token, meta, ...account }) => account;
 
     ipcMain.on('get-accounts', (event) => {
-        event.sender.send('accounts-list', getAccounts());
+        event.sender.send('accounts-list', getAccounts().map(publicAccount));
     });
 
     ipcMain.on('add-offline-account', (event, name) => {
-        console.log('IPC: add-offline-account triggered for:', name);
         try {
+            if (typeof name !== 'string' || !/^[A-Za-z0-9_]{3,16}$/.test(name)) throw new Error('El nombre offline debe tener entre 3 y 16 letras, números o guiones bajos.');
             const crypto = require('crypto');
             const hash = crypto.createHash('md5').update('OfflinePlayer:' + name).digest('hex');
             const uuid = `${hash.substring(0,8)}-${hash.substring(8,12)}-${hash.substring(12,16)}-${hash.substring(16,20)}-${hash.substring(20,32)}`;
@@ -51,9 +75,8 @@ function init(ipcMain, app) {
             accounts.push(newAccount);
             saveAccounts(accounts);
 
-            console.log('Offline account added:', name, 'UUID:', uuid);
-            event.sender.send('login-success', newAccount);
-            event.sender.send('accounts-list', accounts);
+            event.sender.send('login-success', publicAccount(newAccount));
+            event.sender.send('accounts-list', accounts.map(publicAccount));
         } catch (e) {
             console.error('Error adding offline account:', e);
             event.sender.send('login-error', e.message);
@@ -66,7 +89,7 @@ function init(ipcMain, app) {
             let accounts = getAccounts();
             accounts = accounts.filter(a => a.uuid !== uuid);
             saveAccounts(accounts);
-            event.sender.send('accounts-list', accounts);
+            event.sender.send('accounts-list', accounts.map(publicAccount));
         } catch (e) {
             console.error('Error removing account:', e);
         }
@@ -176,7 +199,7 @@ function init(ipcMain, app) {
             saveAccounts(accounts);
 
             console.log('MSMC: Login success for', account.name);
-            event.sender.send('login-success', account);
+            event.sender.send('login-success', publicAccount(account));
         } catch (err) {
             console.error('--- MSMC FULL ERROR ---');
             console.error(err);
@@ -198,7 +221,7 @@ function init(ipcMain, app) {
         }
     });
 
-    return { getAccountsLocal: getAccounts };
+    return { getAccountsLocal: getAccounts, getAccessToken: (uuid) => getAccounts().find(account => account.uuid === uuid)?.access_token || null };
 }
 
 module.exports = { init };

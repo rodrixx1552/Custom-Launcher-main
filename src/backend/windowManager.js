@@ -14,7 +14,11 @@ function init(ipcMain) {
     });
 
     ipcMain.on('open-external', (event, targetUrl) => {
-        shell.openExternal(targetUrl);
+        try {
+            const parsed = new URL(targetUrl);
+            if (parsed.protocol !== 'https:' || !['github.com', 'discord.gg', 'discord.com', 'instagram.com', 'twitter.com', 'x.com', 'youtube.com', 'www.youtube.com', 'tiktok.com', 't.me', 'aternos.org', 'mc-heads.net'].includes(parsed.hostname)) return;
+            shell.openExternal(parsed.toString());
+        } catch (_) { /* Ignore malformed or non-HTTPS destinations. */ }
     });
 
     ipcMain.on('log-ui-error', (event, err) => {

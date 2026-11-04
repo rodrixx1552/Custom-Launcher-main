@@ -1,12 +1,14 @@
 {
   "name": "custom-launcher",
-  "version": "0.5.10",
+  "version": "0.5.12",
   "description": "Launcher de Minecraft personalizable basado en ElectronJS",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "dev:start": "npx sass src/scss/main.scss src/css/main.css && electron .",
-    "build": "npx sass src/scss/main.scss src/css/main.css && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build": "npx sass src/scss/main.scss src/css/main.css && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 && node scratch/zip-dist.js",
+    "portable:zip": "node scratch/zip-dist.js",
+    "release:upload": "node upload-exe.js",
     "package": "electron-packager . \"LosPapus Launcher\" --platform=win32 --arch=x64 --out=dist --icon=src/assets/main.ico --overwrite --asar"
   },
   "repository": {
@@ -21,25 +23,23 @@
     "custom-launcher"
   ],
   "author": "LosPapus Lover Team",
-  "launcher_version": "0.5.10",
-  "latest_launcher_version": "0.5.10",
+  "launcher_version": "0.5.12",
+  "latest_launcher_version": "0.5.12",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "bugs": {
     "url": "https://github.com/rodrixx1552/Custom-Launcher-main/issues"
   },
-  "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.5.3/LosPapus-v0.5.3.zip",
+  "launcher_download_url": "https://github.com/rodrixx1552/Custom-Launcher-main/releases/download/v0.5.12/LosPapus-v0.5.12.zip",
   "devDependencies": {
-    "electron": "^19.0.9",
+    "electron": "^45.2.3",
     "electron-builder": "^26.8.1",
-    "electron-installer-windows": "^3.0.0",
     "electron-packager": "^17.1.2",
-    "electron-reload": "^2.0.0-alpha.1",
-    "esm": "^3.2.25",
-    "requirejs": "^2.3.6",
     "sass": "^1.54.4"
   },
   "dependencies": {
-    "@electron/remote": "^2.0.8",
     "@fortawesome/fontawesome-free": "^6.1.2",
     "@travisvn/edge-tts": "^1.0.2",
     "adm-zip": "^0.5.16",
@@ -51,7 +51,6 @@
     "mcping-js": "^1.5.0",
     "minecraft-launcher-core": "^3.16.13",
     "msmc": "^5.0.5",
-    "png-to-ico": "^3.0.1",
     "skinview3d": "^3.4.1"
   },
   "build": {
@@ -70,7 +69,6 @@
     },
     "files": [
       "src/**/*",
-      "node_modules/**/*",
       "package.json"
     ],
     "directories": {

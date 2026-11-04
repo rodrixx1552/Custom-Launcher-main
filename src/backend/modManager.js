@@ -1,80 +1,66 @@
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const AdmZip = require('adm-zip');
+const crypto = require('crypto');
+
+function getFileSha256(filePath) {
+    return new Promise((resolve, reject) => {
+        const hash = crypto.createHash('sha256');
+        const stream = fs.createReadStream(filePath);
+        stream.on('data', chunk => hash.update(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(hash.digest('hex')));
+    });
+}
 
 function init(ipcMain, app, context) {
     const MODS_MANIFEST_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/mods.json';
     const MODS_BASE_URL = 'https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/mods/';
-    const { updateManager, gameLauncher } = context;
+    const { gameLauncher } = context;
 
     ipcMain.on('sync-modpacks', async (event) => {
-        let manifestSuccess = false;
         const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
-        const tempZip = path.join(app.getPath('temp'), 'modpack.zip');
 
         try {
             event.sender.send('sync-progress', { step: 'SCANNING CLOUD...', progress: 5 });
             console.log('OTA Mods: Fetching manifest from:', MODS_MANIFEST_URL);
-            const response = await axios.get(`${MODS_MANIFEST_URL}?t=${Date.now()}`, { timeout: 10000 });
+            const response = await axios.get(`${MODS_MANIFEST_URL}?t=${Date.now()}`, { timeout: 10000, maxContentLength: 100000 });
             const modsToList = response.data;
 
             if (Array.isArray(modsToList)) {
+                if (!modsToList.every(mod => mod && typeof mod.name === 'string' && /^[\w .()\-]+\.jar$/i.test(mod.name) && /^[a-f0-9]{64}$/i.test(mod.sha256 || ''))) throw new Error('Manifiesto de mods inválido: cada mod debe tener nombre seguro y SHA-256.');
                 console.log(`OTA Mods: Manifest found with ${modsToList.length} mods.`);
                 if (!fs.existsSync(modsPath)) fs.mkdirSync(modsPath, { recursive: true });
 
-                // 1. CLEANUP: Delete local mods not in manifest
-                event.sender.send('sync-progress', { step: 'CLEANING MATRIX...', progress: 15 });
-                const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
-                for (const file of localFiles) {
-                    if (!modsToList.find(m => m.name === file)) {
-                        console.log('OTA Mods: Removing extra mod:', file);
-                        fs.unlinkSync(path.join(modsPath, file));
-                    }
-                }
-
-                // 2. DOWNLOAD: Missing mods
+                // Preserve locally installed mods; only managed manifest entries are updated.
                 for (let i = 0; i < modsToList.length; i++) {
                     const mod = modsToList[i];
                     const dest = path.join(modsPath, mod.name);
+                    const disabledDest = `${dest}.disable`;
+                    const localDest = fs.existsSync(dest) ? dest : fs.existsSync(disabledDest) ? disabledDest : null;
                     const progress = 20 + Math.floor((i / modsToList.length) * 75);
-
-                    if (!fs.existsSync(dest)) {
+                    let needsDownload = !localDest;
+                    if (localDest) needsDownload = (await getFileSha256(localDest)).toLowerCase() !== mod.sha256.toLowerCase();
+                    if (needsDownload) {
                         event.sender.send('sync-progress', { step: `DOWNLOADING: ${mod.name}`, progress });
                         console.log('OTA Mods: Downloading missing mod:', mod.name);
-                        await gameLauncher.downloadFile(MODS_BASE_URL + encodeURIComponent(mod.name), dest);
+                        const temp = `${dest}.download`;
+                        try {
+                            await gameLauncher.downloadFile(MODS_BASE_URL + encodeURIComponent(mod.name), temp);
+                            if (!fs.existsSync(temp) || fs.statSync(temp).size < 4) throw new Error('Archivo de mod vacío o incompleto.');
+                            if ((await getFileSha256(temp)).toLowerCase() !== mod.sha256.toLowerCase()) throw new Error(`Hash inválido para ${mod.name}`);
+                            fs.renameSync(temp, localDest || dest);
+                        } catch (err) { if (fs.existsSync(temp)) fs.unlinkSync(temp); throw err; }
                     }
                 }
 
-                manifestSuccess = true;
                 event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
                 event.sender.send('sync-finished');
-            }
+                return;
+            } else throw new Error('El manifiesto de mods no es una lista.');
         } catch (err) {
-            console.warn('OTA Mods: Incremental sync failed, falling back to ZIP.', err.message);
-        }
-
-        if (!manifestSuccess) {
-            // FALLBACK: ZIP METHOD
-            try {
-                event.sender.send('sync-progress', { step: 'FALLBACK: LOADING ZIP...', progress: 5 });
-                const mediafireUrl = "https://www.mediafire.com/file/542w7o9u5z402he/MODS_LOSPAPUS.zip/file"; // Hardcoded safe fallback
-                const config = await updateManager.getRemoteConfig();
-                const usedUrl = config?.modpack_url || mediafireUrl;
-
-                const directUrl = await updateManager.getMediafireDirectLink(usedUrl);
-                await gameLauncher.downloadFile(directUrl, tempZip);
-                const zip = new AdmZip(tempZip);
-                const rootPath = path.join(app.getPath('appData'), '.lospapus-minecraft');
-                zip.extractAllTo(rootPath, true);
-                if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
-                event.sender.send('sync-progress', { step: 'SYNC COMPLETE!', progress: 100 });
-                event.sender.send('sync-finished');
-            } catch (zipErr) {
-                console.error('Sync Error Final Fallback:', zipErr);
-                event.sender.send('sync-error', 'Matrix error: ' + zipErr.message);
-                if (fs.existsSync(tempZip)) fs.unlinkSync(tempZip);
-            }
+            console.error('Mods sync aborted safely:', err);
+            event.sender.send('sync-error', 'No se pudo sincronizar mods: ' + err.message);
         }
     });
 
@@ -83,14 +69,16 @@ function init(ipcMain, app, context) {
             const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
             if (!fs.existsSync(modsPath)) return true;
 
-            const response = await axios.get(`${MODS_MANIFEST_URL}?t=${Date.now()}`, { timeout: 5000 });
+            const response = await axios.get(`${MODS_MANIFEST_URL}?t=${Date.now()}`, { timeout: 5000, maxContentLength: 100000 });
             const remoteMods = response.data;
-            if (!Array.isArray(remoteMods)) return typeof remoteMods === 'object' && remoteMods.length > 0;
+            if (!Array.isArray(remoteMods)) return false;
 
             if (Array.isArray(remoteMods)) {
                 const localFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
                 for (const mod of remoteMods) {
-                    if (!localFiles.includes(mod.name)) return true;
+                    if (!mod || !/^[\w .()\-]+\.jar$/i.test(mod.name || '') || !/^[a-f0-9]{64}$/i.test(mod.sha256 || '')) return true;
+                    const file = localFiles.includes(mod.name) ? mod.name : localFiles.includes(`${mod.name}.disable`) ? `${mod.name}.disable` : null;
+                    if (!file || (await getFileSha256(path.join(modsPath, file))).toLowerCase() !== mod.sha256.toLowerCase()) return true;
                 }
             }
             return false;
@@ -108,7 +96,7 @@ function init(ipcMain, app, context) {
                 return;
             }
 
-            const files = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar') || f.endsWith('.jar.disable'));
+            const files = fs.readdirSync(modsPath).filter(f => /^[\w .()\-]+\.jar(?:\.disable)?$/i.test(f));
             const mods = await Promise.all(files.map(async (filename) => {
                 const fullPath = path.join(modsPath, filename);
                 const stat = fs.statSync(fullPath);
@@ -174,6 +162,7 @@ function init(ipcMain, app, context) {
 
     ipcMain.on('toggle-mod', (event, filename) => {
         try {
+            if (typeof filename !== 'string' || !/^[\w .()\-]+\.jar(?:\.disable)?$/i.test(filename)) throw new Error('Nombre de mod inválido.');
             const modsPath = path.join(app.getPath('appData'), '.lospapus-minecraft', 'mods');
             const filePath = path.join(modsPath, filename);
             

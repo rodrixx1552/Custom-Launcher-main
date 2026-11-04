@@ -27,21 +27,21 @@
   ],
   "news": [
     {
-      "title": "¡Pura Fachada y Accesorios!",
-      "tag": "MODS",
-      "description": "Se han añadido SimpleHats y Accessories para que personalices tu personaje al máximo. ¡Busca los nuevos gorros!",
+      "title": "Minecraft 1.21.1 + NeoForge",
+      "tag": "JUEGO",
+      "description": "El perfil del launcher está fijado en NeoForge 21.1.265 y Java 21.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_1.png"
     },
     {
-      "title": "Launcher v0.5.6 Estable",
-      "tag": "LAUNCHER",
-      "description": "Nueva interfaz mejorada con sistema de sincronización rápida y optimización de memoria.",
+      "title": "Sesiones Microsoft protegidas",
+      "tag": "CUENTAS",
+      "description": "Los tokens se protegen con el almacén cifrado del sistema.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_2.png"
     },
     {
-      "title": "Pack de 110 Mods Activos",
+      "title": "Administra tus mods locales",
       "tag": "MODS",
-      "description": "Sincroniza tus mods con el botón circular antes de entrar. Ahora con más personalización y estética.",
+      "description": "Activa o desactiva los archivos de mods en tu carpeta del juego.",
       "image": "https://raw.githubusercontent.com/rodrixx1552/Custom-Launcher-main/main/src/assets/los_papus/news_3.png"
     }
   ]
