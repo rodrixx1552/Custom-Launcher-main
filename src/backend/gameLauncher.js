@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const axios = require('axios');
 const AdmZip = require('adm-zip');
 const { Client, Authenticator } = require("minecraft-launcher-core");
@@ -7,17 +8,50 @@ const { Client, Authenticator } = require("minecraft-launcher-core");
 function init(ipcMain, app, context) {
     const launcher = new Client();
     const { discordManager, authManager } = context;
+    const MINECRAFT_VERSION = '1.21.1';
+    const NEOFORGE_VERSION = '21.1.265';
+    const gameRoot = path.join(app.getPath('appData'), '.lospapus-minecraft');
+
+    function disableModsForOlderMinecraft(event) {
+        const modsPath = path.join(gameRoot, 'mods');
+        if (!fs.existsSync(modsPath)) return [];
+        const legacyMinecraftVersion = /(?:^|[^0-9])1\.(?:20|19|18|17|16|15|14|13|12)(?:\.\d+)?(?:[^0-9]|$)/i;
+        const disabled = [];
+        for (const filename of fs.readdirSync(modsPath)) {
+            if (!filename.toLowerCase().endsWith('.jar') || !legacyMinecraftVersion.test(filename)) continue;
+            const source = path.join(modsPath, filename);
+            const target = `${source}.disable`;
+            if (fs.existsSync(target)) continue;
+            try {
+                fs.renameSync(source, target);
+                disabled.push(filename);
+            } catch (error) {
+                console.warn(`Could not disable mod for an older Minecraft version (${filename}):`, error.message);
+            }
+        }
+        if (disabled.length) {
+            const message = `Desactivados ${disabled.length} mods marcados para Minecraft anterior a ${MINECRAFT_VERSION}; siguen en la carpeta como .jar.disable.`;
+            console.warn(message);
+            event.sender.send('launch-log', `[COMPATIBILIDAD] ${message}`);
+        }
+        return disabled;
+    }
 
     async function downloadFile(url, dest) {
         if (!fs.existsSync(path.dirname(dest))) fs.mkdirSync(path.dirname(dest), { recursive: true });
         try {
             const writer = fs.createWriteStream(dest);
-            const response = await axios({ url, method: 'GET', responseType: 'stream' });
+            const response = await axios({ url, method: 'GET', responseType: 'stream', timeout: 120000 });
             response.data.pipe(writer);
+            let received = 0;
             return await new Promise((resolve, reject) => {
                 writer.on('finish', resolve);
                 writer.on('error', reject);
                 response.data.on('error', reject);
+                response.data.on('data', chunk => {
+                    received += chunk.length;
+                    if (received > 512 * 1024 * 1024) response.data.destroy(new Error('La descarga excede el límite de 512 MB.'));
+                });
             });
         } catch (err) {
             if (fs.existsSync(dest)) fs.unlinkSync(dest);
@@ -26,27 +60,37 @@ function init(ipcMain, app, context) {
     }
 
     ipcMain.on('launch-game', async (event, options) => {
-        console.log('Launching game with options:', JSON.stringify(options, null, 2));
-        const { nick, version, account } = options;
+        if (!options || typeof options !== 'object') {
+            event.sender.send('launch-error', 'Opciones de inicio inválidas.');
+            return;
+        }
+        let { nick, version, account } = options;
         const accountUuid = account?.uuid || options.accountUuid;
+        if (typeof nick !== 'string' || !/^[A-Za-z0-9_]{3,16}$/.test(nick)) {
+            event.sender.send('launch-error', 'El nombre de jugador debe tener entre 3 y 16 letras, números o guiones bajos.');
+            return;
+        }
         
         discordManager.setActivity(`🎮 Jugando Minecraft ${version}`, `👤 Piloto: ${nick}`);
         
         try {
             let auth;
-            if (account && account.type === 'microsoft') {
+            if (account?.uuid && account.type === 'microsoft') {
                 console.log('Auth: Using Microsoft Session');
+                const storedAccount = authManager.getAccountsLocal().find(a => a.uuid === account.uuid && a.type === 'microsoft');
+                if (!storedAccount?.access_token) throw new Error('La sesión Microsoft ya no está disponible. Vuelve a iniciar sesión.');
                 auth = {
-                    access_token: account.access_token,
+                    access_token: storedAccount.access_token,
                     client_token: null,
-                    uuid: account.uuid,
-                    name: account.name,
+                    uuid: storedAccount.uuid,
+                    name: storedAccount.name,
                     user_properties: '{}'
                 };
             } else if (accountUuid) {
                 console.log('Auth: Searching for account in storage');
                 const accounts = authManager.getAccountsLocal();
                 const storedAccount = accounts.find(a => a.uuid === accountUuid);
+                if (storedAccount) nick = storedAccount.name;
                 if (storedAccount && storedAccount.type === 'microsoft') {
                     auth = {
                         access_token: storedAccount.access_token,
@@ -64,7 +108,7 @@ function init(ipcMain, app, context) {
             }
             
             // --- Java Auto-Installer Logic ---
-            const runtimePath = path.join(app.getPath('userData'), 'runtime');
+            const runtimePath = path.join(app.getPath('userData'), 'runtime-21');
             const javaExe = process.platform === 'win32' ? 'java.exe' : 'java';
             
             const findJavaInDir = (dir) => {
@@ -76,7 +120,7 @@ function init(ipcMain, app, context) {
                     if (stat.isDirectory()) {
                         const found = findJavaInDir(full);
                         if (found) return found;
-                    } else if (ent === javaExe || ent === (javaExe + '.exe')) {
+                    } else if (ent.toLowerCase() === javaExe.toLowerCase()) {
                         if (full.toLowerCase().includes('bin')) return full; 
                     }
                 }
@@ -86,23 +130,24 @@ function init(ipcMain, app, context) {
             let internalJava = findJavaInDir(runtimePath);
             
             if (!internalJava && (!options.javaPath || !options.javaPath.trim())) {
-                console.log('Java Engine not found. Starting auto-download...');
-                event.sender.send('launch-progress', { step: 'PREPARANDO MOTOR JAVA...', progress: 5 });
+                console.log('Java 21 Engine not found. Starting auto-download...');
+                event.sender.send('launch-progress', { step: 'PREPARANDO MOTOR JAVA 21...', progress: 5 });
                 
-                const javaZip = path.join(app.getPath('temp'), 'java-runtime.zip');
-                const javaUrl = "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk";
+                const javaZip = path.join(app.getPath('temp'), 'java-runtime-21.zip');
+                const javaUrl = "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk";
 
                 try {
                     const response = await axios({ url: javaUrl, method: 'GET', responseType: 'stream', timeout: 30000 });
                     const writer = fs.createWriteStream(javaZip);
-                    const totalLength = parseInt(response.headers['content-length'] || "50000000"); // 50MB fallback
+                    const totalLength = parseInt(response.headers['content-length'] || "50000000", 10);
                     let downloadedLength = 0;
 
                     response.data.on('data', (chunk) => {
                         downloadedLength += chunk.length;
                         const progress = 5 + Math.floor((downloadedLength / totalLength) * 85);
+                        if (downloadedLength > 200 * 1024 * 1024) response.data.destroy(new Error('Java excede el límite esperado de 200 MB.'));
                         if (downloadedLength % (1024 * 1024) < 65536) { // Reduce IPC spam
-                            event.sender.send('launch-progress', { step: `DESCARGANDO JAVA: ${Math.floor(downloadedLength / 1024 / 1024)}MB`, progress });
+                            event.sender.send('launch-progress', { step: `DESCARGANDO JAVA 21: ${Math.floor(downloadedLength / 1024 / 1024)}MB`, progress });
                         }
                     });
 
@@ -110,9 +155,10 @@ function init(ipcMain, app, context) {
                     await new Promise((resolve, reject) => {
                         writer.on('finish', resolve);
                         writer.on('error', reject);
+                        response.data.on('error', reject);
                     });
 
-                    event.sender.send('launch-progress', { step: 'EXTRAYENDO MOTOR...', progress: 95 });
+                    event.sender.send('launch-progress', { step: 'EXTRAYENDO MOTOR JAVA 21...', progress: 95 });
                     const zip = new AdmZip(javaZip);
                     zip.getEntries().forEach(entry => {
                         try {
@@ -124,20 +170,22 @@ function init(ipcMain, app, context) {
                     if (fs.existsSync(javaZip)) fs.unlinkSync(javaZip);
                     
                     internalJava = findJavaInDir(runtimePath);
-                    console.log('Java Engine installed at:', internalJava);
+                    console.log('Java 21 Engine installed at:', internalJava);
                 } catch (err) {
                     console.error('Java Download Error:', err);
-                    event.sender.send('launch-error', "No se pudo bajar Java automáticamente. Por favor instálalo manualmente.");
+                    event.sender.send('launch-error', "No se pudo bajar Java 21 automáticamente. Por favor instálalo manualmente.");
                     return;
                 }
             }
 
+            const targetVersion = MINECRAFT_VERSION;
+            disableModsForOlderMinecraft(event);
             const launchOptions = {
                 clientPackage: null,
                 authorization: auth,
-                root: path.join(app.getPath('appData'), '.lospapus-minecraft'),
+                root: gameRoot,
                 version: {
-                    number: version,
+                    number: targetVersion,
                     type: "release"
                 },
                 "server": {
@@ -146,7 +194,7 @@ function init(ipcMain, app, context) {
                 },
                 memory: {
                     min: "2G",
-                    max: (options.maxRam || "6") + "G"
+                    max: Math.max(2, Math.min(16, Number.parseInt(options.maxRam, 10) || 6, Math.max(2, Math.floor(os.totalmem() / (1024 ** 3)) - 1))) + "G"
                 },
                 customArgs: [
                     "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
@@ -173,28 +221,25 @@ function init(ipcMain, app, context) {
                 launchOptions.javaPath = internalJava;
             }
 
-            if (options.forgeVersion) {
-                console.log('Forge is requested. Preparing Forge auto-downloader...');
-                event.sender.send('launch-progress', { step: 'PREPARING FORGE...' });
-                
-                const forgeDir = path.join(app.getPath('appData'), '.lospapus-minecraft', 'forge-installers');
-                const forgeFile = path.join(forgeDir, `forge-${version}-${options.forgeVersion}-installer.jar`);
-                const forgeUrl = `https://maven.minecraftforge.net/net/minecraftforge/forge/${version}-${options.forgeVersion}/forge-${version}-${options.forgeVersion}-installer.jar`;
+            const loaderVersion = NEOFORGE_VERSION;
 
-                if (!fs.existsSync(forgeFile)) {
-                    if (!fs.existsSync(forgeDir)) fs.mkdirSync(forgeDir, { recursive: true });
-                    console.log(`Downloading forge installer from: ${forgeUrl}`);
-                    event.sender.send('launch-progress', { step: 'DOWNLOADING FORGE INSTALLER...' });
-                    await downloadFile(forgeUrl, forgeFile);
-                } else {
-                    console.log(`Forge installer found locally: ${forgeFile}`);
-                    event.sender.send('launch-progress', { step: 'FORGE INSTALLER FOUND...' });
-                }
-
-                launchOptions.forge = forgeFile; 
+            console.log(`NeoForge is requested (${loaderVersion}). Preparing NeoForge auto-downloader...`);
+            event.sender.send('launch-progress', { step: 'PREPARANDO NEOFORGE...' });
+            const neoforgeDir = path.join(app.getPath('appData'), '.lospapus-minecraft', 'neoforge-installers');
+            const neoforgeFile = path.join(neoforgeDir, `neoforge-${loaderVersion}-installer.jar`);
+            const neoforgeUrl = `https://maven.neoforged.net/releases/net/neoforged/neoforge/${loaderVersion}/neoforge-${loaderVersion}-installer.jar`;
+            if (!fs.existsSync(neoforgeFile) || fs.statSync(neoforgeFile).size < 100000) {
+                if (!fs.existsSync(neoforgeDir)) fs.mkdirSync(neoforgeDir, { recursive: true });
+                if (fs.existsSync(neoforgeFile)) fs.unlinkSync(neoforgeFile);
+                console.log(`Downloading NeoForge installer from: ${neoforgeUrl}`);
+                event.sender.send('launch-progress', { step: 'DESCARGANDO INSTALADOR DE NEOFORGE...' });
+                await downloadFile(neoforgeUrl, neoforgeFile);
+            } else {
+                event.sender.send('launch-progress', { step: 'INSTALADOR DE NEOFORGE ENCONTRADO...' });
             }
+            launchOptions.forge = neoforgeFile;
 
-            console.log('Launching with options:', JSON.stringify(launchOptions, null, 2));
+            console.log(`Starting Minecraft ${targetVersion} with NeoForge ${NEOFORGE_VERSION}.`);
             
             try {
                 launcher.launch(launchOptions);

@@ -1,22 +1,15 @@
-const remoteMain = require('@electron/remote/main');
-remoteMain.initialize();
-
-const { app, BrowserWindow, ipcMain, screen, shell, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, screen } = require("electron");
 const ejse = require('ejs-electron');
 const path = require("path");
 const fs = require("fs");
 const url = require("url");
+const { fileURLToPath } = require('url');
 const os = require("os");
 const settings = require("./js/json/settings.json");
+const translations = require('./js/json/lang.json');
+const launcherConfig = require('./launcher-config.json');
 const ui = settings.launcher.ui;
 const lang = require(`./assets/lang/${settings.launcher.ui.default_lang}.json`);
-
-// check if the environment is dev
-if (settings.launcher.debug.environment !== 'production') {
-    require('electron-reload')(__dirname, {
-        electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
-    });
-}
 
 const getSplashesText = () => {
     let data  = fs.readFileSync(path.join(__dirname, 'assets', 'splashes_texts.json'), 'utf8')
@@ -35,12 +28,13 @@ const createWindow = () => {
         title: ui.title,
         resizable: true,
         frame: false,
-        icon: path.join(__dirname, 'assets', 'lpv_main.png'),
+        icon: path.join(__dirname, 'assets', 'main.ico'),
         webPreferences: {
             preload: path.join(__dirname, '/js/preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
-            enableRemoteModule: false
+            sandbox: true,
+            webSecurity: true
         }
     });
 
@@ -49,22 +43,33 @@ const createWindow = () => {
           responseHeaders: {
             ...details.responseHeaders,
             'Content-Security-Policy': [
-                "default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://raw.githubusercontent.com https://mc-heads.net; " +
-                "script-src 'self' 'unsafe-inline' https://unpkg.com https://www.youtube.com https://s.ytimg.com https://raw.githubusercontent.com 'unsafe-eval'; " +
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; " +
+                "default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://raw.githubusercontent.com https://mc-heads.net; " +
+                "script-src 'self' 'unsafe-inline'; " +
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; " +
                 "media-src 'self' data: https:; " +
                 "img-src 'self' data: https: https://mc-heads.net https://mineskin.org https://i.ytimg.com https://raw.githubusercontent.com; " +
-                "frame-src https://www.youtube.com; " +
-                "connect-src 'self' https://raw.githubusercontent.com https://api.mcsrvstat.us https://api.mcstatus.io https://api.minecraftservices.com https://api.adoptium.net;"
+                "frame-src 'none'; " +
+                "connect-src 'self' https://raw.githubusercontent.com; " +
+                "object-src 'none'; base-uri 'self'; form-action 'self';"
             ]
           }
         })
       });
 
-    remoteMain.enable(win.webContents);
     win.removeMenu();
 
-    if (process.env.NODE != 'production') { win.openDevTools() }
+    if (settings.launcher.debug.environment !== 'production' && process.env.NODE_ENV !== 'production') win.openDevTools();
+
+    win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    win.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
+    win.webContents.on('will-navigate', (event, target) => {
+        try {
+            const parsed = new URL(target);
+            const targetPath = path.resolve(fileURLToPath(parsed));
+            const appRoot = path.resolve(__dirname) + path.sep;
+            if (parsed.protocol !== 'file:' || !targetPath.startsWith(appRoot)) event.preventDefault();
+        } catch (_) { event.preventDefault(); }
+    });
 
     ejse.data('splash_text', getSplashesText());
     ejse.data('title', ui.title);
@@ -100,12 +105,14 @@ const ttsManager = require('./backend/ttsManager');
 discordManager.init();
 windowManager.init(ipcMain);
 const authContext = authManager.init(ipcMain, app);
-serverServices.init(ipcMain);
+serverServices.init(ipcMain, authContext, launcherConfig);
 ttsManager.init();
 
 ipcMain.handle('get-total-ram', async () => {
     return Math.floor(os.totalmem() / (1024 * 1024 * 1024));
 });
+ipcMain.on('sync-get-settings', (event) => { event.returnValue = settings; });
+ipcMain.on('sync-get-translations', (event) => { event.returnValue = translations; });
 
 
 // Provide cross-module dependencies
@@ -115,7 +122,6 @@ const gameLauncherContext = gameLauncher.init(ipcMain, app, launcherContext);
 const updateContext = updateManager.init(ipcMain, app, __dirname);
 
 modManager.init(ipcMain, app, { 
-    updateManager: updateContext, 
     gameLauncher: gameLauncherContext 
 });
 

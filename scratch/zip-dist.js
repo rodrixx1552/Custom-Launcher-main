@@ -2,6 +2,7 @@
 const AdmZip = require('adm-zip');
 const path = require('path');
 const fs = require('fs');
+const version = require('../package.json').version;
 
 async function createZip() {
     console.log('📦 Creando ZIP de la versión portable...');
@@ -14,7 +15,7 @@ async function createZip() {
     }
     
     zip.addLocalFolder(unpackedDir);
-    zip.writeZip(path.join(process.cwd(), 'dist', 'LosPapus-v0.5.4.zip'));
+    zip.writeZip(path.join(process.cwd(), 'dist', `LosPapus-v${version}.zip`));
     console.log('✅ ZIP creado con éxito!');
 }
 

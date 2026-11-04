@@ -3,7 +3,8 @@ const mcping = require('mcping-js');
 const { shell, dialog } = require('electron');
 const fs = require('fs');
 
-function init(ipcMain) {
+function init(ipcMain, authManager, launcherConfig) {
+    const configuredServer = launcherConfig?.server ? `${launcherConfig.server.ip}:${launcherConfig.server.port}` : 'na34.holy.gg:26068';
     ipcMain.on('auto-start-server', (event) => {
         shell.openExternal('https://aternos.org/go/'); // Fallback or informative
     });
@@ -13,12 +14,13 @@ function init(ipcMain) {
         let data = { online: false };
         let playersList = [];
 
-        // Protocol 763 = 1.20.1
-        const MC_VERSION_PROTOCOL = 763;
+        // Protocol 767 = 1.21.1
+        const MC_VERSION_PROTOCOL = 767;
 
         try {
+            if (serverIP !== configuredServer) throw new Error('El radar solo puede consultar el servidor configurado.');
             console.log(`📡 Sistema de Radar: Escaneando ${serverIP}...`);
-            
+
             // Split IP and Port for direct ping
             const parts = serverIP.split(':');
             const host = parts[0];
@@ -40,7 +42,7 @@ function init(ipcMain) {
             if (!data.online) {
                 console.log("Activando Radar de Respaldo (Ping Directo con Timeout)...");
                 const server = new mcping.MinecraftServer(host, port);
-                
+
                 await new Promise((resolve) => {
                     const timeoutTimer = setTimeout(() => {
                         console.warn(`📡 [Radar Directo] Timeout alcanzado para ${serverIP}. Resolviendo...`);
@@ -66,13 +68,13 @@ function init(ipcMain) {
             }
 
             if (data.online) {
-                event.sender.send('ping-result', { 
-                    online: true, 
-                    version: data.version?.name || '1.20.1', 
-                    players: {
-                        online: data.players?.online || 0,
-                        max: data.players?.max || 20,
-                        list: playersList
+                event.sender.send('ping-result', {
+                    online: true,
+                    version: data.version?.name || '1.21.1',
+                players: {
+                        online: Number.isFinite(Number(data.players?.online)) ? Math.max(0, Math.floor(Number(data.players.online))) : 0,
+                        max: Number.isFinite(Number(data.players?.max)) ? Math.max(1, Math.floor(Number(data.players.max))) : 20,
+                        list: playersLis
                     },
                     description: data.motd?.clean?.[0] || 'Los Papus Lover Server'
                 });
@@ -85,9 +87,14 @@ function init(ipcMain) {
         }
     });
 
-    ipcMain.on('upload-skin', async (event, { accessToken, base64Image }) => {
+    ipcMain.on('upload-skin', async (event, { uuid, base64Image }) => {
         try {
+            const accessToken = authManager.getAccessToken(uuid);
+            if (!accessToken) throw new Error('Vuelve a iniciar sesión con tu cuenta Microsoft.');
+            if (typeof base64Image !== 'string' || !base64Image.startsWith('data:image/png;base64,') || base64Image.length > 8_000_000) throw new Error('Imagen PNG inválida o demasiado grande.');
             const buffer = Buffer.from(base64Image.split(',')[1], 'base64');
+            const image = await require('jimp').read(buffer);
+            if (![64, 128, 256, 512, 1024].includes(image.bitmap.width) || ![32, 64, 128, 256, 512, 1024].includes(image.bitmap.height)) throw new Error('La skin debe tener dimensiones compatibles con Minecraft.');
             const formData = new (require('form-data'))();
             formData.append('variant', 'classic'); // or 'slim'
             formData.append('file', buffer, { filename: 'skin.png' });
@@ -95,7 +102,7 @@ function init(ipcMain) {
             const response = await axios.put('https://api.minecraftservices.com/minecraft/profile/skins', formData, {
                 headers: {
                     ...formData.getHeaders(),
-                    'Authorization': `Bearer ${accessToken}`
+                    'Authorization': `Bearer ${accessToken}
                 }
             });
 
@@ -113,7 +120,11 @@ function init(ipcMain) {
         }).then(result => {
             if (!result.canceled && result.filePaths.length > 0) {
                 const filePath = result.filePaths[0];
-                const data = fs.readFileSync(filePath).toString('base64');
+                const stat = fs.statSync(filePath);
+                if (stat.size > 8 * 1024 * 1024) throw new Error('La imagen supera el límite de 8 MB.');
+                const buffer = fs.readFileSync(filePath);
+                if (buffer.length < 8 || !buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) throw new Error('El archivo seleccionado no es un PNG válido.');
+                const data = buffer.toString('base64');
                 event.sender.send('file-selected', `data:image/png;base64,${data}`);
             }
         }).catch(err => {
