@@ -7,35 +7,8 @@ const { Client, Authenticator } = require("minecraft-launcher-core");
 
 function init(ipcMain, app, context) {
     const launcher = new Client();
-    const { discordManager, authManager } = context;
-    const MINECRAFT_VERSION = '1.21.1';
-    const NEOFORGE_VERSION = '21.1.265';
+    const { discordManager, authManager, modManager } = context;
     const gameRoot = path.join(app.getPath('appData'), '.lospapus-minecraft');
-
-    function disableModsForOlderMinecraft(event) {
-        const modsPath = path.join(gameRoot, 'mods');
-        if (!fs.existsSync(modsPath)) return [];
-        const legacyMinecraftVersion = /(?:^|[^0-9])1\.(?:20|19|18|17|16|15|14|13|12)(?:\.\d+)?(?:[^0-9]|$)/i;
-        const disabled = [];
-        for (const filename of fs.readdirSync(modsPath)) {
-            if (!filename.toLowerCase().endsWith('.jar') || !legacyMinecraftVersion.test(filename)) continue;
-            const source = path.join(modsPath, filename);
-            const target = `${source}.disable`;
-            if (fs.existsSync(target)) continue;
-            try {
-                fs.renameSync(source, target);
-                disabled.push(filename);
-            } catch (error) {
-                console.warn(`Could not disable mod for an older Minecraft version (${filename}):`, error.message);
-            }
-        }
-        if (disabled.length) {
-            const message = `Desactivados ${disabled.length} mods marcados para Minecraft anterior a ${MINECRAFT_VERSION}; siguen en la carpeta como .jar.disable.`;
-            console.warn(message);
-            event.sender.send('launch-log', `[COMPATIBILIDAD] ${message}`);
-        }
-        return disabled;
-    }
 
     async function downloadFile(url, dest) {
         if (!fs.existsSync(path.dirname(dest))) fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -64,14 +37,12 @@ function init(ipcMain, app, context) {
             event.sender.send('launch-error', 'Opciones de inicio inválidas.');
             return;
         }
-        let { nick, version, account } = options;
+        let { nick, account } = options;
         const accountUuid = account?.uuid || options.accountUuid;
         if (typeof nick !== 'string' || !/^[A-Za-z0-9_]{3,16}$/.test(nick)) {
             event.sender.send('launch-error', 'El nombre de jugador debe tener entre 3 y 16 letras, números o guiones bajos.');
             return;
         }
-        
-        discordManager.setActivity(`🎮 Jugando Minecraft ${version}`, `👤 Piloto: ${nick}`);
         
         try {
             let auth;
@@ -106,9 +77,17 @@ function init(ipcMain, app, context) {
                 console.log('Auth: Using Offline/Standard auth');
                 auth = await Authenticator.getAuth(nick);
             }
+
+            if (!modManager || typeof modManager.syncLatestPack !== 'function') throw new Error('El gestor del modpack no está disponible.');
+            event.sender.send('launch-progress', { step: 'COMPROBANDO ACTUALIZACIONES DEL MODPACK…', progress: 2 });
+            const profile = await modManager.syncLatestPack(progress => event.sender.send('launch-progress', progress));
+            const targetVersion = profile.minecraftVersion;
+            const loaderVersion = profile.loaderVersion;
+            const javaVersion = Number(profile.javaVersion);
+            discordManager.setActivity(`🎮 Jugando Minecraft ${targetVersion}`, `👤 Piloto: ${nick}`);
             
             // --- Java Auto-Installer Logic ---
-            const runtimePath = path.join(app.getPath('userData'), 'runtime-21');
+            const runtimePath = path.join(app.getPath('userData'), `runtime-${javaVersion}`);
             const javaExe = process.platform === 'win32' ? 'java.exe' : 'java';
             
             const findJavaInDir = (dir) => {
@@ -130,11 +109,11 @@ function init(ipcMain, app, context) {
             let internalJava = findJavaInDir(runtimePath);
             
             if (!internalJava && (!options.javaPath || !options.javaPath.trim())) {
-                console.log('Java 21 Engine not found. Starting auto-download...');
-                event.sender.send('launch-progress', { step: 'PREPARANDO MOTOR JAVA 21...', progress: 5 });
+                console.log(`Java ${javaVersion} runtime not found. Starting auto-download...`);
+                event.sender.send('launch-progress', { step: `PREPARANDO MOTOR JAVA ${javaVersion}...`, progress: 5 });
                 
-                const javaZip = path.join(app.getPath('temp'), 'java-runtime-21.zip');
-                const javaUrl = "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk";
+                const javaZip = path.join(app.getPath('temp'), `java-runtime-${javaVersion}.zip`);
+                const javaUrl = `https://api.adoptium.net/v3/binary/latest/${javaVersion}/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk`;
 
                 try {
                     const response = await axios({ url: javaUrl, method: 'GET', responseType: 'stream', timeout: 30000 });
@@ -147,7 +126,7 @@ function init(ipcMain, app, context) {
                         const progress = 5 + Math.floor((downloadedLength / totalLength) * 85);
                         if (downloadedLength > 200 * 1024 * 1024) response.data.destroy(new Error('Java excede el límite esperado de 200 MB.'));
                         if (downloadedLength % (1024 * 1024) < 65536) { // Reduce IPC spam
-                            event.sender.send('launch-progress', { step: `DESCARGANDO JAVA 21: ${Math.floor(downloadedLength / 1024 / 1024)}MB`, progress });
+                            event.sender.send('launch-progress', { step: `DESCARGANDO JAVA ${javaVersion}: ${Math.floor(downloadedLength / 1024 / 1024)}MB`, progress });
                         }
                     });
 
@@ -158,7 +137,7 @@ function init(ipcMain, app, context) {
                         response.data.on('error', reject);
                     });
 
-                    event.sender.send('launch-progress', { step: 'EXTRAYENDO MOTOR JAVA 21...', progress: 95 });
+                    event.sender.send('launch-progress', { step: `EXTRAYENDO MOTOR JAVA ${javaVersion}...`, progress: 95 });
                     const zip = new AdmZip(javaZip);
                     zip.getEntries().forEach(entry => {
                         try {
@@ -170,16 +149,14 @@ function init(ipcMain, app, context) {
                     if (fs.existsSync(javaZip)) fs.unlinkSync(javaZip);
                     
                     internalJava = findJavaInDir(runtimePath);
-                    console.log('Java 21 Engine installed at:', internalJava);
+                    console.log(`Java ${javaVersion} Engine installed at:`, internalJava);
                 } catch (err) {
                     console.error('Java Download Error:', err);
-                    event.sender.send('launch-error', "No se pudo bajar Java 21 automáticamente. Por favor instálalo manualmente.");
+                            event.sender.send('launch-error', `No se pudo bajar Java ${javaVersion} automáticamente. Por favor instálalo manualmente.`);
                     return;
                 }
             }
 
-            const targetVersion = MINECRAFT_VERSION;
-            disableModsForOlderMinecraft(event);
             const launchOptions = {
                 clientPackage: null,
                 authorization: auth,
@@ -221,8 +198,6 @@ function init(ipcMain, app, context) {
                 launchOptions.javaPath = internalJava;
             }
 
-            const loaderVersion = NEOFORGE_VERSION;
-
             console.log(`NeoForge is requested (${loaderVersion}). Preparing NeoForge auto-downloader...`);
             event.sender.send('launch-progress', { step: 'PREPARANDO NEOFORGE...' });
             const neoforgeDir = path.join(app.getPath('appData'), '.lospapus-minecraft', 'neoforge-installers');
@@ -239,7 +214,7 @@ function init(ipcMain, app, context) {
             }
             launchOptions.forge = neoforgeFile;
 
-            console.log(`Starting Minecraft ${targetVersion} with NeoForge ${NEOFORGE_VERSION}.`);
+            console.log(`Starting Minecraft ${targetVersion} with NeoForge ${loaderVersion}.`);
             
             try {
                 launcher.launch(launchOptions);

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#0d1118">
+  <title>Administración del launcher · LosPapus</title>
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="../"><span class="brand-mark">LP</span><span>LOS PAPUS <small>ADMINISTRACIÓN</small></span></a>
+      <div class="identity"><span id="auth-status" class="status-dot"></span><span id="auth-label">Sesión cerrada</span><button id="logout-button" class="button ghost hidden" type="button">Cerrar sesión</button></div>
+    </header>
+
+    <section id="login-panel" class="login card">
+      <div class="eyebrow">ACCESO DEL PROPIETARIO</div>
+      <h1>Administra el modpack desde aquí.</h1>
+      <p>Inicia sesión con un token de GitHub de alcance limitado. El token se conserva solo en la memoria de esta pestaña y se comprueba que pertenezca a <b>rodrixx1552</b>.</p>
+      <label for="github-token">Fine-grained personal access token</label>
+      <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+      <button id="login-button" class="button primary" type="button">Conectar con GitHub</button>
+      <p id="login-error" class="error" role="alert"></p>
+      <details>
+        <summary>¿Cómo crear el token?</summary>
+        <ol>
+          <li>En GitHub, abre <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens</b>.</li>
+          <li>Limita el acceso al repositorio <b>Custom-Launcher-main</b>.</li>
+          <li>Da permisos de repositorio <b>Contents: Read and write</b> y <b>Actions: Read and write</b>. Añade una caducidad.</li>
+          <li>Copia el token aquí. Nunca lo envíes por chat ni lo guardes en el código.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="admin-panel" class="hidden">
+      <div class="hero">
+        <div><div class="eyebrow">PUBLICACIÓN CENTRALIZADA</div><h1>Un cambio aquí actualiza el perfil de todos.</h1><p>Los jugadores reciben el modpack y la versión de NeoForge más recientes la próxima vez que pulsan <b>Jugar</b>.</p></div>
+        <div class="live-badge"><span></span> Perfil activo en <b>main</b></div>
+      </div>
+
+      <div id="notice" class="notice hidden" role="status"></div>
+      <nav class="tabs" aria-label="Tipo de publicación">
+        <button class="tab active" data-tab="pack" type="button">Modpack</button>
+        <button class="tab" data-tab="launcher" type="button">Launcher</button>
+      </nav>
+
+      <section id="pack-panel" class="panel card">
+        <div class="panel-heading"><div><div class="eyebrow">PERFIL DE MINECRAFT</div><h2>Modpack</h2></div><span id="current-pack" class="version-chip">Cargando…</span></div>
+        <p class="muted">Cada publicación queda guardada como un release. Los JAR se verifican con SHA-256 y el launcher los instala antes de iniciar el juego. Comprueba que cada archivo sea compatible con Minecraft, NeoForge y Java elegidos; el panel no puede validar la compatibilidad interna de un mod.</p>
+        <div class="form-grid four">
+          <label>Versión del modpack<input id="pack-version" type="text" placeholder="1.0.1" autocomplete="off"></label>
+          <label>Versión de Minecraft<input id="minecraft-version" type="text" placeholder="1.21.1"></label>
+          <label>Versión de NeoForge<input id="loader-version" type="text" placeholder="21.1.265"></label>
+          <label>Java<select id="java-version"><option value="21">Java 21</option><option value="17">Java 17</option></select></label>
+        </div>
+        <div class="upload-zone"><div><b>Añade los mods compatibles</b><span>Selecciona uno o varios archivos JAR. Cada versión se guarda en un release del repositorio.</span></div><label class="button secondary file-button">Elegir JAR<input id="mod-files" type="file" accept=".jar,application/java-archive" multiple></label></div>
+        <div class="table-wrap"><table><thead><tr><th>Archivo</th><th>SHA-256</th><th>Tamaño</th><th></th></tr></thead><tbody id="mod-list"><tr><td colspan="4" class="empty">Inicia sesión para cargar el perfil actual.</td></tr></tbody></table></div>
+        <div class="actions"><span id="pack-summary" class="muted">Sin mods</span><button id="publish-pack" class="button primary" type="button" disabled>Publicar nueva versión</button></div>
+      </section>
+
+      <section id="launcher-panel" class="panel card hidden">
+        <div class="panel-heading"><div><div class="eyebrow">ACTUALIZACIÓN DE LA APLICACIÓN</div><h2>Launcher</h2></div><span id="current-launcher" class="version-chip">Cargando…</span></div>
+        <p class="muted">GitHub compila el instalador y el ZIP portable de Windows, publica el release, calcula el SHA-256 y actualiza el canal que consulta el launcher. No hace falta compilar ni subir archivos desde tu PC.</p>
+        <div class="form-grid two">
+          <label>Nueva versión del launcher<input id="launcher-version" type="text" placeholder="0.5.13"></label>
+          <div class="workflow-permission"><b>Permisos necesarios</b><span>Contents: Read and write<br>Actions: Read and write</span></div>
+        </div>
+        <div class="actions"><span class="muted">La actualización se ofrecerá al abrir las instalaciones actuales. El build tarda unos minutos.</span><button id="publish-launcher" class="button primary" type="button">Construir y publicar</button></div>
+        <p class="workflow-link"><a id="actions-link" href="https://github.com/rodrixx1552/Custom-Launcher-main/actions/workflows/publish-launcher.yml" target="_blank" rel="noopener noreferrer">Ver compilaciones en GitHub Actions ↗</a></p>
+      </section>
+
+      <section class="help card"><div class="help-icon">i</div><div><b>Los cambios llegan a todos los usuarios.</b><p>El launcher compara el perfil remoto antes de cada inicio. Si cambias Minecraft o NeoForge, instala esa combinación en el siguiente arranque. Los mods antiguos de la carpeta activa se mueven a una copia de seguridad local antes de aplicar el nuevo perfil.</p></div></section>
+      <footer>LosPapus Launcher · El token solo se usa para acceder a GitHub en esta pestaña.</footer>
+    </section>
+  </main>
+  <script src="./admin.js" defer></script>
+</body>
+</html>

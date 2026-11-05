@@ -95,15 +95,6 @@ if (typeof initEngine === 'function') {
     initEngine();
 }
 
-// The launcher supports one fixed game profile.
-(function migrateVersion() {
-    const saved = localStorage.getItem('selectedVersion');
-    if (saved !== '1.21.1') {
-        localStorage.setItem('selectedVersion', '1.21.1');
-        console.log('[Migration] selectedVersion actualizado a 1.21.1 (NeoForge)');
-    }
-})();
-
 // Global UI State
 window.currentTab = 'play';
 
@@ -233,7 +224,7 @@ function updateUserHeader() {
 // --- PLAY TAB (INICIO) ---
 function renderPlayTab(container) {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
-    const version = localStorage.getItem('selectedVersion') || '1.21.1';
+    const version = '1.21.1';
     
     container.innerHTML = `
         <!-- HERO SECTION -->
@@ -243,8 +234,8 @@ function renderPlayTab(container) {
             
             <div class="hero-content">
                 <div style="background: rgba(74, 222, 128, 0.1); color: var(--accent); display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; margin-bottom: 20px; border: 1px solid rgba(74, 222, 128, 0.2);">MODPACK PERSONALIZADO</div>
-                <h1 class="hero-title">Minecraft ${version}</h1>
-                <p class="hero-desc">Minecraft ${version} con NeoForge — el sucesor oficial de Forge, con mejor rendimiento y compatibilidad para mods modernos.</p>
+                <h1 class="hero-title" id="active-minecraft-version">Minecraft ${version}</h1>
+                <p class="hero-desc" id="active-pack-summary">Minecraft ${version} con NeoForge. Se comprobarán las actualizaciones antes de jugar.</p>
                 
                 <div class="launch-btn-group">
                     <button class="launch-btn" id="play-btn" onclick="window.tryLaunch()">
@@ -282,6 +273,16 @@ function renderPlayTab(container) {
             </div>
         </section>
     `;
+
+    window.electronAPI.getModpackInfo().then(info => {
+        if (!info || info.error) return;
+        const title = document.getElementById('active-minecraft-version');
+        const summary = document.getElementById('active-pack-summary');
+        const button = document.getElementById('play-btn');
+        if (title) title.textContent = `Minecraft ${info.minecraftVersion}`;
+        if (summary) summary.textContent = `Modpack ${info.version} · NeoForge ${info.loaderVersion} · ${info.modCount} mods. Se actualizará automáticamente antes de jugar.`;
+        if (button) button.innerHTML = `INICIAR ${escapeHtml(info.minecraftVersion)}<div style="font-size: 9px; opacity: 0.6; font-weight: 700; margin-top: 2px;">ACTUALIZACIÓN AUTOMÁTICA</div>`;
+    }).catch(error => console.warn('UI: Could not read the active modpack:', error));
     
     // Render News & Skin
     loadNews();
@@ -512,7 +513,6 @@ function renderSettingsTab(container) {
     const ram = localStorage.getItem('maxRam') || '6';
     const width = localStorage.getItem('windowWidth') || '1280';
     const height = localStorage.getItem('windowHeight') || '720';
-    const version = localStorage.getItem('selectedVersion') || '1.21.1';
     const sfxVol = parseFloat(localStorage.getItem('sfxVolume') ?? '0.5');
     const musicVol = parseFloat(localStorage.getItem('musicVolume') ?? '0.3');
     const jarvisVoice = localStorage.getItem('jarvisVoice') || 'female';
@@ -573,12 +573,10 @@ function renderSettingsTab(container) {
 
                     <div class="settings-item">
                         <div class="settings-label">
-                            <span class="settings-title">Versión Seleccionada</span>
-                            <span class="settings-subtitle">Cambia la versión base de Minecraft. Requiere reinicio.</span>
+                            <span class="settings-title">Perfil global</span>
+                            <span class="settings-subtitle" id="settings-game-profile">Cargando perfil del modpack…</span>
                         </div>
-                        <select class="res-field" style="width: 150px; text-align: left;" onchange="window.updateSetting('selectedVersion', this.value)">
-                            <option value="1.21.1" ${version === '1.21.1' ? 'selected' : ''}>1.21.1 + NeoForge (Latest)</option>
-                        </select>
+                        <span class="res-field" id="settings-game-version" style="width: auto; min-width: 165px; text-align: center;">Perfil administrado</span>
                     </div>
                 </div>
 
@@ -637,6 +635,14 @@ function renderSettingsTab(container) {
             </div>
         </div>
     `;
+
+    window.electronAPI.getModpackInfo().then(info => {
+        if (!info || info.error) return;
+        const summary = document.getElementById('settings-game-profile');
+        const versionLabel = document.getElementById('settings-game-version');
+        if (summary) summary.textContent = `Modpack ${info.version} · ${info.modCount} mods · Java ${info.javaVersion}`;
+        if (versionLabel) versionLabel.textContent = `Minecraft ${info.minecraftVersion} · NeoForge ${info.loaderVersion}`;
+    }).catch(error => console.warn('UI: Could not read the settings modpack profile:', error));
 }
 
 window.updateRam = (val) => {
@@ -696,44 +702,6 @@ window.tryLaunch = async () => {
     const acc = JSON.parse(localStorage.getItem('activeAccount') || 'null');
     if (!acc) return window.showToast('No hay cuenta seleccionada. Por favor inicia sesión.', 'warning');
 
-    // [FIX 3] Check mod sync status before launching — avoid crashes from missing mods
-    try {
-        const needsSync = await window.electronAPI.checkModsStatus();
-        if (needsSync) {
-            const confirmed = await new Promise((resolve) => {
-                const overlay = document.getElementById('overlay-container');
-                const content = document.getElementById('modal-content');
-                content.innerHTML = `
-                    <div style="text-align: center; padding: 30px 20px;">
-                        <div style="font-size: 50px; margin-bottom: 20px;">⚠️</div>
-                        <h2 style="font-weight: 950; color: white; font-size: 20px; margin-bottom: 10px;">MODS DESACTUALIZADOS</h2>
-                        <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-bottom: 25px;">
-                            Tu carpeta de mods no está sincronizada con el servidor.<br>
-                            <b style="color: var(--accent)">Iniciar sin sincronizar puede causar crashes.</b>
-                        </p>
-                        <div style="display: flex; gap: 12px; justify-content: center;">
-                            <button class="user-btn primary" id="warn-sync-btn" style="flex: 1; max-width: 160px;">SINCRONIZAR</button>
-                            <button class="user-btn" id="warn-launch-btn" style="flex: 1; max-width: 160px; opacity: 0.7;">JUGAR DE TODAS FORMAS</button>
-                        </div>
-                    </div>
-                `;
-                overlay.classList.add('show');
-                document.getElementById('warn-sync-btn').onclick = () => {
-                    overlay.classList.remove('show');
-                    window.trySync();
-                    resolve(false); // Don't launch
-                };
-                document.getElementById('warn-launch-btn').onclick = () => {
-                    overlay.classList.remove('show');
-                    resolve(true); // Launch anyway
-                };
-            });
-            if (!confirmed) return;
-        }
-    } catch(e) {
-        console.warn('UI: Could not check mods before launch:', e);
-    }
-
     const btn = document.getElementById('play-btn');
     if (btn) {
         btn.disabled = true;
@@ -744,19 +712,12 @@ window.tryLaunch = async () => {
         btn.style.filter = "grayscale(0.5) contrast(0.8)";
     }
 
-    const version = '1.21.1';
-    const neoforgeVersion = '21.1.265';
-    const modloader = 'neoforge';
-
     window.electronAPI.launchGame({
         nick: acc.name,
-        version: version,
         maxRam: localStorage.getItem('maxRam') || '6',
         width: localStorage.getItem('windowWidth') || '1280',
         height: localStorage.getItem('windowHeight') || '720',
-        account: acc,
-        modloader,
-        neoforgeVersion
+        account: acc
     });
 };
 
@@ -1075,7 +1036,10 @@ window.toggleNotifs = () => {
     window.playClick();
     const dot = document.getElementById('notif-dot');
     if (dot) dot.style.display = 'none';
-    window.showToast('LosPapus Launcher v0.5.12 — Perfil Minecraft 1.21.1 con NeoForge 21.1.265.', 'info', 7000);
+    window.electronAPI.getModpackInfo().then(info => {
+        if (info && !info.error) window.showToast(`Perfil ${info.version} — Minecraft ${info.minecraftVersion} con NeoForge ${info.loaderVersion}.`, 'info', 7000);
+        else window.showToast('El perfil global del modpack se comprueba al iniciar el juego.', 'info', 7000);
+    }).catch(() => window.showToast('El perfil global del modpack se comprueba al iniciar el juego.', 'info', 7000));
 };
 
 window.toggleSoundscape = (enabled) => {

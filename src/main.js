@@ -115,15 +115,12 @@ ipcMain.on('sync-get-settings', (event) => { event.returnValue = settings; });
 ipcMain.on('sync-get-translations', (event) => { event.returnValue = translations; });
 
 
-// Provide cross-module dependencies
-const launcherContext = { discordManager, authManager: authContext };
-const gameLauncherContext = gameLauncher.init(ipcMain, app, launcherContext);
+// The current public modpack is resolved before each game launch.
+const modManagerContext = modManager.init(ipcMain, app);
+const launcherContext = { discordManager, authManager: authContext, modManager: modManagerContext };
+gameLauncher.init(ipcMain, app, launcherContext);
 
 const updateContext = updateManager.init(ipcMain, app, __dirname);
-
-modManager.init(ipcMain, app, { 
-    gameLauncher: gameLauncherContext 
-});
 
 // --- READY ---
 app.whenReady().then(async () => {
