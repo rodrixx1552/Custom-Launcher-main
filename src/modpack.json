@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "minecraftVersion": "1.21.1",
+  "loader": "neoforge",
+  "loaderVersion": "21.1.265",
+  "javaVersion": 21,
+  "mods": []
+}

@@ -72,8 +72,7 @@ async function getRemoteConfig() {
         console.log('OTA: Fetching remote config from:', REMOTE_CONFIG_URL);
         const res = await axios.get(`${REMOTE_CONFIG_URL}?t=${Date.now()}`, { timeout: 8000 });
         if (res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
-            const config = { ...res.data, minecraft_version: '1.21.1', modloader: 'neoforge', neoforge_version: '21.1.265' };
-            return config;
+            return res.data;
         }
     } catch (e) {
         console.warn('OTA config fetch error:', e.message);

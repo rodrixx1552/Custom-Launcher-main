@@ -1,0 +1,90 @@
+name: Publish launcher
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: New launcher version (for example 0.5.13)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: launcher-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate and prepare version
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node scratch/set-launcher-version.js "$env:VERSION"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows installer and portable ZIP
+        run: npm run build
+
+      - name: Calculate portable ZIP checksum
+        id: checksum
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          $zip = "dist/LosPapus-v$env:VERSION.zip"
+          if (-not (Test-Path -LiteralPath $zip)) { throw "Build did not create $zip" }
+          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "sha256=$hash" >> $env:GITHUB_OUTPUT
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          $zip = "dist/LosPapus-v$env:VERSION.zip"
+          $setup = "dist/LosPapus Launcher Setup $env:VERSION.exe"
+          if (-not (Test-Path -LiteralPath $setup)) { throw "Build did not create $setup" }
+          $tag = "v$env:VERSION"
+          $releaseJson = gh api "repos/rodrixx1552/Custom-Launcher-main/releases/tags/$tag" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --draft --title "LosPapus Launcher $tag" --notes "Automated Windows x64 launcher release."
+            if ($LASTEXITCODE -ne 0) { throw "Could not create release $tag" }
+            $releaseJson = gh api "repos/rodrixx1552/Custom-Launcher-main/releases/tags/$tag"
+          }
+          $release = $releaseJson | ConvertFrom-Json
+          gh release upload $tag $zip $setup --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Could not upload launcher assets to $tag" }
+          gh api --method PATCH "repos/rodrixx1552/Custom-Launcher-main/releases/$($release.id)" -F draft=false -F prerelease=false --raw-field make_latest=true | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "Could not publish release $tag" }
+
+      - name: Update the launcher update channel
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+          SHA256: ${{ steps.checksum.outputs.sha256 }}
+        run: |
+          node scratch/update-launcher-release.js "$env:VERSION" "$env:SHA256"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json src/launcher-config.json
+          git commit -m "release: launcher $env:VERSION"
+          git push origin HEAD:main

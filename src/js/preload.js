@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onAutoUpdateProgress: (callback) => { ipcRenderer.removeAllListeners('auto-update-progress'); ipcRenderer.on('auto-update-progress', (event, data) => callback(data)) },
     onAutoUpdateError: (callback) => { ipcRenderer.removeAllListeners('auto-update-error'); ipcRenderer.on('auto-update-error', (event, error) => callback(error)) },
     checkModsStatus: () => ipcRenderer.invoke('check-mods-status'),
+    getModpackInfo: () => ipcRenderer.invoke('get-modpack-info'),
     getServerIp: () => ipcRenderer.invoke('get-server-ip'),
     getTotalRAM: () => ipcRenderer.invoke('get-total-ram'),
     getLauncherConfig: () => ipcRenderer.invoke('get-launcher-config'),
